@@ -47,22 +47,21 @@ Kilitli: root `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.js
 **Çıkış:** `apps/app` canlı URL’de; yeni kullanıcı onboarding → dashboard akışı çalışır.
 
 ```text
-M1.1 — Supabase production
+M1.1 — Supabase production (senin panel)
   - Proje oluştur / prod instance seç
-  - Sırayla uygula: 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 011
+  - Sırayla uygula: 002 → … → 011 (docs/supabase/README.md § Production)
   - Service role + anon key → deploy env
 
-M1.2 — Clerk production
+M1.2 — Clerk production (senin panel)
   - Prod Clerk app, redirect URLs (app domain)
   - Webhook: user.created / updated / deleted → /api/webhooks/clerk
   - CLERK_WEBHOOK_SECRET prod env
 
-M1.3 — App deploy (ör. Vercel)
-  - Root: apps/app veya monorepo turbo build
-  - Env: NEXT_PUBLIC_SUPABASE_*, SUPABASE_SERVICE_ROLE_KEY,
-         NEXT_PUBLIC_CLERK_*, CLERK_SECRET_KEY,
-         NEXT_PUBLIC_APP_URL=https://<prod-domain>,
-         GEMINI_API_KEY (opsiyonel ama AI için önerilir)
+M1.3 — App deploy (kod hazır ✓)
+  - apps/app/vercel.json (monorepo pnpm turbo build)
+  - apps/app/.env.example + GET /api/health
+  - lib/app-url.ts → davet linkleri NEXT_PUBLIC_APP_URL
+  - Vercel: Root Directory = apps/app; env listesi .env.example
 
 M1.4 — Deploy öncesi manuel smoke (⬜ işaretle)
   - Kayıt / giriş → users satırı

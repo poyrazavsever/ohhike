@@ -15,8 +15,8 @@ export default function BillingSettingsPage() {
       />
 
       <SettingsNotice
-        title="Current model"
-        body="Billing is team-based. Feature gates read from team_billing_entitlements for the active team. Clerk Billing webhooks and plan upgrades will extend this page in a later phase."
+        title="Payments coming soon"
+        body="CoachOS MVP runs without online checkout. Team plans (Basic / Pro / Pro Plus) are stored in the database for future gates. Clerk Billing and self-serve upgrades will ship after the first production release."
       />
 
       <div className="mt-4 grid gap-2 md:grid-cols-2">

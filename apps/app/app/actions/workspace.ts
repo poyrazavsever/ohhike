@@ -2,7 +2,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 
 import type {
@@ -55,6 +55,7 @@ import {
   createActionSupabase,
   formatSupabaseActionError,
 } from "../../lib/supabase-action";
+import { getAppBaseUrl, buildAppUrl } from "../../lib/app-url";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
 const organizationTypes = [
@@ -1367,25 +1368,6 @@ export async function deleteAthlete(
   };
 }
 
-async function getRequestOrigin(): Promise<string> {
-  const envBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (envBase) {
-    return envBase;
-  }
-
-  try {
-    const headerList = await headers();
-    const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-    if (!host) {
-      return "";
-    }
-    const proto = headerList.get("x-forwarded-proto") ?? "https";
-    return `${proto}://${host}`;
-  } catch {
-    return "";
-  }
-}
-
 export async function createAthleteInvite(
   athleteId: string,
 ): Promise<WorkspaceActionResult> {
@@ -1472,9 +1454,10 @@ export async function createAthleteInvite(
 
   revalidatePath("/athletes");
 
-  const origin = await getRequestOrigin();
-  const claimPath = `/invite/athlete/${token}`;
-  const claimUrl = origin ? `${origin}${claimPath}` : claimPath;
+  const claimUrl = buildAppUrl(
+    await getAppBaseUrl(),
+    `/invite/athlete/${token}`,
+  );
 
   return {
     ok: true,
@@ -1803,9 +1786,10 @@ export async function createStaffInvite(
 
   revalidatePath("/settings/staff");
 
-  const origin = await getRequestOrigin();
-  const invitePath = `/invite/staff/${token}`;
-  const claimUrl = origin ? `${origin}${invitePath}` : invitePath;
+  const claimUrl = buildAppUrl(
+    await getAppBaseUrl(),
+    `/invite/staff/${token}`,
+  );
 
   return {
     ok: true,

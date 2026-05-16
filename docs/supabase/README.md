@@ -54,12 +54,33 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `009_daily_data_schema_align.sql`, `001` sonrasi `004` calistirildiginda eksik kalan daily data kolonlarini tamamlar. Check-in hatasi (`created_by` schema cache) goruluyorsa bu dosyayi Supabase SQL Editor'de calistirin.
 - `010_organization_staff_invites.sql`, staff davet linkleri icin tabloyu kurar. Staff invite olustururken tablo bulunamadi hatasi aliyorsaniz bu dosyayi Supabase SQL Editor'de calistirin.
 - `011_team_memory_rag.sql`, `/team-memory` assistant sohbeti ve vector arama icin tablolari kurar. Assistant veya embedding hatasi aliyorsaniz bu dosyayi calistirin; `GEMINI_API_KEY` ile embedding + LLM cevaplari acilir.
-- Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.
-- **Clerk + RLS (app):** Server action'larda `createActionSupabase()` Clerk JWT template `supabase` ile calisir. Clerk Dashboard → JWT Templates → Supabase sablonu; `sub` claim kullanicinin Clerk ID'si olmali. JWT yoksa check-in / nutrition / personal training kayitlari "Database access was denied" doner.
+- Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilir (MVP varsayilan).
 
-## App client kullanimi (2026-05)
+## Production migration (FAZ M1)
+
+Yeni Supabase projesinde **sirayla** SQL Editor'de calistir (her dosya idempotent):
+
+```text
+002_phase1_foundation.sql
+003_sessions.sql
+004_daily_data.sql
+005_drills.sql
+006_wearables.sql
+007_ai_reports.sql
+008_team_memory.sql
+009_daily_data_schema_align.sql
+010_organization_staff_invites.sql
+011_team_memory_rag.sql
+```
+
+`001_initial_schema.sql` yalnizca sifirdan tam schema kuruyorsan; cogu ortamda `002`–`011` yeterli.
+
+Deploy sonrasi: `GET /api/health` — eksik env listesini dondurur.
+
+## App client kullanimi (MVP)
 
 | Client | Dosya | Kullanim |
 |--------|-------|----------|
-| `createActionSupabase()` | `lib/supabase-action.ts` | Varsayilan veri yazma/okuma (RLS) — readiness, nutrition, personal training |
-| `createSupabaseAdminClient()` | `lib/supabase-admin.ts` | Webhook, audit log, bootstrap, henuz migrate edilmemis action'lar |
+| `createSupabaseAdminClient()` | `lib/supabase-admin.ts` | Varsayilan — loader, action, webhook |
+| `createActionSupabase()` | `lib/supabase-action.ts` | MVP alias → admin client |
+| `createSupabaseServerClient()` | `lib/supabase-server.ts` | Post-MVP RLS icin hazir; su an zorunlu degil |

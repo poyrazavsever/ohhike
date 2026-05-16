@@ -1,23 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { buildAppUrl, getAppBaseUrl } from "../../../../lib/app-url";
 import { ClaimStaffPanel } from "./claim-staff-panel";
 import { getStaffInvitePreview } from "../../../../lib/staff-invite";
 
 async function absoluteInviteUrl(token: string) {
-  const envBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (envBase) {
-    return `${envBase}/invite/staff/${token}`;
-  }
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  if (!host) {
-    return `/invite/staff/${token}`;
-  }
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}/invite/staff/${token}`;
+  return buildAppUrl(await getAppBaseUrl(), `/invite/staff/${token}`);
 }
 
 function formatExpiry(iso: string | null) {

@@ -1,23 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { buildAppUrl, getAppBaseUrl } from "../../../../lib/app-url";
 import { ClaimAthletePanel } from "./claim-athlete-panel";
 import { getAthleteInvitePreview } from "../../../../lib/athlete-invite";
 
 async function absoluteInviteUrl(token: string) {
-  const envBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (envBase) {
-    return `${envBase}/invite/athlete/${token}`;
-  }
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  if (!host) {
-    return `/invite/athlete/${token}`;
-  }
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}/invite/athlete/${token}`;
+  return buildAppUrl(await getAppBaseUrl(), `/invite/athlete/${token}`);
 }
 
 function formatExpiry(iso: string | null) {
