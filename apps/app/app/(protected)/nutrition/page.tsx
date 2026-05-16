@@ -1,4 +1,8 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getNutritionData } from "../../../lib/workspace";
 import { NutritionLogForm } from "./_components/nutrition-log-form";
 
@@ -26,65 +30,62 @@ export default async function NutritionPage() {
   const today = new Date().toISOString().slice(0, 10);
   const todayLogs = logs.filter((log) => log.log_date === today);
 
-  const cards = [
+  const metricCards = [
     {
       label: "Today",
       value: todayLogs.length.toString(),
       helper: "Nutrition logs submitted",
+      icon: "solar:calendar-bold",
     },
     {
       label: "Avg Hydration",
       value: average(todayLogs.map((log) => log.hydration_score)),
       helper: "Today score",
+      icon: "solar:drop-bold",
+      tone: "info" as const,
     },
     {
       label: "Avg Meal Quality",
       value: average(todayLogs.map((log) => log.meal_quality)),
       helper: "Today score",
+      icon: "solar:cup-hot-bold",
+      tone: "secondary" as const,
     },
     {
       label: "Athletes",
       value: athletes.length.toString(),
       helper: "Available for logging",
+      icon: "solar:user-id-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Performance Data"
         title="Nutrition"
-        description={`Nutrition overview for ${workspace.organization.name}.`}
+        subtitle={`Nutrition overview for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/suIcme.png"
       />
 
-      <NutritionLogForm athletes={athletes} />
+      <div className="mt-4">
+        <NutritionLogForm athletes={athletes} />
+      </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {latestLogs.length > 0 ? (
-        <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card">
-          <div className="border-b border-border p-5">
-            <p className="text-sm font-extrabold text-foreground">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <p className="text-sm font-black text-foreground">
               Latest nutrition logs
             </p>
-            <p className="mt-1 text-sm font-medium text-muted-foreground">
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
               Recent athlete hydration, meal quality and protein notes.
             </p>
           </div>
@@ -93,37 +94,37 @@ export default async function NutritionPage() {
             {latestLogs.map((log) => (
               <article
                 key={log.id}
-                className="grid gap-4 p-5 md:grid-cols-[1.4fr_1fr_1fr_1fr]"
+                className="grid gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr]"
               >
                 <div>
-                  <p className="font-extrabold text-foreground">
+                  <p className="font-black text-foreground">
                     {log.athleteName}
                   </p>
-                  <p className="mt-1 text-xs font-medium text-muted-foreground">
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
                     {log.teamName ?? "No team"} · {formatDate(log.log_date)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
                     Hydration
                   </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
+                  <p className="mt-1 text-sm font-black text-foreground">
                     {log.hydration_score ?? "Not set"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
                     Meal Quality
                   </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
+                  <p className="mt-1 text-sm font-black text-foreground">
                     {log.meal_quality ?? "Not set"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
                     Protein
                   </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
+                  <p className="mt-1 text-sm font-black text-foreground">
                     {log.protein_servings ?? "Not set"}
                   </p>
                 </div>
@@ -132,14 +133,11 @@ export default async function NutritionPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No nutrition logs yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Add the first daily nutrition entry to start tracking habits.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No nutrition logs yet"
+          description="Add the first daily nutrition entry to start tracking habits."
+          icon="solar:cup-hot-bold"
+        />
       )}
     </section>
   );

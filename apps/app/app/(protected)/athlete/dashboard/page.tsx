@@ -1,4 +1,9 @@
-import { PageHeader } from "../../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../../components/dashboard/dashboard-cards";
 import { getAthleteDashboardData } from "../../../../lib/workspace";
 
 function formatNumber(value: number) {
@@ -37,115 +42,94 @@ function readinessLabel(score: number | null) {
 export default async function AthleteDashboardPage() {
   const { workspace, summaries, totals } = await getAthleteDashboardData();
 
-  const cards = [
+  const metricCards = [
     {
       label: "Athletes",
       value: totals.athletes.toString(),
       helper: `${totals.activeAthletes} active`,
+      icon: "solar:user-id-bold",
     },
     {
       label: "Avg Readiness",
       value: totals.averageReadiness?.toString() ?? "No data",
       helper: "Latest 7D signal",
+      icon: "solar:pulse-2-bold",
+      tone: "info" as const,
     },
     {
       label: "7D Load",
       value: formatNumber(totals.totalLoad),
       helper: "Minutes x RPE",
+      icon: "solar:chart-2-bold",
+      tone: "secondary" as const,
     },
     {
       label: "Profiles",
       value: summaries.filter((summary) => summary.position).length.toString(),
       helper: "With position data",
+      icon: "solar:user-rounded-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Workspace"
         title="Athlete View"
-        description={`Athlete-level readiness, load and nutrition snapshot for ${workspace.organization.name}.`}
+        subtitle={`Athlete-level readiness, load and nutrition snapshot for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/kalpTutma.png"
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {summaries.length > 0 ? (
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
           {summaries.map((summary) => (
             <article
               key={summary.athleteId}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {summary.athleteName}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {summary.teamName ?? "No team"} ·{" "}
                     {summary.position ?? "No position"} ·{" "}
                     {formatStatus(summary.status)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                   {readinessLabel(summary.latestReadiness)}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Readiness
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {summary.latestReadiness ?? "No data"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Fatigue
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {summary.latestFatigue ?? "No data"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Hydration
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {summary.latestHydration ?? "No data"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    7D Load
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {formatNumber(summary.sevenDayLoad)}
-                  </p>
-                </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-4">
+                <DetailStat
+                  label="Readiness"
+                  value={summary.latestReadiness ?? "No data"}
+                />
+                <DetailStat
+                  label="Fatigue"
+                  value={summary.latestFatigue ?? "No data"}
+                />
+                <DetailStat
+                  label="Hydration"
+                  value={summary.latestHydration ?? "No data"}
+                />
+                <DetailStat
+                  label="7D Load"
+                  value={formatNumber(summary.sevenDayLoad)}
+                />
               </div>
 
-              <p className="mt-4 text-sm font-medium text-muted-foreground">
+              <p className="mt-3 text-sm font-semibold text-muted-foreground">
                 {summary.attendanceCount} attendance entries · Meal quality{" "}
                 {summary.latestMealQuality ?? "No data"}
               </p>
@@ -153,14 +137,11 @@ export default async function AthleteDashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No athletes yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Add athletes to start building athlete-level dashboards.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No athletes yet"
+          description="Add athletes to start building athlete-level dashboards."
+          icon="solar:user-heart-bold"
+        />
       )}
     </section>
   );

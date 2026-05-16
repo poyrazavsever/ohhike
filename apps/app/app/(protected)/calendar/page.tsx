@@ -1,4 +1,7 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getCalendarData, type CalendarSession } from "../../../lib/workspace";
 
 function formatDate(value: string | null) {
@@ -54,37 +57,37 @@ function splitSessions(sessions: CalendarSession[]) {
 
 function SessionRow({ session }: { session: CalendarSession }) {
   return (
-    <article className="grid gap-4 rounded-2xl border border-border bg-background p-4 md:grid-cols-[0.8fr_1.4fr_0.8fr_0.8fr]">
+    <article className="grid gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[0.8fr_1.4fr_0.8fr_0.8fr]">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
           Date
         </p>
-        <p className="mt-2 text-sm font-extrabold text-foreground">
+        <p className="mt-1 text-sm font-black text-foreground">
           {formatDate(session.scheduled_at)}
         </p>
-        <p className="mt-1 text-xs font-medium text-muted-foreground">
+        <p className="mt-1 text-xs font-semibold text-muted-foreground">
           {formatTime(session.scheduled_at)}
         </p>
       </div>
       <div>
-        <p className="font-extrabold text-foreground">{session.title}</p>
-        <p className="mt-1 text-sm font-medium text-muted-foreground">
+        <p className="font-black text-foreground">{session.title}</p>
+        <p className="mt-1 text-sm font-semibold text-muted-foreground">
           {session.teamName ?? "No team"} · {formatSessionType(session.type)}
         </p>
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
           Location
         </p>
-        <p className="mt-2 text-sm font-extrabold text-foreground">
+        <p className="mt-1 text-sm font-black text-foreground">
           {session.location ?? "Not set"}
         </p>
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
           Status
         </p>
-        <p className="mt-2 text-sm font-extrabold text-foreground">
+        <p className="mt-1 text-sm font-black text-foreground">
           {session.status ?? "planned"}
         </p>
       </div>
@@ -102,26 +105,26 @@ function SessionSection({
   sessions: CalendarSession[];
 }) {
   return (
-    <div className="rounded-3xl border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-4">
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-extrabold text-foreground">{title}</p>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
+          <p className="text-sm font-black text-foreground">{title}</p>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">
             {description}
           </p>
         </div>
-        <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+        <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
           {sessions.length}
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-4 grid gap-2">
         {sessions.length > 0 ? (
           sessions.map((session) => (
             <SessionRow key={session.id} session={session} />
           ))
         ) : (
-          <p className="rounded-2xl border border-dashed border-border bg-background p-5 text-center text-sm font-medium text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border bg-background p-4 text-center text-sm font-semibold text-muted-foreground">
             No sessions in this section.
           </p>
         )}
@@ -135,57 +138,52 @@ export default async function CalendarPage() {
   const { upcoming, recent, unscheduled } = splitSessions(sessions);
   const scheduledCount = sessions.filter((session) => session.scheduled_at).length;
 
-  const cards = [
+  const metricCards = [
     {
       label: "Scheduled",
       value: scheduledCount.toString(),
       helper: "Sessions with date",
+      icon: "solar:calendar-mark-bold",
     },
     {
       label: "Upcoming",
       value: upcoming.length.toString(),
       helper: "Next sessions",
+      icon: "solar:calendar-add-bold",
+      tone: "info" as const,
     },
     {
       label: "Unscheduled",
       value: unscheduled.length.toString(),
       helper: "Need planning",
+      icon: "solar:calendar-minimalistic-bold",
+      tone: "warning" as const,
     },
     {
       label: "Total",
       value: sessions.length.toString(),
       helper: "Loaded sessions",
+      icon: "solar:clipboard-list-bold",
+      tone: "secondary" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Workspace"
         title="Calendar"
-        description={`Session calendar for ${workspace.organization.name}.`}
+        subtitle={`Session calendar for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/gozetleme.png"
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6">
+      <div className="mt-4 grid gap-4">
         <SessionSection
           title="Upcoming"
           description="Scheduled sessions from now forward."

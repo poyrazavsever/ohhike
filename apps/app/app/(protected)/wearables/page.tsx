@@ -1,4 +1,9 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getWearablesData } from "../../../lib/workspace";
 import { CreateWearableConnectionForm } from "./_components/create-wearable-connection-form";
 
@@ -23,111 +28,98 @@ function formatDate(value: string | null) {
 export default async function WearablesPage() {
   const { workspace, connections, athletes, totals } = await getWearablesData();
 
-  const cards = [
+  const metricCards = [
     {
       label: "Connections",
       value: totals.connections.toString(),
       helper: `${totals.activeConnections} active`,
+      icon: "solar:watch-round-bold",
     },
     {
       label: "Daily Summaries",
       value: totals.summaries.toString(),
       helper: "Normalized rows",
+      icon: "solar:clipboard-list-bold",
+      tone: "info" as const,
     },
     {
       label: "Activities",
       value: totals.activities.toString(),
       helper: "Imported activities",
+      icon: "solar:running-bold",
+      tone: "secondary" as const,
     },
     {
       label: "Athletes",
       value: athletes.length.toString(),
       helper: "Available to connect",
+      icon: "solar:user-id-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Performance Data"
         title="Wearables"
-        description={`Wearable provider connections for ${workspace.organization.name}.`}
+        subtitle={`Wearable provider connections for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/kosu.png"
       />
 
-      <CreateWearableConnectionForm athletes={athletes} />
+      <div className="mt-4">
+        <CreateWearableConnectionForm athletes={athletes} />
+      </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {connections.length > 0 ? (
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
           {connections.map((connection) => (
             <article
               key={connection.id}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {connection.athleteName}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {connection.teamName ?? "No team"} ·{" "}
                     {formatProvider(connection.provider)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                   {connection.is_active ? "Active" : "Inactive"}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Provider ID
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {connection.provider_user_id ?? "Not set"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Last Sync
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {formatDate(connection.last_synced_at)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Scopes
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {connection.scopes?.length
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                <DetailStat
+                  label="Provider ID"
+                  value={connection.provider_user_id ?? "Not set"}
+                />
+                <DetailStat
+                  label="Last Sync"
+                  value={formatDate(connection.last_synced_at)}
+                />
+                <DetailStat
+                  label="Scopes"
+                  value={
+                    connection.scopes?.length
                       ? connection.scopes.join(", ")
-                      : "Not set"}
-                  </p>
-                </div>
+                      : "Not set"
+                  }
+                />
               </div>
 
               {connection.sync_error ? (
-                <p className="mt-4 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+                <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft p-3 text-sm font-bold text-destructive-foreground">
                   {connection.sync_error}
                 </p>
               ) : null}
@@ -135,14 +127,11 @@ export default async function WearablesPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No wearable connections yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Add a provider connection to prepare wearable sync workflows.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No wearable connections yet"
+          description="Add a provider connection to prepare wearable sync workflows."
+          icon="solar:watch-round-bold"
+        />
       )}
     </section>
   );
