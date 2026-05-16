@@ -12,6 +12,14 @@ import type {
   SportType,
   WearableProvider,
 } from "../../lib/database.types";
+import {
+  isDrillEquipmentValue,
+  isOptionalDrillCategory,
+  isOptionalDrillDifficulty,
+  isOptionalMemorySeverity,
+  isOptionalObservationCategory,
+  isTeamPatternType,
+} from "../../lib/coach-vocabulary";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
@@ -1964,6 +1972,31 @@ export async function createDrill(
     };
   }
 
+  const category = cleanString(input.category);
+  const difficulty = cleanString(input.difficulty);
+  const equipment = cleanString(input.equipment);
+
+  if (!isOptionalDrillCategory(category)) {
+    return {
+      ok: false,
+      error: "Invalid drill category.",
+    };
+  }
+
+  if (!isOptionalDrillDifficulty(difficulty)) {
+    return {
+      ok: false,
+      error: "Invalid drill difficulty.",
+    };
+  }
+
+  if (!isDrillEquipmentValue(equipment)) {
+    return {
+      ok: false,
+      error: "Equipment description is too long or invalid.",
+    };
+  }
+
   const { organization, membership } = await getCurrentWorkspace();
 
   if (
@@ -1983,15 +2016,15 @@ export async function createDrill(
     created_by: userId,
     sport_type: input.sportType,
     title,
-    category: cleanString(input.category),
+    category: category || null,
     description: cleanString(input.description),
     objective: cleanString(input.objective),
     duration_min: parsePositiveInteger(input.durationMin),
-    difficulty: cleanString(input.difficulty),
+    difficulty: difficulty || null,
     player_count_min: parsePositiveInteger(input.playerCountMin),
     player_count_max: parsePositiveInteger(input.playerCountMax),
     area_setup: cleanString(input.areaSetup),
-    equipment: cleanString(input.equipment),
+    equipment: equipment || null,
     instructions: cleanString(input.instructions),
     coaching_points: cleanString(input.coachingPoints),
     tags: parseTags(input.tags),
@@ -2293,14 +2326,31 @@ export async function createAthleteObservation(
     };
   }
 
+  const observationCategory = cleanString(input.category);
+  const observationSeverity = cleanString(input.severity);
+
+  if (!isOptionalObservationCategory(observationCategory)) {
+    return {
+      ok: false,
+      error: "Invalid observation category.",
+    };
+  }
+
+  if (!isOptionalMemorySeverity(observationSeverity)) {
+    return {
+      ok: false,
+      error: "Invalid severity value.",
+    };
+  }
+
   const { error } = await supabase.from("athlete_observations").insert({
     organization_id: organization.id,
     team_id: athlete.team_id,
     athlete_id: athlete.id,
     source: "manual",
     title: cleanString(input.title),
-    category: cleanString(input.category),
-    severity: cleanString(input.severity),
+    category: observationCategory || null,
+    severity: observationSeverity || null,
     observation,
     recommendation: cleanString(input.recommendation),
     is_resolved: false,
@@ -2326,11 +2376,26 @@ export async function createTeamPattern(
 ): Promise<WorkspaceActionResult> {
   const title = cleanString(input.title);
   const patternType = cleanString(input.patternType);
+  const patternSeverity = cleanString(input.severity);
 
   if (!title || !patternType) {
     return {
       ok: false,
       error: "Pattern type and title are required.",
+    };
+  }
+
+  if (!isTeamPatternType(patternType)) {
+    return {
+      ok: false,
+      error: "Invalid pattern type.",
+    };
+  }
+
+  if (!isOptionalMemorySeverity(patternSeverity)) {
+    return {
+      ok: false,
+      error: "Invalid severity value.",
     };
   }
 
@@ -2368,7 +2433,7 @@ export async function createTeamPattern(
     pattern_type: patternType,
     title,
     description: cleanString(input.description),
-    severity: cleanString(input.severity),
+    severity: patternSeverity || null,
     occurrence_count: 1,
     status: "active",
     metadata: {},

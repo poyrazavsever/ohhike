@@ -9,6 +9,11 @@ import {
   type CreateDrillInput,
 } from "../../../actions/workspace";
 import type { SportType } from "../../../../lib/database.types";
+import {
+  DRILL_CATEGORY_OPTIONS,
+  DRILL_DIFFICULTY_OPTIONS,
+  DRILL_EQUIPMENT_PRESETS,
+} from "../../../../lib/coach-vocabulary";
 
 const sportTypes: Array<{ label: string; value: SportType }> = [
   { label: "Football", value: "football" },
@@ -24,11 +29,16 @@ const sportTypes: Array<{ label: string; value: SportType }> = [
   { label: "Other", value: "other" },
 ];
 
+type DrillFormState = CreateDrillInput & {
+  equipmentPreset: string;
+  equipmentCustom: string;
+};
+
 function inputClassName() {
   return "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
-function emptyForm(): CreateDrillInput {
+function emptyForm(): DrillFormState {
   return {
     title: "",
     sportType: "football",
@@ -41,6 +51,8 @@ function emptyForm(): CreateDrillInput {
     playerCountMax: "",
     areaSetup: "",
     equipment: "",
+    equipmentPreset: "",
+    equipmentCustom: "",
     instructions: "",
     coachingPoints: "",
     tags: "",
@@ -51,7 +63,7 @@ export function CreateDrillForm() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<CreateDrillInput>(() => emptyForm());
+  const [form, setForm] = useState<DrillFormState>(() => emptyForm());
   const [isPending, startTransition] = useTransition();
 
   function closeModal() {
@@ -62,8 +74,35 @@ export function CreateDrillForm() {
   function submit() {
     setError(null);
 
+    const equipment =
+      form.equipmentPreset === "__custom__"
+        ? form.equipmentCustom.trim()
+        : form.equipmentPreset;
+
+    const payload: CreateDrillInput = {
+      title: form.title,
+      sportType: form.sportType,
+      category: form.category,
+      description: form.description,
+      objective: form.objective,
+      durationMin: form.durationMin,
+      difficulty: form.difficulty,
+      playerCountMin: form.playerCountMin,
+      playerCountMax: form.playerCountMax,
+      areaSetup: form.areaSetup,
+      equipment,
+      instructions: form.instructions,
+      coachingPoints: form.coachingPoints,
+      tags: form.tags,
+    };
+
+    if (form.equipmentPreset === "__custom__" && !payload.equipment?.trim()) {
+      setError("Describe custom equipment or choose a preset.");
+      return;
+    }
+
     startTransition(async () => {
-      const result = await createDrill(form);
+      const result = await createDrill(payload);
 
       if (!result.ok) {
         setError(result.error);
@@ -77,7 +116,7 @@ export function CreateDrillForm() {
   }
 
   return (
-    <div className="mt-6 flex justify-end">
+    <div className="mt-4 flex justify-end">
       <button
         type="button"
         onClick={() => {
@@ -156,7 +195,7 @@ export function CreateDrillForm() {
                   </option>
                 ))}
               </select>
-              <input
+              <select
                 className={inputClassName()}
                 value={form.category}
                 onChange={(event) =>
@@ -165,8 +204,13 @@ export function CreateDrillForm() {
                     category: event.target.value,
                   }))
                 }
-                placeholder="Category"
-              />
+              >
+                {DRILL_CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt.value || "none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <input
                 type="number"
                 min="0"
@@ -180,7 +224,7 @@ export function CreateDrillForm() {
                 }
                 placeholder="Duration minutes"
               />
-              <input
+              <select
                 className={inputClassName()}
                 value={form.difficulty}
                 onChange={(event) =>
@@ -189,8 +233,13 @@ export function CreateDrillForm() {
                     difficulty: event.target.value,
                   }))
                 }
-                placeholder="Difficulty"
-              />
+              >
+                {DRILL_DIFFICULTY_OPTIONS.map((opt) => (
+                  <option key={opt.value || "none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <input
                 type="number"
                 min="0"
@@ -217,6 +266,35 @@ export function CreateDrillForm() {
                 }
                 placeholder="Max players"
               />
+              <select
+                className={`${inputClassName()} md:col-span-2`}
+                value={form.equipmentPreset}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    equipmentPreset: event.target.value,
+                  }))
+                }
+              >
+                {DRILL_EQUIPMENT_PRESETS.map((opt) => (
+                  <option key={opt.value || "none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {form.equipmentPreset === "__custom__" ? (
+                <textarea
+                  className={`${inputClassName()} min-h-20 resize-none md:col-span-2`}
+                  value={form.equipmentCustom}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      equipmentCustom: event.target.value,
+                    }))
+                  }
+                  placeholder="Describe equipment (cones, balls, goals, etc.)"
+                />
+              ) : null}
               <input
                 className={`${inputClassName()} md:col-span-2`}
                 value={form.tags}
@@ -271,17 +349,6 @@ export function CreateDrillForm() {
                   }))
                 }
                 placeholder="Coaching points"
-              />
-              <textarea
-                className={`${inputClassName()} min-h-20 resize-none md:col-span-2`}
-                value={form.equipment}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    equipment: event.target.value,
-                  }))
-                }
-                placeholder="Equipment"
               />
               <textarea
                 className={`${inputClassName()} min-h-20 resize-none md:col-span-2`}
