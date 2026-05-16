@@ -1619,6 +1619,80 @@ export async function getAiReportsData(): Promise<{
   };
 }
 
+export async function getAiReportDetailData(
+  reportId: string,
+): Promise<{
+  workspace: CurrentWorkspace;
+  report: AiReportWithMeta;
+} | null> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const { data: report, error: reportError } = await supabase
+    .from("ai_reports")
+    .select("*")
+    .eq("id", reportId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (reportError) {
+    throw new Error(reportError.message);
+  }
+
+  if (!report) {
+    return null;
+  }
+
+  const [
+    { data: team },
+    { data: athlete },
+    { data: session },
+  ] = await Promise.all([
+    report.team_id
+      ? supabase
+          .from("teams")
+          .select("id, name")
+          .eq("id", report.team_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    report.athlete_id
+      ? supabase
+          .from("athletes")
+          .select("id, first_name, last_name, number")
+          .eq("id", report.athlete_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    report.session_id
+      ? supabase
+          .from("sessions")
+          .select("id, title")
+          .eq("id", report.session_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const athleteName = athlete
+    ? [
+        athlete.number ? `#${athlete.number}` : null,
+        athlete.first_name,
+        athlete.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : null;
+
+  return {
+    workspace,
+    report: {
+      ...report,
+      teamName: team?.name ?? null,
+      athleteName: athleteName || null,
+      sessionTitle: session?.title ?? null,
+    },
+  };
+}
+
 export async function getTeamMemoryData(): Promise<{
   workspace: CurrentWorkspace;
   observations: AthleteObservationWithMeta[];

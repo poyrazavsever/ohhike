@@ -382,7 +382,7 @@ export async function tryGenerateSessionAnalysisWithGemini(
 ): Promise<SessionAnalysisOutput | null> {
   const { geminiGenerateJson } = await import("./gemini");
 
-  const content = await geminiGenerateJson({
+  const result = await geminiGenerateJson({
     systemInstruction:
       "You are Doctor Panda, the AI coaching intelligence assistant for OhHike CoachOS. Analyze session data and return JSON only. Do not invent unsupported facts. Do not provide medical diagnosis. Use severity low|medium|high. Include missing_data array when context is incomplete.",
     userText: `Analyze this session and return JSON with keys: title, summary, confidence_score (0-1), tactical_observations[], athlete_observations[], load_observations[], risk_alerts[], recommended_drills[{title,reason}], next_training_plan{focus,notes}, missing_data[].
@@ -392,12 +392,12 @@ ${serializeContextForLlm(context)}`,
     temperature: 0.3,
   });
 
-  if (!content) {
+  if (!result.ok) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(content) as SessionAnalysisOutput;
+    const parsed = JSON.parse(result.text) as SessionAnalysisOutput;
 
     if (!parsed.summary || !parsed.title) {
       return null;

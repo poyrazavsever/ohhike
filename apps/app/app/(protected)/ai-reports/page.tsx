@@ -1,9 +1,13 @@
+import { Icon } from "@iconify/react";
+import Link from "next/link";
+
 import {
   DashboardHero,
   DetailStat,
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { formatModelProvider } from "../../../lib/ai-report-display";
 import { getAiReportsData } from "../../../lib/workspace";
 import { CreateAiReportForm } from "./_components/create-ai-report-form";
 
@@ -96,7 +100,7 @@ export default async function AiReportsPage() {
                   </p>
                 </div>
                 <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
-                  {report.model_provider ?? "manual"}
+                  {formatModelProvider(report.model_provider)}
                 </div>
               </div>
 
@@ -120,10 +124,20 @@ export default async function AiReportsPage() {
               </div>
 
               {report.summary ? (
-                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
+                <p className="mt-3 line-clamp-2 text-sm font-semibold leading-6 text-muted-foreground">
                   {report.summary}
                 </p>
               ) : null}
+
+              <div className="mt-4">
+                <Link
+                  href={`/ai-reports/${report.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
+                >
+                  <Icon icon="solar:arrow-right-linear" className="size-3.5" />
+                  View report
+                </Link>
+              </div>
             </article>
           ))}
         </div>

@@ -37,7 +37,8 @@ import {
   getSessionAnalysisPromptVersion,
   tryGenerateSessionAnalysisWithGemini,
 } from "../../lib/ai/session-analysis";
-import { getGeminiConfig } from "../../lib/ai/gemini";
+import { getGeminiConfig, isGeminiConfigured } from "../../lib/ai/gemini";
+import { syncOrganizationMemoryEmbeddings } from "../../lib/ai/team-memory/embeddings";
 import {
   canManageStaffInvites,
   isAthleteRole,
@@ -137,6 +138,8 @@ export type WorkspaceActionResult =
       redirectTo?: string;
       /** Present after generating an AI report. */
       reportId?: string;
+      /** Optional user-facing status (e.g. rules fallback when Gemini fails). */
+      message?: string;
     }
   | {
       ok: false;
@@ -3895,6 +3898,11 @@ export async function generateSessionAiReport(
     llmAnalysis ?? generateSessionAnalysisFromContext(analysisContext);
   const usedLlm = Boolean(llmAnalysis);
   const geminiConfig = getGeminiConfig();
+  const statusMessage = usedLlm
+    ? `Analysis generated with Gemini (${geminiConfig.model}).`
+    : isGeminiConfigured()
+      ? "Report saved with rule-based analysis. Gemini did not return a valid response — verify your API key and model in .env.local."
+      : "Report saved with rule-based analysis. Add GEMINI_API_KEY for LLM-powered session reports.";
 
   const { data: inserted, error: insertError } = await supabase
     .from("ai_reports")
@@ -3942,11 +3950,88 @@ export async function generateSessionAiReport(
   });
 
   revalidatePath("/ai-reports");
+  revalidatePath(`/ai-reports/${inserted.id}`);
   revalidatePath(`/sessions/${sessionId}`);
 
   return {
     ok: true,
     reportId: inserted.id,
+    message: statusMessage,
+  };
+}
+
+export async function deleteAiReport(
+  reportId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can delete AI reports.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: report } = await supabase
+    .from("ai_reports")
+    .select("id, session_id")
+    .eq("id", reportId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (!report) {
+    return {
+      ok: false,
+      error: "Report could not be found.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("ai_reports")
+    .delete()
+    .eq("id", reportId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await writeWorkspaceAuditLog({
+    organizationId: organization.id,
+    userId,
+    role: membership.role,
+    action: "ai_report.deleted",
+    entityType: "ai_report",
+    entityId: reportId,
+  });
+
+  revalidatePath("/ai-reports");
+  revalidatePath(`/ai-reports/${reportId}`);
+  if (report.session_id) {
+    revalidatePath(`/sessions/${report.session_id}`);
+  }
+
+  return {
+    ok: true,
+    redirectTo: "/ai-reports",
   };
 }
 
@@ -4044,6 +4129,12 @@ export async function createAthleteObservation(
     };
   }
 
+  void syncOrganizationMemoryEmbeddings(
+    supabase,
+    organization.id,
+    userId,
+  ).catch(() => undefined);
+
   revalidatePath("/team-memory");
 
   return {
@@ -4054,6 +4145,15 @@ export async function createAthleteObservation(
 export async function createTeamPattern(
   input: CreateTeamPatternInput,
 ): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
   const title = cleanString(input.title);
   const patternType = cleanString(input.patternType);
   const patternSeverity = cleanString(input.severity);
@@ -4125,6 +4225,12 @@ export async function createTeamPattern(
       error: error.message,
     };
   }
+
+  void syncOrganizationMemoryEmbeddings(
+    supabase,
+    organization.id,
+    userId,
+  ).catch(() => undefined);
 
   revalidatePath("/team-memory");
 

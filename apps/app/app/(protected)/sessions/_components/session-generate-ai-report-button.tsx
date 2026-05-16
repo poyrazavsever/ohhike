@@ -16,10 +16,12 @@ export function SessionGenerateAiReportButton({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function generate() {
     setError(null);
+    setNotice(null);
 
     startTransition(async () => {
       const result = await generateSessionAiReport(sessionId);
@@ -29,6 +31,10 @@ export function SessionGenerateAiReportButton({
         return;
       }
 
+      setNotice(result.message ?? "AI report saved.");
+      if (result.reportId) {
+        router.push(`/ai-reports/${result.reportId}`);
+      }
       router.refresh();
     });
   }
@@ -41,18 +47,18 @@ export function SessionGenerateAiReportButton({
             AI session analysis
           </p>
           <p className="mt-1 text-xs font-medium text-muted-foreground">
-            Doctor Panda summarizes attendance, load, readiness signals and coach
-            notes from this session.
+            Doctor Panda (Gemini) summarizes attendance, load, readiness signals
+            and coach notes from this session.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {existingReportId ? (
             <Link
-              href="/ai-reports"
+              href={`/ai-reports/${existingReportId}`}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
             >
               <Icon icon="solar:document-text-bold" className="size-3.5" />
-              View in AI Reports
+              Open AI report
             </Link>
           ) : null}
           <button
@@ -70,6 +76,9 @@ export function SessionGenerateAiReportButton({
           </button>
         </div>
       </div>
+      {notice ? (
+        <p className="mt-3 text-xs font-semibold text-primary-700">{notice}</p>
+      ) : null}
       {error ? (
         <p className="mt-3 text-xs font-bold text-destructive">{error}</p>
       ) : null}

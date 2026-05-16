@@ -89,7 +89,7 @@ export async function tryGenerateTeamMemoryAnswerWithGemini(
 ): Promise<TeamMemoryAnswer | null> {
   const { geminiGenerateJson } = await import("../gemini");
 
-  const content = await geminiGenerateJson({
+  const result = await geminiGenerateJson({
     systemInstruction: `You are Doctor Panda, the Team Memory assistant inside OhHike CoachOS (${PROMPT_VERSION}).
 Answer using ONLY the retrieved memory documents and context. Do not invent data. No medical diagnosis.
 Return JSON with keys: direct_answer (string), supporting_evidence (array of {document_title, document_type, evidence_summary}), recommended_next_actions (array of {action, reason}), missing_data (string array).`,
@@ -106,12 +106,12 @@ ${serializeRetrievedDocuments(documents)}`,
     temperature: 0.25,
   });
 
-  if (!content) {
+  if (!result.ok) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(content) as Omit<
+    const parsed = JSON.parse(result.text) as Omit<
       TeamMemoryAnswer,
       "retrieval_mode" | "model_provider"
     >;
