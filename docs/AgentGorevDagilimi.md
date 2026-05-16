@@ -1,23 +1,23 @@
-# OhHike CoachOS - Iki Agent Icin Cakismasiz Gorev Dagilimi
+# OhHike CoachOS - Gelistirme Plani ve Faz Tanimi
 
-## 0. Amac
+## 0. Genel Durum
 
-Bu plan, iki farkli editor/agent ile ayni repo uzerinde calisirken dosya, modul ve veritabani cakislarini azaltmak icin hazirlandi.
+Bu plan, tek agent ile OhHike CoachOS'u dokumanlardaki hedef mimariye gore adim adim insa etmek icin hazirlanmistir.
 
-Ana hedef:
+Temel ilkeler:
 
-- `docs/` altindaki CoachOS v3 urun, mimari, veri modeli ve kullanici akislarina uygun ilerlemek.
-- Iki agent'in ayni dosyalari ayni anda duzenlememesini saglamak.
-- Ayni veritabani tablolarinda paralel migration/action/query calismasi yapmamak.
-- Kacilmaz ortak bagimliliklari faz kapilariyla siralamak.
+- `docs/` altindaki CoachOS v3 urun, mimari, veri modeli ve kullanici akislarina tam uyum.
+- Her faz sonunda calisabilir, test edilebilir bir urun katmani olmali.
+- Supabase migration'lari `docs/supabase/` klasorune kaydedilir, `docs/supabase/README.md` guncellenir.
+- `apps/web` tamamlandi; odak `apps/app` uzerinde.
 
-Bu dokuman implementation checklist degil, calisma sahipligi ve faz planidir.
+---
 
 ## 1. Proje Ozeti
 
 OhHike CoachOS; spor takimlari, antrenorler, sporcular ve kulup ekipleri icin AI destekli, self-host edilebilir bir spor operasyon ve takim hafizasi platformudur.
 
-Urunun cozdogu ana problem:
+Urunun cozdugu ana problem:
 
 - Antrenman notlari, sporcu check-in'leri, wearable verileri, RPE, beslenme/su aliskanliklari ve gecmis raporlar daginik tutuluyor.
 - Koclar bu veriyi sezon boyunca karar destek sistemine donusturemiyor.
@@ -36,531 +36,566 @@ Organization
             -> Team Memory Assistant
 ```
 
-Mevcut kod durumu:
+Mevcut kod durumu (Faz 1 baslangici):
 
-- `apps/web`: Marketing site buyuk olcude CoachOS mesajina uygun.
-- `apps/app`: Clerk korumali shell, auth sayfalari, sidebar ve Clerk user webhook'u var.
-- Supabase migration, RLS, organization/team/athlete CRUD, onboarding, billing, AI/RAG ve session/performance modulleri henuz yok.
-- `README.md` ve root package metadata halen starter izleri tasiyor.
+- `apps/web`: Marketing site tamamlandi. Dokunulmayacak.
+- `apps/app`:
+  - Clerk korumalı shell, auth sayfalari (login/register), AppSidebar, AppShell mevcut.
+  - Clerk user webhook → Supabase `users` sync calisiyor.
+  - `lib/supabase.ts` yalnizca anon client. Server/admin ayrimi yok.
+  - Supabase migration, RLS, onboarding, organization/team/athlete CRUD, billing, AI/RAG modulleri henuz yok.
+  - Sidebar'da tum nav linkleri tanimli ama hicbir route sayfasi mevcut degil.
 
-## 2. Agent Rolleri
+---
 
-Iki agent ayni anda calisacaksa roller net ayrilmali.
-
-### Agent A - App Core ve Veri Temeli
-
-Sorumluluk alani:
-
-- SaaS uygulamasi cekirdegi.
-- Auth sonrasi onboarding.
-- Organization, team, athlete, staff ve billing entitlement temeli.
-- Supabase schema'nin foundation kisimi.
-- `apps/app` protected app iskeleti.
-- Server-side auth, organization/team context, permission ve feature gate temelleri.
-
-Agent A, urunun operasyonel veri temelini kurar.
-
-### Agent B - Public Web, Docs ve Uygulama UX Yuzeyleri
-
-Sorumluluk alani:
-
-- Marketing site, docs sayfalari, self-host/open-source/security/privacy/terms icerikleri.
-- Public pricing ve CTA uyumu.
-- Empty state, onboarding metinleri, Doctor Panda UX dili.
-- `packages/ui` icindeki ortak presentational component'ler.
-- App tarafinda yalnizca Agent A'nin belirledigi component API'lerini kullanan gorsel/UX katmanlari; veri action/query yazmaz.
-
-Agent B, urunun dis anlatimini, dokumantasyonunu ve UI dilini netlestirir.
-
-## 3. Mutlak Cakisma Kurallari
-
-1. Ayni dosya ayni fazda iki agent tarafindan duzenlenmez.
-2. Ayni migration dosyasina iki agent dokunmaz.
-3. Ayni tabloyu olusturan, degistiren veya RLS policy ekleyen is tek agent'a aittir.
-4. `package.json`, `pnpm-lock.yaml`, `turbo.json`, root config ve workspace config dosyalari faz sahibi disinda degistirilmez.
-5. `packages/ui` Agent B'ye aittir. Agent A yeni shared UI ihtiyaci icin once lokal component yazar veya Agent B'ye interface istegi acar.
-6. `apps/app/components/layout/app-sidebar.tsx`, `apps/app/app/layout.tsx`, `apps/app/middleware.ts` Agent A'ya aittir.
-7. `apps/web` tamami Agent B'ye aittir.
-8. `apps/app/app/api/**` Agent A'ya aittir; Agent B API route yazmaz.
-9. App veri erisimi Agent A tarafindan yazilir; Agent B veri mock'u gerekiyorsa `apps/web/lib/**` veya kendi public sayfa dosyalarinda tutar.
-10. Bir agent digerinin sahip oldugu dosyada duzeltme gerektiren bug gorurse dosyayi degistirmez; not birakir veya sonraki entegrasyon fazina tasir.
-
-## 4. Dosya Sahipligi
-
-### Agent A Dosyalari
+## 2. Dosya ve Klasor Sahipligi
 
 ```text
-apps/app/**
-supabase/**
-packages/database/**
-packages/auth/**
-packages/billing/**
-packages/validators/**
+apps/app/**              → Tum app gelistirmesi burada
+apps/web/**              → DOKUNULMAYACAK (tamamlandi)
+packages/ui/**           → Ortak presentational component'ler
+docs/**                  → Urun/mimari referans, plan ve migration kayitlari
+docs/supabase/           → SQL migration dosyalari ve README
 ```
 
-Notlar:
-
-- Su an `supabase/`, `packages/database`, `packages/auth`, `packages/billing`, `packages/validators` yok. Agent A olusturursa sahipligi Agent A'da kalir.
-- `apps/app/public/**` asset dosyalarina dokunulmaz; mevcut asset'ler kullanilir.
-
-### Agent B Dosyalari
+Kilitli dosyalar (degistirilmez):
 
 ```text
-apps/web/**
-packages/ui/**
-docs/**
-```
-
-Notlar:
-
-- Bu plan dosyasi Agent B alaninda gibi gorunse de ilk planlama icin ortak referans kabul edilir.
-- Agent B, `docs/` icinde urun/dokuman icerigi guncelleyebilir; ancak schema veya app implementation karari degistirirse Agent A ile faz kapisinda mutabakat gerekir.
-
-### Ortak Ama Kilitli Dosyalar
-
-Bu dosyalar ayni fazda serbest degistirilmez:
-
-```text
-package.json
+package.json (root)
 pnpm-lock.yaml
 pnpm-workspace.yaml
 turbo.json
-components.json
-README.md
 .gitignore
 ```
 
-Sahiplik onerisi:
+---
 
-- Faz 0'da root metadata ve README: Agent B
-- Dependency ekleme gerekiyorsa ilgili agent once kendi app/package dosyasini degistirir.
-- Lockfile degisimi tek entegrasyon adiminda yapilir.
+## 3. Migration Yonetimi
 
-## 5. Veritabani Tablo Sahipligi
+Butun Supabase migration SQL'leri `docs/supabase/` klasorune kaydedilir.
 
-Ortak tablo kullanmamak icin tablolar module ownership ile ayrildi.
+Kural:
 
-### Agent A Tablo Sahipligi
+- Her migration ayri numarali bir `.sql` dosyasidir: `001_foundation.sql`, `002_sessions.sql` vb.
+- Her yeni migration sonrasi `docs/supabase/README.md` guncellenir.
+- Supabase Dashboard SQL Editor'a elle yapistirilerek uygulanir veya Supabase CLI ile migrate edilir.
+- Cakisma olmamasi icin migration sirasi dosya numarasiyla belirlenir.
 
-Foundation ve operasyon tablolari:
+---
 
-```text
-users
-organizations
-organization_members
-teams
-team_staff
-athletes
-athlete_invites
-team_billing_entitlements
-audit_logs
-system_settings
-api_keys
-```
+## 4. Faz Plani
 
-Agent A sorumluluklari:
+---
 
-- Enum temel tipleri.
-- Tenant izolasyonu.
-- Organization/team context.
-- Athlete claim modeli.
-- Staff rolleri.
-- Team bazli pricing entitlement cache.
-- RLS foundation policy'leri.
+### FAZ 1 — Supabase Foundation + Onboarding + Route Iskeleti
 
-### Agent B Tablo Sahipligi
+**Amac:** Urunun calisabilir veritabani temelini kurmak, auth sonrasi yonlendirme mantigini tanimlamak ve temel app route iskeletini olusturmak.
 
-Agent B normalde DB yazmaz. Ancak ileriki fazlarda sadece Agent A'nin foundation migration'i merge edildikten sonra su tablolarin schema tasarimini dokumante edebilir veya ayri migration PR'i olarak hazirlayabilir:
+**Kapsam:** `apps/app` — veri katmani, auth akisi, onboarding, route iskeleti.
+
+**Web'e dokunulmaz.**
+
+---
+
+#### Blok 1 — Supabase Foundation (DB Katmani)
+
+##### 1.1 — Foundation Migration SQL
+
+Dosya: `docs/supabase/001_foundation.sql`
+
+Icerigi:
 
 ```text
-sessions
-session_attendance
-training_blocks
-personal_trainings
-wellness_checkins
-nutrition_logs
-wearable_connections
-wearable_daily_summaries
-wearable_activities
-session_files
-session_file_summaries
-ai_reports
-athlete_observations
-team_patterns
-drills
-training_plans
-performance_goals
-documents
-document_embeddings
-assistant_threads
-assistant_messages
-reports
-report_exports
-imports
-notifications
+Extensions:
+  - uuid-ossp
+  - pgcrypto
+  - vector
+
+Enum tipleri:
+  - subscription_tier
+  - organization_type
+  - organization_role
+  - sport_type
+  - athlete_status
+  - session_type
+  - session_status
+  - media_type
+  - processing_status
+  - data_source
+  - ai_report_type
+  - document_type
+  - wearable_provider
+
+Tablolar:
+  - users
+  - organizations
+  - organization_members
+  - teams
+  - team_staff
+  - athletes
+  - athlete_invites
+  - billing_entitlements
+  - audit_logs
+
+Index'ler:
+  - organizations(slug)
+  - organization_members(user_id, organization_id)
+  - teams(organization_id)
+  - athletes(organization_id, team_id, user_id)
+  - audit_logs(organization_id, created_at)
+
+RLS Helper Fonksiyonlari:
+  - current_user_id()         → JWT sub claim'den kullanici id'sini dondurur
+  - is_org_member(org_id)     → Kullanici org'a uye mi?
+  - has_org_role(org_id, roles[]) → Kullanicinin belirli rolleri var mi?
+  - is_team_staff(team_id)    → Kullanici takim staff'i mi?
+  - is_athlete_self(athlete_id) → Bu sporcu mevcut kullanici mi?
+
+RLS Aktivasyonu:
+  - Tum tablolara ALTER TABLE ... ENABLE ROW LEVEL SECURITY
+
+RLS Politikalari:
+  - users: kendi profilini gorur/gunceller/ekler
+  - organizations: uyeler gorur; owner/admin gunceller; authenticated kullanici olusturur
+  - organization_members: uyeler gorur; owner/admin yonetir
+  - teams: org uyeler gorur; owner/admin/head_coach yonetir
+  - team_staff: org uyeler gorur; owner/admin yonetir
+  - athletes: org uyeler ve sporcu kendi profilini gorur; coach'lar yonetir
+  - athlete_invites: davet eden veya davet edilen gorur
+  - billing_entitlements: owner/admin gorur
+  - audit_logs: owner/admin gorur
+
+Storage Buckets:
+  - avatars (public: true)
+  - organization-logos (public: true)
 ```
 
-Pratik onerim: Ilk iki fazda Agent B hic migration yazmasin. Agent B public/docs/UI alaninda ilerlerken Agent A foundation schema'yi kursun. Performance ve AI tablolarina gecis daha sonra ayri fazda yapilsin.
+`docs/supabase/README.md` guncellenir: 001_foundation.sql eklenir, kapsami belirtilir.
 
-### FK Bagimlilik Kurali
+---
 
-Agent B'nin tablolarinin cogu `organization_id`, `team_id`, `athlete_id`, `session_id` kullanir. Bu tablolar Agent A sahipligindeki foundation tablolara FK verir.
+##### 1.2 — TypeScript Tip Tanimlari
 
-Bu nedenle:
+Dosya: `apps/app/lib/database.types.ts`
 
-- Agent B, Agent A'nin foundation migration'i merge edilmeden DB migration yazmaz.
-- Agent B, FK verilen foundation tablolarda kolon degisikligi yapmaz.
-- Agent A, foundation kolonlarini degistirecekse Agent B'nin downstream tablolarini etkileyecegi icin faz kapisinda duyurur.
+- Schema'daki tum tablo satirlarini karsilayan TypeScript interface/type tanimlari.
+- `Row`, `Insert`, `Update` varyantlari her tablo icin tanimlanir.
+- Enum tipleri TypeScript union type olarak tanimlanir.
 
-## 6. Faz Plani
+---
 
-### Faz 0 - Repo ve Plan Sabitleme
+#### Blok 2 — Supabase Client Mimarisi
 
-Amac: Iki agent calismaya baslamadan once repo kimligi, plan ve cakismazlik kurallari net olsun.
+##### 2.1 — Server Component Client
 
-Agent A:
+Dosya: `apps/app/lib/supabase-server.ts`
 
-- `apps/app` mevcut auth, middleware, Clerk webhook ve sidebar yapisini inceler.
-- Uygulama tarafinda hangi route gruplarinin olusacagini netlestirir.
-- DB foundation migration taslagini hazirlar ama henuz genis AI/performance tablolarina girmez.
+- `createServerClient()` fonksiyonu: Next.js Server Component ve Server Action'lardan cagrilir.
+- Clerk JWT'sini Supabase'e aktarir: `auth().getToken({ template: 'supabase' })`.
+- RLS, Clerk user context ile calismis olur.
+- Cookie bazli session yoktur; her istekte Clerk token alinir.
 
-Agent B:
+##### 2.2 — Admin Client
 
-- `README.md` starter icerigini OhHike CoachOS'a uygun hale getirir.
-- `docs/` icindeki eski pricing ifadelerini `PricingPolicy.md` ile uyumlu hale getirir.
-- Public docs sayfalarinin bilgi mimarisini hazirlar.
+Dosya: `apps/app/lib/supabase-admin.ts`
 
-Dokunulmayacaklar:
+- `createAdminClient()` fonksiyonu: `SUPABASE_SERVICE_ROLE_KEY` kullanir.
+- RLS bypass eder; sadece webhook ve kritik server action'larda kullanilir.
+- Mevcut webhook (`apps/app/app/api/webhooks/clerk/route.ts`) bu client'a gecis yapar.
 
-- Agent A `apps/web/**` dosyalarina dokunmaz.
-- Agent B `apps/app/**` dosyalarina dokunmaz.
+##### 2.3 — Mevcut `lib/supabase.ts` Duzeltme
 
-Cikis kriteri:
+- Anon client client-side bilesenler icin korunur.
+- Server ve admin client ayri dosyalara tasindi; eski dosyadan import'lar guncellenir.
 
-- Root README urunu dogru anlatir.
-- Bu plan herkes tarafindan referans alinir.
-- Pricing kaynak karari: `PricingPolicy.md` canonical kabul edilir.
+---
 
-### Faz 1 - App Foundation vs Public Web Tamamlama
+#### Blok 3 — Auth Sonrasi Yonlendirme ve Route Gruplari
 
-Amac: Bir agent uygulama temelini kurarken diger agent public site ve dokumantasyonu ilerletir.
+##### 3.1 — Route Grubu Yapisi
 
-Agent A isleri:
-
-- `supabase/migrations` altinda foundation migration:
-  - enum tipleri
-  - `users`
-  - `organizations`
-  - `organization_members`
-  - `teams`
-  - `team_staff`
-  - `athletes`
-  - `athlete_invites`
-  - `team_billing_entitlements`
-  - temel `audit_logs`
-- `apps/app/lib/**` altinda Supabase admin/server client ayrimi.
-- Clerk webhook'unun `users` disinda gerekli bootstrap alanlarini desteklemesi.
-- Protected app route iskeleti:
-  - `/dashboard`
-  - `/onboarding`
-  - `/teams`
-  - `/athletes`
-  - `/settings/billing`
-
-Agent B isleri:
-
-- `apps/web/app/docs/page.tsx` placeholder yerine gercek docs landing.
-- Public sayfalar:
-  - `/docs/self-host`
-  - `/docs/integrations`
-  - `/open-source`
-  - `/security`
-  - `/privacy`
-  - `/terms`
-- Pricing sayfasini takim bazli modelle korumak.
-- Marketing CTA'larini `app.ohhike.com` / local app URL modeliyle tutarli yapmak.
-
-Dosya cakismasi yok:
-
-- Agent A: `apps/app/**`, `supabase/**`
-- Agent B: `apps/web/**`, `docs/**`, gerekirse `packages/ui/**`
-
-Cikis kriteri:
-
-- Foundation migration uygulanabilir.
-- Public site urun, pricing, self-host ve guvenlik mesajlarini dogru anlatir.
-- Agent A'nin DB foundation'i Agent B'nin docs'unda tarif edilen modelle uyumludur.
-
-### Faz 2 - Team Operations vs UX System
-
-Amac: App icinde takim/sporcu operasyonlari baslarken Agent B ortak UI ve empty state sistemini guclendirir.
-
-Agent A isleri:
-
-- Organization onboarding:
-  - organization create
-  - first team create
-  - owner membership
-- Team CRUD.
-- Athlete CRUD.
-- Athlete invite token uretimi.
-- Team member limit kontrolu icin entitlement helper.
-- Server-side permission helper:
-  - owner/admin
-  - coach/staff
-  - athlete
-
-Agent B isleri:
-
-- `packages/ui` icinde sadece presentational component'ler:
-  - empty state
-  - stat card
-  - section header
-  - dashboard card shell
-  - form field wrappers
-- `docs/EmptyStates.md` ile uyumlu Doctor Panda empty state copy seti.
-- Marketing blog/community/docs sayfalarini urun diliyle uyumlu hale getirme.
-
-Kritik kural:
-
-- Agent B `apps/app` icine component entegre etmez.
-- Agent A `packages/ui` component API'sini ancak Agent B merge ettikten sonra kullanir.
-
-Cikis kriteri:
-
-- Yeni kullanici organization + first team kurabilir.
-- Coach, athlete listesi olusturabilir.
-- UI component'leri shared ama data-free kalir.
-
-### Faz 3 - Sessions ve Athlete Daily Data
-
-Amac: Urunun gercek operasyon verisi toplanmaya baslar.
-
-Bu fazda DB ownership yeniden netlestirilir. Eger paralel calisma devam edecekse Agent B hala migration yazmamalidir; Agent A session/performance tablolarini da ustlenmelidir. Cakismazlik icin onerilen model budur.
-
-Agent A isleri:
-
-- Session tablolarini ekler:
-  - `sessions`
-  - `session_attendance`
-  - `training_blocks`
-- Daily athlete data tablolarini ekler:
-  - `wellness_checkins`
-  - `nutrition_logs`
-  - `personal_trainings`
-- App route'lari:
-  - `/sessions`
-  - `/readiness`
-  - `/nutrition`
-  - `/athlete/dashboard`
-- Readiness score icin ilk deterministic hesaplama.
-
-Agent B isleri:
-
-- Public docs tarafinda:
-  - session workflow dokumani
-  - athlete check-in dokumani
-  - CSV template dokumani
-- Empty state ve loading state metinlerini tamamlar.
-- Uygulama ekranlari icin Figma'siz UI spec veya markdown wireframe dokumani yazar.
-
-Cikis kriteri:
-
-- Coach session olusturabilir.
-- Attendance ve RPE kaydedilebilir.
-- Athlete check-in ve nutrition log girebilir.
-- Public docs bu akislari dogru anlatir.
-
-### Faz 4 - Wearables, Files ve Import
-
-Amac: Manuel veri akisini bozmadan wearable ve dosya/import katmani kurulur.
-
-Agent A isleri:
-
-- `wearable_connections`
-- `wearable_daily_summaries`
-- `wearable_activities`
-- `session_files`
-- `session_file_summaries`
-- CSV import icin minimal parser/action.
-- Token/API key encryption temel helper'i.
-
-Agent B isleri:
-
-- `/docs/integrations` detaylari:
-  - Strava
-  - Garmin
-  - Apple Health
-  - Android Health Connect
-  - CSV fallback
-- Self-host API key yonetimi anlatimi.
-- Guvenlik ve gizlilik metinlerinde wearable izinleri.
-
-Cikis kriteri:
-
-- Manual fallback korunur.
-- CSV veya mock wearable summary veri modele yazilabilir.
-- Token/secrets frontend'e cikmaz.
-
-### Faz 5 - AI Reports ve Team Memory
-
-Amac: CoachOS'un ana farklilastiricisi olan karar destek ve hafiza katmani baslar.
-
-Agent A isleri:
-
-- AI/RAG tablolarini ekler:
-  - `ai_reports`
-  - `athlete_observations`
-  - `team_patterns`
-  - `documents`
-  - `document_embeddings`
-  - `assistant_threads`
-  - `assistant_messages`
-- AI provider adapter arayuzu.
-- Structured output validation.
-- Session analysis icin ilk server action veya route handler.
-- Team Memory query icin ilk retrieval arayuzu.
-
-Agent B isleri:
-
-- `docs/PromptEngineering.md` senaryolarini product docs'a donusturur.
-- Public siteye AI safety / no medical diagnosis mesajini guclendirir.
-- AI rapor kartlari icin presentational component tasarlar.
-
-Cikis kriteri:
-
-- Bir completed session'dan AI report kaydi olusabilir.
-- Report memory document olarak yazilabilir.
-- Team Memory soru-cevap akisi mock veya real provider ile calisir.
-
-### Faz 6 - Billing, Reports ve Self-host
-
-Amac: SaaS planlama, export ve self-host kurulum hikayesi tamamlanir.
-
-Agent A isleri:
-
-- Clerk Billing webhook.
-- `team_billing_entitlements` sync.
-- Feature gate enforcement:
-  - AI reports
-  - Team Memory
-  - Training Planner
-  - PDF export
-  - team member limit
-- Reports/export tablolarinin final hali.
-- Self-host setup mode icin app route iskeleti.
-
-Agent B isleri:
-
-- Pricing/public checkout copy.
-- Self-host installation docs.
-- Security/privacy/terms final polish.
-- GitHub README ve contribution docs.
-
-Cikis kriteri:
-
-- Basic/Pro/Pro Plus ayrimi server-side uygulanir.
-- Public pricing ile app entitlement ayni plan keylerini kullanir.
-- Self-host yolu dokumante edilir.
-
-## 7. Onerilen Branch ve Merge Sirasi
-
-Iki editor icin basit model:
+Mevcut `app/` dizini yeniden duzenlenir:
 
 ```text
-main
-  agent-a/app-foundation
-  agent-b/public-docs-ui
+apps/app/app/
+  (auth)/
+    login/[[...login]]/page.tsx      → mevcut
+    register/[[...register]]/page.tsx → mevcut
+  (protected)/
+    layout.tsx                        → auth + onboarding guard
+    page.tsx                          → /dashboard'a redirect
+    dashboard/
+      page.tsx
+    onboarding/
+      page.tsx
+      _components/
+        onboarding-stepper.tsx
+        step-welcome.tsx
+        step-organization.tsx
+        step-first-team.tsx
+        step-add-athletes.tsx
+        step-done.tsx
+      actions.ts
+    teams/
+      page.tsx
+    athletes/
+      page.tsx
+    sessions/
+      page.tsx
+    settings/
+      billing/
+        page.tsx
+  api/
+    webhooks/
+      clerk/
+        route.ts                      → mevcut, admin client'a gecis yapilir
+  globals.css
+  layout.tsx
 ```
 
-Merge sirasi:
+##### 3.2 — Protected Layout (Onboarding Guard)
 
-1. Agent B'nin dokuman/marketing-only degisiklikleri.
-2. Agent A'nin foundation schema ve app shell degisiklikleri.
-3. Lockfile veya shared dependency degisiklikleri tek entegrasyon commit'i.
-4. Sonraki faz branch'leri yeniden guncel `main` uzerinden acilir.
+Dosya: `apps/app/app/(protected)/layout.tsx`
 
-Her faz sonunda:
+Mantik:
 
 ```text
-pnpm lint
-pnpm check-types
+1. Clerk auth kontrolu (proxy.ts zaten yapiyor ama layout'ta da dogrulama)
+2. Supabase'de organization_members kaydina bak
+3. Kayit yoksa → /onboarding'e redirect
+4. Kayit varsa → devam et (children render edilir)
 ```
 
-En azindan ilgili app icin:
+- Server component olarak yazilir.
+- `createServerClient()` kullanilir.
+- Onboarding sayfasi bu layout'un disinda olur (sonsuz dongu engeli).
+
+---
+
+#### Blok 4 — Onboarding Akisi
+
+UserFlows.md §2 referans alinir.
+
+##### 4.1 — Onboarding Page (Server Component)
+
+Dosya: `apps/app/app/(protected)/onboarding/page.tsx`
+
+- Kullanicinin zaten organizasyonu varsa `/dashboard`'a redirect.
+- `OnboardingStepper` client component'ini render eder.
+
+##### 4.2 — Onboarding Stepper (Client Component)
+
+Dosya: `apps/app/app/(protected)/onboarding/_components/onboarding-stepper.tsx`
+
+5 adimli stepper:
 
 ```text
-pnpm --filter app lint
-pnpm --filter app check-types
-pnpm --filter web lint
-pnpm --filter web check-types
+Step 1 — Welcome
+  Doctor Panda karsilama mesaji.
+  CTA: "Takimimı Kur"
+
+Step 2 — Organization
+  Alanlar:
+  - Organizasyon adi (required)
+  - Organizasyon turu (club/academy/individual_coach/school_team/university_team/performance_center/other)
+  - Sehir (optional)
+  - Ulke (optional)
+
+Step 3 — First Team
+  Alanlar:
+  - Takim adi (required)
+  - Spor dali (required)
+  - Yas grubu (optional)
+  - Seviye (optional)
+  - Sezon hedefi (optional)
+  - Haftalik antrenman sayisi (optional)
+
+Step 4 — Add Athletes
+  Secenekler:
+  - Manuel sporcu ekle (ad, soyad, pozisyon, forma no)
+  - Daha sonra ekle (skip)
+
+Step 5 — Ready
+  Doctor Panda tebrik mesaji.
+  CTA: "Dashboard'a Git"
 ```
 
-## 8. Riskler ve Kararlar
+##### 4.3 — Onboarding Server Actions
 
-### Risk: Pricing dokumanlari arasinda eski/yeni model farki
+Dosya: `apps/app/app/(protected)/onboarding/actions.ts`
+
+```text
+createOrganization(data):
+  - organizations tablosuna INSERT
+  - organization_members tablosuna owner kaydi INSERT
+  - billing_entitlements tablosuna free plan INSERT
+  - audit_logs INSERT (organization.created)
+  - Return: { organizationId, teamId? }
+
+createFirstTeam(organizationId, data):
+  - Plan limiti kontrolu (max_teams)
+  - teams tablosuna INSERT
+  - audit_logs INSERT (team.created)
+
+addInitialAthletes(organizationId, teamId, athletes[]):
+  - Plan limiti kontrolu (max_athletes)
+  - athletes tablosuna bulk INSERT
+  - audit_logs INSERT (athletes.created)
+```
+
+Her action:
+- `createAdminClient()` veya `createServerClient()` kullanir.
+- Zod ile input validation.
+- Hata durumunda anlamli mesaj dondurur.
+
+---
+
+#### Blok 5 — Route Skeleton Sayfalari
+
+Her sayfa basit placeholder — gercek icerik sonraki fazlarda gelir.
+
+| Route | Dosya | Gosterecegi |
+|---|---|---|
+| `/dashboard` | `dashboard/page.tsx` | "Coach Dashboard" baslik, bos kart grid |
+| `/teams` | `teams/page.tsx` | "Teams" baslik, bos empty state |
+| `/athletes` | `athletes/page.tsx` | "Athletes" baslik, bos empty state |
+| `/sessions` | `sessions/page.tsx` | "Sessions" baslik, bos empty state |
+| `/settings/billing` | `settings/billing/page.tsx` | Plan bilgisi placeholder |
+
+Her sayfa `AppShell` ile sarmalanir.
+
+---
+
+#### Blok 6 — Webhook Refactor
+
+Dosya: `apps/app/app/api/webhooks/clerk/route.ts`
+
+Degisiklikler:
+
+```text
+- Mevcut inline supabase client → createAdminClient() ile degistirilir.
+- CLERK_WEBHOOK_SECRET dogrulama calistirilir (verifyWebhook).
+- user.created ve user.updated event'leri: users tablosuna upsert (mevcut mantik korunur).
+- user.deleted event'i: users tablosundan silme (mevcut mantik korunur).
+```
+
+---
+
+#### Faz 1 Cikis Kriterleri
+
+```text
+✓ Supabase'de tum foundation tablolari ve RLS aktif
+✓ TypeScript tip tanimlari mevcut
+✓ Server client, admin client ve anon client ayri dosyalarda
+✓ Kullanici login olunca:
+    - Organizasyonu yoksa → /onboarding'e yonlenir
+    - Organizasyonu varsa → /dashboard'a yonlenir
+✓ Onboarding akisi tamamlanabiliyor (org + team + opsiyonel athlete)
+✓ /dashboard, /teams, /athletes, /sessions, /settings/billing sayfalari yuklenebiliyor (placeholder)
+✓ Webhook admin client kullaniyor, signing secret dogrulamasi calisiyor
+```
+
+---
+
+### FAZ 2 — Team Operations ve CRUD (Planlama Asamas&#305;)
+
+**Amac:** Onboarding sonrasi gercek operasyon ekranlari.
+
+```text
+Agent gorevleri:
+- Organization onboarding: create/update organization
+- Team CRUD: liste, detay, duzenle, sil
+- Athlete CRUD: liste, detay, form, duzenle, sil
+- Athlete invite token olusturma
+- Staff yonetimi: davet, rol atama
+- Entitlement helper: max_teams, max_athletes kontrolu
+- Permission helper: owner/admin/coach/athlete rol kontrolleri
+```
+
+Faz 2 planlamasi Faz 1 cikis kriterleri karsilanainca yapilacak.
+
+---
+
+### FAZ 3 — Sessions ve Athlete Daily Data (Planlama Asamas&#305;)
+
+**Amac:** Urunun gercek operasyon verisi toplanmaya baslar.
+
+```text
+Migration: 002_sessions.sql
+  - sessions
+  - session_attendance
+  - training_blocks
+  - wellness_checkins
+  - nutrition_logs
+  - personal_trainings
+
+App route'lari:
+  - /sessions (liste + olustur)
+  - /sessions/[id] (detay + tamamla + RPE)
+  - /readiness (check-in akisi)
+  - /nutrition (gunluk log)
+  - /athlete/dashboard (sporcu ozet)
+```
+
+---
+
+### FAZ 4 — Wearables, Files ve Import (Planlama Asamas&#305;)
+
+```text
+Migration: 003_wearables_files.sql
+  - wearable_connections
+  - wearable_daily_summaries
+  - wearable_activities
+  - session_files
+  - session_file_summaries
+
+Entegrasyonlar:
+  - Strava OAuth
+  - CSV import
+  - Dosya upload (Supabase Storage)
+  - Token sifreleme (AES-256-GCM)
+```
+
+---
+
+### FAZ 5 — AI Reports ve Team Memory (Planlama Asamas&#305;)
+
+```text
+Migration: 004_ai_rag.sql
+  - ai_reports
+  - athlete_observations
+  - team_patterns
+  - drills
+  - training_plans
+  - performance_goals
+  - documents
+  - document_embeddings
+  - assistant_threads
+  - assistant_messages
+
+AI Katmani:
+  - LLM provider adapter (OpenAI / Gemini / OpenRouter)
+  - Structured JSON output validation (Zod)
+  - Session analysis pipeline
+  - Team Memory RAG sorgu akisi
+  - document_embeddings ivfflat index
+```
+
+---
+
+### FAZ 6 — Billing, Reports ve Self-host (Planlama Asamas&#305;)
+
+```text
+- Clerk Billing webhook
+- billing_entitlements sync
+- Feature gate enforcement (server-side)
+- PDF rapor export
+- Self-host setup akisi
+- api_keys yonetimi
+- reports ve report_exports tablolari
+```
+
+---
+
+## 5. Teknik Kararlar
+
+### Supabase Client Stratejisi
+
+```text
+createServerClient()   → Server Component, Server Action
+createAdminClient()    → Webhook, kritik admin islemler (RLS bypass)
+createBrowserClient()  → Client Component (anon key)
+```
+
+### Auth Akisi
+
+```text
+Clerk auth → proxy.ts middleware (rota koruma)
+                ↓
+          (protected)/layout.tsx
+                ↓
+    organization_members kontrol
+    Yok ise → /onboarding
+    Var ise → devam
+```
+
+### RLS Stratejisi
+
+```text
+Clerk JWT → Supabase'e token olarak gecilir
+current_user_id() → JWT sub claim'i okur
+RLS her sorguda aktif → cok-kiracili izolasyon saglanir
+Admin client → yalnizca guvenilir server-side kodda
+```
+
+### Validation
+
+```text
+Her server action → Zod schema validation
+Plan limiti kontrolu → billing_entitlements tablosundan
+Entitlement yoksa → error response ile feature blocked mesaji
+```
+
+### Hata Yonetimi
+
+```text
+Server action'lar { data, error } pattern ile doner
+UI katmani error mesajini kullaniciya gosterir
+Kritik hatalar audit_logs'a yazilir
+```
+
+---
+
+## 6. Migration Kayit Tablosu
+
+| Dosya | Durum | Kapsam |
+|---|---|---|
+| `docs/supabase/001_foundation.sql` | Planli | Extensions, enum'lar, foundation tablolar, RLS, storage |
+| `docs/supabase/002_sessions.sql` | Faz 3 | sessions, attendance, training_blocks, checkins, nutrition, personal_trainings |
+| `docs/supabase/003_wearables_files.sql` | Faz 4 | wearable tablolar, session_files |
+| `docs/supabase/004_ai_rag.sql` | Faz 5 | ai_reports, documents, embeddings, assistant |
+| `docs/supabase/005_billing_reports.sql` | Faz 6 | reports, api_keys, system_settings |
+
+---
+
+## 7. Riskler ve Kararlar
+
+### Risk: Pricing modeli tutarsizligi
 
 Karar:
 
-- `docs/PricingPolicy.md` canonical kabul edilmeli.
-- Basic Team / Pro Team / Pro Plus Team takim bazli model uygulanmali.
-- Eski Free / Coach Pro / Club ifadeleri public sayfalardan ve app logic'ten temizlenmeli.
+- `docs/PricingPolicy.md` canonical kaynak.
+- Uygulama `billing_entitlements` tablosunu takip eder.
+- Team bazli: Basic / Pro / Pro Plus.
 
-### Risk: Shared UI paketi cakisabilir
-
-Karar:
-
-- `packages/ui` sadece Agent B tarafindan degistirilir.
-- Agent A acil ihtiyaclarda `apps/app/components/**` altinda lokal component kullanir.
-- Ortak component ihtiyaci faz sonunda Agent B'ye aktarilir.
-
-### Risk: DB tablolarini iki agent ayni anda tasarlarsa migration sirasi bozulur
+### Risk: RLS Clerk entegrasyonu
 
 Karar:
 
-- Ilk uc fazda migration sahibi Agent A'dir.
-- Agent B DB yazmaz; UX/docs ve public alanlarda calisir.
-- AI/performance migration'larinda ikinci agent devreye alinacaksa once tablo ownership yeniden bolunur ve FK bagimliliklari netlestirilir.
+- Clerk JWT template olarak Supabase'e verilmeli.
+- Supabase Dashboard → Authentication → JWT Templates → Clerk template olusturulacak.
+- `current_user_id()` fonksiyonu `request.jwt.claim('sub')` ile calisir.
 
-### Risk: App route ve marketing route dil/CTA farki
-
-Karar:
-
-- Agent B public CTA ve copy dilini sahiplenir.
-- Agent A app route path'lerini sahiplenir.
-- Route degisikligi gerekiyorsa faz kapisinda liste halinde duyurulur.
-
-### Risk: AI medikal/beslenme sinirlarini asabilir
+### Risk: Onboarding sonsuz dongusu
 
 Karar:
 
-- Prompt ve UI copy `docs/PromptEngineering.md` kurallarina uymali.
-- AI ciktisi "karar destek" olarak sunulmali.
-- Teshis, tedavi, kesin sakatlik veya diyet recetesi dili kullanilmamali.
+- `/onboarding` sayfasi `(protected)/layout.tsx` guard'inin DISINDA olmali.
+- Guard sadece organization_members yoksa /onboarding'e yonlendirir.
+- Onboarding sayfasinin kendisi ayri layout veya guard kontrol mantigi olmadan render edilir.
 
-## 9. Ilk Yapilacaklar
+### Risk: Admin client ile RLS bypass
 
-Agent A icin ilk net paket:
+Karar:
 
-1. `supabase/migrations` foundation schema.
-2. `apps/app/lib/supabase-server.ts` ve admin client ayrimi.
-3. Organization/team onboarding route iskeleti.
-4. Team ve athlete CRUD icin server action/query klasorleri.
-5. Permission ve entitlement helper taslagi.
+- `createAdminClient()` yalnizca webhook ve kritik bootstrap islemlerinde kullanilir.
+- Server Action'larda default olarak `createServerClient()` tercih edilir.
+- Admin client kullanimi kod reviewda isaret edilmeli.
 
-Agent B icin ilk net paket:
+### Risk: AI medikal siniri
 
-1. Root `README.md` OhHike CoachOS'a gore yeniden yazilsin.
-2. `apps/web/app/docs/page.tsx` gercek docs landing'e donussun.
-3. `/open-source`, `/security`, `/privacy`, `/terms`, `/docs/self-host`, `/docs/integrations` sayfalari eklensin.
-4. Pricing copy `PricingPolicy.md` ile uyumlu kalsin.
-5. Empty state presentational component seti `packages/ui` altinda hazirlansin.
+Karar:
 
-## 10. Kisa Sonuc
-
-En guvenli paralel calisma modeli:
-
-- Agent A: `apps/app` + `supabase` + app core data.
-- Agent B: `apps/web` + `docs` + `packages/ui`.
-
-Ilk fazlarda DB ve app logic tek agent'ta kalmali. Diger agent public/docs/UI alaninda hizli ilerleyebilir. Bu ayrim, ayni tabloya veya ayni dosyaya dokunma riskini ciddi sekilde azaltir ve CoachOS'un dokumanlardaki hedef mimarisine uygun sirali bir temel kurar.
+- `docs/PromptEngineering.md` kurallari tum AI ciktilarinda zorunlu.
+- AI ciktisi "karar destek" olarak sunulur; teshis, tedavi, diyet recetesi dili kullanilmaz.
+- UI copy bu siniri yansitmali.
