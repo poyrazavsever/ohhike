@@ -6,7 +6,6 @@ import {
   QuickActions,
 } from "../../../components/dashboard/dashboard-cards";
 import { getDashboardData } from "../../../lib/workspace";
-import Image from "next/image";
 
 function formatPlan(plan: string | undefined) {
   if (!plan) {
@@ -70,22 +69,21 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <section className="bg-primary-50 px-5 py-6 md:px-8">
+    <section className="bg-primary-50 px-5 py-8 md:px-8">
       <DashboardHero
         eyebrow="Coach Workspace"
         title="Welcome back, let's move."
         subtitle={`Ready to coach ${organization.name} today? Your workspace is live and waiting for the next signal.`}
-        mascotSrc="/maskotlar/harita.png"
       />
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metricCards.map((card) => (
           <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.4fr_0.8fr]">
-        <div className="grid gap-3">
+      <div className="mt-6 grid gap-4 xl:grid-cols-[0.9fr_1.4fr_0.8fr]">
+        <div className="grid gap-4">
           <ProgressCard
             label="Athlete Capacity"
             value={athleteProgress}
@@ -102,33 +100,27 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-border bg-card p-6 text-center">
-          <div className="relative size-28">
-            <Image
-              src="/maskotlar/hazirlik.png"
-              alt=""
-              fill
-              sizes="112px"
-              className="object-contain"
-            />
+        <div className="flex min-h-96 flex-col items-center justify-center rounded-4xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="flex size-16 items-center justify-center rounded-3xl bg-primary-soft text-primary-700">
+            <span className="text-3xl font-black">O</span>
           </div>
-          <h2 className="mt-4 max-w-md text-3xl font-black tracking-tight text-foreground">
+          <h2 className="mt-6 max-w-md text-4xl font-black tracking-tight text-foreground">
             Discover Today&apos;s Coaching Route
           </h2>
-          <p className="mt-3 max-w-md text-sm font-semibold leading-6 text-muted-foreground">
+          <p className="mt-4 max-w-md text-sm font-semibold leading-6 text-muted-foreground">
             Review athlete signals, plan training blocks and keep the team memory
             fresh from one focused workspace.
           </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href="/sessions"
-              className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
+              className="inline-flex items-center rounded-2xl bg-primary px-8 py-3 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               Plan Session
             </a>
             <a
               href="/readiness"
-              className="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-black text-foreground transition-colors hover:border-primary hover:text-primary-700"
+              className="inline-flex items-center rounded-2xl border border-border px-8 py-3 text-sm font-black text-foreground transition-colors hover:border-primary hover:text-primary-700"
             >
               Log Wellness
             </a>
@@ -156,7 +148,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-6">
         <AchievementStrip
           achievements={[
             {
