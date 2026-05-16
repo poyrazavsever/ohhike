@@ -103,28 +103,28 @@ Bu bölüm `apps/web` için mevcut kod durumunu, hedef public site yapısını v
 | `/` | Var | Landing page |
 | `/features` | Var | Genel ürün yetenekleri |
 | `/pricing` | Var | Takım bazlı güncel pricing |
-| `/docs` | Var ama eksik | Şimdilik placeholder |
+| `/docs` | Var | Genel dokümantasyon giriş sayfası |
 | `/about` | Var | Marka ve kurucu hikayesi |
 | `/community` | Var | Mock community etkinliği |
 | `/blog` | Var | Mock blog liste sayfası |
 | `/blog/[slug]` | Var | Mock blog detay sayfası |
+| `/self-host` | Var | Self-host ürün anlatımı |
+| `/docs/self-host` | Var | Docs ağacı altında self-host rehberi |
+| `/security` | Var | Güven/trust sayfası |
+| `/contact` | Var | İletişim sayfası |
+| `/privacy` | Var | Gizlilik politikası |
+| `/terms` | Var | Kullanım şartları |
 
-Kodda link verilen fakat henüz route’u bulunmayan public sayfalar:
+Hedef haritada olup henüz route’u bulunmayan public sayfalar:
 
 | Route | Bugünkü durum |
 |---|---|
-| `/self-host` | Eksik |
 | `/roadmap` | Eksik |
 | `/features/coach-dashboard` | Eksik |
 | `/features/check-ins` | Eksik |
 | `/features/team-memory` | Eksik |
 | `/features/ai-reports` | Eksik |
-| `/docs/self-host` | Eksik |
 | `/docs/integrations` | Eksik |
-| `/security` | Eksik |
-| `/contact` | Eksik |
-| `/privacy` | Eksik |
-| `/terms` | Eksik |
 
 ### 3.0.2 Hedef Public Web Haritası
 
@@ -167,7 +167,7 @@ Kodda link verilen fakat henüz route’u bulunmayan public sayfalar:
 
 #### Faz 1 - Güvenilir Public Site
 
-İlk teslim edilecek çekirdek sayfalar:
+Tamamlanan çekirdek sayfalar:
 
 1. `/self-host`
 2. `/docs`

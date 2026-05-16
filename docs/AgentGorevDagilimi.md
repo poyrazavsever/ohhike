@@ -9,7 +9,7 @@ Temel ilkeler:
 - `docs/` altindaki CoachOS v3 urun, mimari, veri modeli ve kullanici akislarina tam uyum.
 - Her faz sonunda calisabilir, test edilebilir bir urun katmani olmali.
 - Supabase migration'lari `docs/supabase/` klasorune kaydedilir, `docs/supabase/README.md` guncellenir.
-- `apps/web` tamamlandi; odak `apps/app` uzerinde.
+- `apps/web` public site cekirdegi ve Faz 1 sayfalari mevcut; bundan sonraki web isi bilgi mimarisi, docs ve urun anlatimini derinlestirmektir.
 
 ---
 
@@ -38,17 +38,18 @@ Organization
 
 Mevcut kod durumu (2026-05-16 guncellemesi):
 
-- `apps/web`: Marketing site tamamlandi. Dokunulmayacak.
+- `apps/web`: Marketing site cekirdegi mevcut; public bilgi mimarisi ve eksik sayfalar halen olgunlastiriliyor.
 - `apps/app`:
   - ✓ Clerk korumali shell, auth, AppSidebar, AppShell, onboarding (`app/onboarding/`).
   - ✓ Clerk webhook → `users` sync (`createSupabaseAdminClient`).
   - ✓ `lib/supabase.ts` (anon), `lib/supabase-server.ts` (`createSupabaseServerClient`), `lib/supabase-admin.ts`.
-  - ✓ Migration SQL `002`–`008` (`docs/supabase/README.md` ile uyumlu).
-  - ✓ Team Operations: org switch, team/athlete/session CRUD, readiness, nutrition, drills, wearables (kayit), ai-reports (manuel), team-memory, settings iskeleti.
-  - ✓ Athlete invite/claim (`/invite/athlete/[token]`), kontrollu sozluk (`lib/coach-vocabulary.ts`).
-  - ◐ Server Action'lar cogunlukla **admin client** kullaniyor; RLS'li server client dosyada var ama bagli degil.
-  - ◐ Sporcu dashboard koç aggregate; claim sonrasi profil tamamlama yok.
-  - ✗ Staff davet, gercek AI/RAG, wearable OAuth, personal_trainings, Clerk Billing sync, self-host.
+  - ✓ Migration SQL `002`–`011` (`docs/supabase/README.md` ile uyumlu).
+  - ✓ Team Operations: org switch, team/athlete/session CRUD, session detail, readiness, nutrition, drills, personal training, wearables (kayit), settings iskeleti.
+  - ✓ Athlete invite/claim, athlete onboarding, athlete portal (`/athlete/*`), kontrollu sozluk (`lib/coach-vocabulary.ts`).
+  - ✓ Staff invite/claim akisi (`/settings/staff`, `/invite/staff/[token]`).
+  - ◐ AI katmani: session AI report generation (rules + opsiyonel Gemini), Team Memory Assistant, documents/embeddings/RAG altyapisi mevcut; kalite, retrieval ve entitlement katmani halen MVP.
+  - ◐ Server Action'larin bir bolumu `createActionSupabase()` ile RLS'e gecirildi (readiness, nutrition, personal training); workspace sorgulari ve bircok action halen **admin client** kullaniyor.
+  - ✗ Wearable OAuth/sync, dosya upload/import pipeline, Clerk Billing sync, PDF export, self-host setup, `api_keys` UI henuz yok.
   - Detayli uyum/eksik analizi: `docs/UrunUyumVeEksikler.md`.
 - Kirilma noktalari ve E2E test kapilari: `docs/UrunUyumVeEksikler.md` §9–§11 (ozellik "done" olmadan ilgili E2E kosulmali).
 
@@ -58,7 +59,7 @@ Mevcut kod durumu (2026-05-16 guncellemesi):
 
 ```text
 apps/app/**              → Tum app gelistirmesi burada
-apps/web/**              → DOKUNULMAYACAK (tamamlandi)
+apps/web/**              → Public marketing site, docs ve legal/trust sayfalari
 packages/ui/**           → Ortak presentational component'ler
 docs/**                  → Urun/mimari referans, plan ve migration kayitlari
 docs/supabase/           → SQL migration dosyalari ve README
@@ -365,8 +366,8 @@ Ilk placeholder'lar tamamlandi; asagidaki route'lar gercek CRUD/registry UI ile 
 |---|---|
 | `/dashboard`, `/teams`, `/athletes`, `/sessions` | ✓ |
 | `/readiness`, `/nutrition`, `/load-recovery`, `/calendar`, `/training-planner` | ✓ |
-| `/drills`, `/wearables`, `/ai-reports`, `/team-memory`, `/reports` | ✓ (AI/RAG uretim yok) |
-| `/settings/*` (profile, org, billing, staff, integrations) | ◐ staff/integrations placeholder |
+| `/drills`, `/wearables`, `/ai-reports`, `/team-memory`, `/reports` | ◐ route'lar mevcut; wearables/reports halen kismi, AI/Team Memory MVP |
+| `/settings/*` (profile, org, billing, staff, integrations) | ◐ staff aktif; billing/integrations halen kismi |
 | `/invite/athlete/[token]` | ✓ |
 | `/athlete/dashboard` | ◐ koç aggregate (sporcu paneli degil) |
 
@@ -403,7 +404,7 @@ Degisiklikler:
 
 ---
 
-### FAZ 2 — Team Operations ve CRUD ◐ (devam ediyor)
+### FAZ 2 — Team Operations ve CRUD ✓ / ◐
 
 **Amac:** Onboarding sonrasi gercek operasyon ekranlari.
 
@@ -416,7 +417,7 @@ Agent gorevleri:
 - ✓ Team CRUD: liste, duzenle, sil
 - ✓ Athlete CRUD: liste, form, duzenle, sil
 - ✓ Athlete invite token olusturma (link; e-posta yok)
-- ✗ Staff yonetimi: davet, rol atama (/settings/staff placeholder)
+- ✓ Staff yonetimi: davet linki, claim akisi, aktif uye listesi
 - ◐ Entitlement helper: plan okuma var; tum limitler enforced degil
 - ✓ Permission helper: rol kontrolleri action'larda (admin client ile)
 ```
@@ -454,21 +455,23 @@ UX:
 
 ---
 
-### FAZ 3 — Sessions ve Athlete Daily Data ◐
+### FAZ 3 — Sessions ve Athlete Daily Data ✓ / ◐
 
 **Amac:** Urunun gercek operasyon verisi toplanmaya baslar.
 
 ```text
-Migration: ✓ docs/supabase/003_sessions.sql, 004_daily_data.sql
+Migration: ✓ docs/supabase/003_sessions.sql, 004_daily_data.sql, 009_daily_data_schema_align.sql
   - ✓ sessions, session_attendance, training_blocks
   - ✓ wellness_checkins, nutrition_logs
-  - ✗ personal_trainings (app yok)
+  - ✓ personal_trainings
 
 App route'lari:
   - ✓ /sessions (liste + olustur + attendance + blocks)
-  - ✗ /sessions/[id] (detay + tamamla)
-  - ◐ /readiness, /nutrition (koç sporcu adina giris)
-  - ✗ /athlete/dashboard (sporcu ozet — su an koç aggregate)
+  - ✓ /sessions/[id] (detay + tamamla + AI report CTA)
+  - ✓ /readiness, /nutrition (koç + yetkili staff girisi)
+  - ✓ /personal-training
+  - ✓ /athlete/onboarding, /athlete/home, /athlete/check-in, /athlete/nutrition, /athlete/training, /athlete/profile
+  - ◐ /athlete/dashboard coach aggregate olarak halen duruyor; gercek sporcu deneyimi `/athlete/home` altina tasindi
   - ✓ Kontrollu sozluk: session focus/intensity, attendance, drills, team-memory
 ```
 
@@ -493,19 +496,21 @@ Entegrasyonlar:
 ### FAZ 5 — AI Reports ve Team Memory ◐
 
 ```text
-Migration: ✓ 005_drills.sql, 007_ai_reports.sql, 008_team_memory.sql
-  - ✓ drills, ai_reports (manuel kayit), observations, patterns
-  - ✗ documents, embeddings, assistant (001'de var, app yok)
+Migration: ✓ 005_drills.sql, 007_ai_reports.sql, 008_team_memory.sql, 011_team_memory_rag.sql
+  - ✓ drills, ai_reports, observations, patterns
+  - ✓ documents, embeddings, assistant_threads, assistant_messages, vector match RPC
 
 AI Katmani:
-  - ✗ LLM provider adapter
-  - ✗ Session analysis pipeline (createAiReport → manual)
-  - ✗ Team Memory RAG sorgu akisi
+  - ✓ MVP Gemini adapter (`lib/ai/gemini.ts`)
+  - ✓ Session analysis pipeline (rules fallback + opsiyonel Gemini)
+  - ✓ Team Memory Assistant (keyword + vector retrieval, rules fallback + opsiyonel Gemini)
+  - ◐ RAG kalite iyilestirmesi: gercek chunking, kaynak tipinin korunmasi, corpus refresh, retrieval degerlendirmesi
+  - ◐ Entitlement/limit kontrolu AI tarafinda tam degil
 ```
 
 ---
 
-### FAZ 6 — Billing, Reports ve Self-host ✗
+### FAZ 6 — Billing, Reports ve Self-host ✗ / ◐
 
 ```text
 - ✗ Clerk Billing webhook
@@ -516,6 +521,165 @@ AI Katmani:
 - ✗ api_keys yonetimi
 - ◐ /reports sayfasi (placeholder metin)
 ```
+
+---
+
+## 4.1 Guncel Eksik Analizi ve Bundan Sonraki Yol
+
+Mevcut sistem korunarak ilerlenmesi gereken ana eksikler:
+
+### P0 — Guvenlik, tutarlilik ve kalite
+
+1. `createSupabaseAdminClient()` kullanan normal okuma/yazma akislarini kademeli olarak `createActionSupabase()` / RLS'e tasimak.
+2. `workspace.ts`, athlete portal query'leri ve AI/Team Memory action'lari icin tenant izolasyonunu RLS + negatif testlerle dogrulamak.
+3. E2E test altyapisini kurmak; en az auth, onboarding, athlete claim, org switch, readiness/nutrition, session detail + AI report, Team Memory thread akislari icin kapilar yazmak.
+4. `docs/UrunUyumVeEksikler.md`, `docs/SiteHaritasi.md` ve bu belgeyi her buyuk faz sonunda kodla senkron tutmak.
+
+### P1 — MVP vaatlerini tamamlama
+
+1. Wearable OAuth + sync pipeline (ilk hedef: Strava).
+2. CSV import ve session/file upload pipeline.
+3. Clerk Billing webhook + takim bazli entitlement sync.
+4. Feature gate'leri gercek plan alanlarina baglamak:
+   - `ai_reports_enabled`
+   - `team_memory_enabled`
+   - `training_planner_enabled`
+   - `wearable_enabled`
+   - `max_team_members`
+5. PDF/report export MVP.
+
+### P2 — AI/RAG olgunlastirma
+
+1. Team Memory corpus ingestion'i otomatik ve izlenebilir hale getirmek.
+2. Tek chunk yerine coklu chunking ve source metadata korumasi.
+3. AI report -> documents -> embeddings zincirini event tabanli veya garantili senkron hale getirmek.
+4. Retrieval kalite olcumu, cited source gorunurlugu, missing-data davranisi ve prompt version takibi.
+
+### P3 — Self-host ve urunlestirme
+
+1. Self-host setup flow (`/setup/*`) ve provider key yonetimi.
+2. `api_keys` UI, backup/restore, migration health ve sistem check ekranlari.
+3. Public web docs, legal/trust ve open-source anlatimini tamamlamak.
+
+---
+
+## 4.2 Guncel Faz Plani
+
+### FAZ 7 — RLS Sertlestirme ve Test Temeli
+
+**Amac:** Mevcut urun davranisini bozmadan veri erisimini gercek multi-tenant mimariye yaklastirmak.
+
+```text
+Adim 1:
+  - createSupabaseAdminClient kullanilan action/query listesi cikarilir.
+  - Bootstrap, webhook, audit log gibi admin kalmasi gerekenler isaretlenir.
+
+Adim 2:
+  - Dusuk riskli query'ler RLS client'a tasinir.
+  - Readiness/nutrition/personal training pattern'i referans alinir.
+
+Adim 3:
+  - Org switch, athlete claim, staff claim, coach/athlete route guard icin negatif tenant testleri yazilir.
+
+Adim 4:
+  - E2E test altyapisi ve smoke suite eklenir.
+```
+
+**Cikis kriteri:**
+
+- Normal kullanici verisi varsayilan olarak RLS client ile okunur/yazilir.
+- Admin client listesi acik ve gerekcelidir.
+- Kritik kimlik/tenant akislari testlidir.
+
+### FAZ 8 — Wearables, Files ve Import
+
+**Amac:** Manuel veri disinda gercek dis kaynak verisini sisteme almak.
+
+```text
+Adim 1:
+  - Strava OAuth connect/callback/disconnect.
+  - Token sifreleme ve refresh akisi.
+
+Adim 2:
+  - wearable_daily_summaries / wearable_activities sync job.
+
+Adim 3:
+  - CSV import preview + normalize + athlete eslestirme.
+
+Adim 4:
+  - session file upload + summary ingestion temel akisi.
+```
+
+**Cikis kriteri:**
+
+- En az bir wearable provider'dan gercek veri gelir.
+- CSV ve dosya yukleme tekrarli kayit uretmeden islenir.
+
+### FAZ 9 — Billing ve Feature Gate
+
+**Amac:** PricingPolicy v3.1'i urun davranisina gercekten baglamak.
+
+```text
+Adim 1:
+  - Clerk Billing checkout metadata -> team_id mapping.
+  - Billing webhook -> team_billing_entitlements sync.
+
+Adim 2:
+  - AI Reports, Team Memory, Training Planner, Wearables, member invite islemlerine server-side gate.
+
+Adim 3:
+  - /settings/billing'i placeholder olmaktan cikar.
+```
+
+**Cikis kriteri:**
+
+- Plan degisimi feature access'i server tarafinda degistirir.
+- Basic/Pro/Pro Plus limitleri testlidir.
+
+### FAZ 10 — AI ve Team Memory Olgunlastirma
+
+**Amac:** Calisan AI MVP'yi guvenilir urun katmanina donusturmek.
+
+```text
+Adim 1:
+  - AI report ciktilarini documents/embeddings'e garantili bagla.
+  - Source type ve metadata kaybini kaldir.
+
+Adim 2:
+  - Multi-chunk ingestion + refresh/update stratejisi.
+
+Adim 3:
+  - Retrieval eval setleri, prompt regression ve kaynak gosterimi.
+
+Adim 4:
+  - Team Memory assistant icin entitlement, hata, empty state ve audit davranislari.
+```
+
+**Cikis kriteri:**
+
+- Team Memory cevaplari izlenebilir kaynaklarla gelir.
+- AI fallback, missing-data ve medical boundary davranislari testlidir.
+
+### FAZ 11 — Reports, Self-host ve Public Urunlestirme
+
+**Amac:** Hosted + self-host vaatlerini kapatmak.
+
+```text
+Adim 1:
+  - PDF/report export MVP.
+  - Paylasilabilir rapor veya indirme akisi.
+
+Adim 2:
+  - /setup flow, system check, provider keys, api_keys UI.
+
+Adim 3:
+  - Public docs, integrations, security/legal, open-source anlatimi.
+```
+
+**Cikis kriteri:**
+
+- Self-host kurulum akisi dokuman + UI olarak calisir.
+- Public site ana vaatleri bos link veya placeholder olmadan tasir.
 
 ---
 
@@ -580,9 +744,11 @@ Kritik hatalar audit_logs'a yazilir
 | `docs/supabase/006_wearables.sql` | ✓ Uygulandi | wearable_connections, summaries, activities |
 | `docs/supabase/007_ai_reports.sql` | ✓ Uygulandi | ai_reports |
 | `docs/supabase/008_team_memory.sql` | ✓ Uygulandi | athlete_observations, team_patterns |
-| `documents` / `embeddings` / `assistant_*` | ✗ App yok | 001'de tanimli; ayri migration veya 001 uygulamasi gerekir |
-| `personal_trainings` | ✗ App yok | 001 / planlanan Faz 3 |
-| `reports`, `api_keys`, self-host | ✗ Faz 6 | Henuz migration dosyasi yok |
+| `docs/supabase/009_daily_data_schema_align.sql` | ✓ Uygulandi | daily data kolon uyumu |
+| `docs/supabase/010_organization_staff_invites.sql` | ✓ Uygulandi | staff invite linkleri |
+| `docs/supabase/011_team_memory_rag.sql` | ✓ Uygulandi | documents, embeddings, assistant threads/messages, vector RPC |
+| `personal_trainings` | ✓ App aktif | 001 schema + personal training UI/action |
+| `reports`, `api_keys`, self-host | ◐ / ✗ | reports placeholder; api_keys ve self-host setup henuz yok |
 
 Guncel ozet: `docs/supabase/README.md`
 
@@ -622,6 +788,12 @@ Karar:
 - Server Action'larda default olarak `createServerClient()` tercih edilir.
 - Admin client kullanimi kod reviewda isaret edilmeli.
 
+Guncel durum:
+
+- Readiness, nutrition ve personal training action'lari RLS client'a gecmistir.
+- Workspace query katmani, AI generation ve Team Memory action'lari dahil bircok alan halen admin client kullanir.
+- Faz 7'nin ana amaci bu borcu kontrollu bicimde kapatmaktir.
+
 ### Risk: AI medikal siniri
 
 Karar:
@@ -629,3 +801,11 @@ Karar:
 - `docs/PromptEngineering.md` kurallari tum AI ciktilarinda zorunlu.
 - AI ciktisi "karar destek" olarak sunulur; teshis, tedavi, diyet recetesi dili kullanilmaz.
 - UI copy bu siniri yansitmali.
+
+### Risk: Dokumanlarin koddan geri kalmasi
+
+Karar:
+
+- `docs/UrunUyumVeEksikler.md`, `docs/AgentGorevDagilimi.md`, `docs/supabase/README.md` her buyuk faz sonunda birlikte guncellenir.
+- Bir ozellik tamamlandiginda sadece kod degil, ilgili durum tablosu ve route/migration listesi de degisir.
+- Kod durumuna aykiri eski raporlar karar kaynagi olarak kullanilmaz; once guncellenir.

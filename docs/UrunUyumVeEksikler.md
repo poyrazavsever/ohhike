@@ -9,9 +9,9 @@
 
 Genel yön **doğru**: coach-first kadro modeli, organizasyon → takım → sporcu → seans/veri hiyerarşisi, migration’ların kademeli eklenmesi ve Team Operations ekranlarının büyük ölçüde çalışması PRD ve `DatabaseSchema.md` §2.3 (Athlete Claim Model) ile uyumlu.
 
-Ancak PRD **MVP** ve `UserFlows.md` hedefleri ile **uygulama arasında önemli boşluklar** var: sporcu tarafı paneli, claim sonrası onboarding, gerçek AI/RAG, wearable OAuth, staff davet, kişisel antrenman ve RLS’li server client kullanımı henüz tamamlanmamış veya yanlış yorumlanmış parçalar içeriyor.
+Ancak PRD **MVP** ve `UserFlows.md` hedefleri ile **uygulama arasında hâlâ önemli boşluklar** var: wearable OAuth/sync, dosya ve CSV ingest akışları, billing sync, PDF export, self-host setup, feature gate kapsamı, test altyapısı ve RLS geçişi henüz tamamlanmış değil.
 
-**Sonuç:** Ürün omurgası (Faz 1 + kısmen Faz 2–3 app) iyi ilerliyor; fark yaratan özellikler (AI, Team Memory RAG, sporcu self-service, billing) çoğunlukla **kayıt/registry UI** seviyesinde.
+**Sonuç:** Ürün omurgası artık Faz 1–3 seviyesinde çalışır durumda; athlete portal, session detail, personal training, staff invite ve AI/Team Memory için ilk gerçek ürün akışları mevcut. Bundan sonraki ana iş, mevcut sistemi güvenli ve üretim kalitesine yakın hale getirmek.
 
 **Test rehberi:** Kırılma noktaları ve uçtan uca (E2E) test kapıları → [§9](#9-kırılma-noktaları-breaking-points) ve [§10](#10-uçtan-uca-test-kapıları-e2e-gates).
 
@@ -26,17 +26,17 @@ Ancak PRD **MVP** ve `UserFlows.md` hedefleri ile **uygulama arasında önemli b
 | Organizasyon oluşturma | Onboarding + settings | Onboarding + ek org | ✓ |
 | Takım oluşturma | Onboarding + Teams CRUD | Çalışıyor | ✓ |
 | Sporcu ekleme | Koç kadrosu | CRUD + onboarding adımı | ✓ |
-| Sporcu davet / claim | Token + profil bağlama | `/invite/athlete/[token]`, claim action | ◐ E-posta yok; claim sonrası profil tamamlama yok |
+| Sporcu davet / claim | Token + profil bağlama | `/invite/athlete/[token]`, claim action | ◐ E-posta yok; claim sonrası athlete onboarding var |
 | Koç dashboard | Metrikler, özet | `/dashboard` maskotlu UI | ◐ AI/risk kartları PRD seviyesinde değil |
-| Sporcu dashboard | Kendi check-in, görevler | `/athlete/dashboard` | ✗ Koç için tüm sporcuların özeti; sporcu paneli değil |
-| Günlük check-in | Sporcu girer | `/readiness` | ◐ Koç sporcu adına giriyor |
-| Toplu session | Oluştur + yoklama | `/sessions` CRUD + attendance | ✓ Detay sayfası (`/sessions/[id]`) yok |
-| Kişisel antrenman | `personal_trainings` | — | ✗ Tablo migration’da var, app yok |
-| Beslenme | Günlük log | `/nutrition` | ◐ Koç tarafı form |
-| AI session report | LLM üretimi | `/ai-reports` | ✗ Manuel kayıt (`model_provider: manual`) |
-| Team Memory Assistant | RAG sohbet | `/team-memory` | ✗ Gözlem/pattern registry; assistant yok |
+| Sporcu dashboard | Kendi check-in, görevler | `/athlete/home` + athlete route seti | ✓ `/athlete/dashboard` eski coach aggregate olarak ayrıca duruyor |
+| Günlük check-in | Sporcu girer | `/athlete/check-in` + `/readiness` | ✓ Sporcu self-service + staff girişi |
+| Toplu session | Oluştur + yoklama | `/sessions` + `/sessions/[id]` | ✓ |
+| Kişisel antrenman | `personal_trainings` | `/personal-training`, `/athlete/training` | ✓ |
+| Beslenme | Günlük log | `/athlete/nutrition` + `/nutrition` | ✓ Sporcu self-service + staff girişi |
+| AI session report | LLM üretimi | `/ai-reports`, session detail CTA | ◐ Rules fallback + opsiyonel Gemini; kalite katmanı MVP |
+| Team Memory Assistant | RAG sohbet | `/team-memory` | ◐ Assistant + embeddings mevcut; retrieval/chunking kalite borcu var |
 | Pricing ekranı | Planlar | `/settings/billing` | ◐ Placeholder; Clerk Billing sync yok |
-| Self-host mesajı | Kurulum akışı | — | ✗ App’te self-host setup yok |
+| Self-host mesajı | Kurulum akışı | public `/self-host`, `/docs/self-host` | ◐ Public anlatım var; app setup yok |
 
 **Should Have** (CSV wearable, PDF mock, drill library, observations): drill + observations kısmen var; CSV/PDF/gerçek AI yok.
 
@@ -60,13 +60,11 @@ Bu **bilinçli coach-first** modeldir; “her şeyi sporcu girer” değildir.
 |------|----------------|-----|
 | Davet oluşturma | Profilden veya create sonrası | Athletes satırında Invite; otomatik token yok |
 | E-posta gönderimi | Var | Yok (sadece link kopyala) |
-| Claim sonrası onboarding | “Profilini tamamlar” | Yok → doğrudan `/dashboard` |
-| Athlete dashboard | Check-in, görevler | Koç aggregate görünümü |
-| `/athlete/profile` | SiteHaritasi’nde | Route yok |
+| Claim sonrası onboarding | “Profilini tamamlar” | `/athlete/onboarding` |
+| Athlete dashboard | Check-in, görevler | `/athlete/home` |
+| `/athlete/profile` | SiteHaritasi’nde | Route var |
 
-**Yanlış giden:** UI tam profil formu gösterip claim’in de aynı bilgiyi topladığı izlenimi veriyor; claim yalnızca `user_id` + `organization_members` bağlıyor.
-
-**Eksik:** Claim sonrası sporcu onboarding ve rol bazlı navigasyon (sporcu vs koç menüsü).
+**Kalan boşluk:** Davet akışı hâlâ link temelli; e-posta gönderimi, davet yaşam döngüsü ve rol bazlı test kapsamı tamamlanmalı.
 
 ---
 
@@ -76,8 +74,8 @@ Bu **bilinçli coach-first** modeldir; “her şeyi sporcu girer” değildir.
 
 | Beklenen | Gerçek |
 |----------|--------|
-| Server Action’larda varsayılan `createServerClient()` + RLS | `workspace.ts` ve onboarding **yalnızca** `createSupabaseAdminClient()` |
-| `createSupabaseServerClient()` RLS ile | Dosya var (`lib/supabase-server.ts`) ama **hiçbir yerde kullanılmıyor** |
+| Server Action’larda varsayılan RLS client | readiness, nutrition, personal training `createActionSupabase()` kullanıyor; geniş query/action yüzeyi hâlâ admin client |
+| `createSupabaseServerClient()` / action client ile RLS | Dosyalar var; geçiş kısmi |
 | Zod ile action validation | Yok; `cleanString` / manuel kontroller |
 
 **Risk:** Tüm org verisi service role ile okunuyor; uygulama katmanında rol kontrolü var ama RLS tasarımı devre dışı kalıyor.
@@ -96,10 +94,9 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 ### 4.4 Eksik route’lar (`SiteHaritasi.md` örnekleri)
 
-- `/sessions/[id]` — session detay / tamamlama
-- `/athlete/profile` — sporcu profil tamamlama
 - Self-host setup route’ları
-- Staff invite akışı
+- Billing yönetim akışının gerçek içerikleri
+- `api_keys` yönetimi
 
 ---
 
@@ -109,7 +106,7 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 - SQL `002_phase1_foundation.sql`, tipler, admin client, webhook, onboarding, protected shell.
 
-### Faz 2 — Team Operations ◐
+### Faz 2 — Team Operations ✓ / ◐
 
 | Görev | Durum |
 |-------|--------|
@@ -117,21 +114,21 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 | Ek organizasyon (plan gate) | ✓ kısmi |
 | Team / Athlete CRUD | ✓ |
 | Athlete invite token | ✓ |
-| Staff davet / rol | ✗ placeholder `/settings/staff` |
+| Staff davet / rol | ✓ link + claim akışı |
 | `canCreateOrganization` / entitlement | ✓ kısmi |
 | Org silme / arşiv | ✗ |
 | Zod validation | ✗ |
 
-### Faz 3 — Sessions & Daily Data ◐
+### Faz 3 — Sessions & Daily Data ✓ / ◐
 
 | Görev | Durum |
 |-------|--------|
 | Sessions + attendance + blocks | ✓ |
 | Readiness / nutrition | ✓ (koç girişi) |
 | Kontrollü sözlük (session, attendance, drills, memory) | ✓ |
-| `/sessions/[id]` | ✗ |
-| `personal_trainings` | ✗ |
-| Sporcu kendi check-in | ✗ |
+| `/sessions/[id]` | ✓ |
+| `personal_trainings` | ✓ |
+| Sporcu kendi check-in | ✓ |
 
 ### Faz 4 — Wearables ◐
 
@@ -147,9 +144,9 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 |-------|--------|
 | Drills kütüphanesi | ✓ |
 | Observations / patterns | ✓ |
-| `ai_reports` tablosu + manuel form | ✓ kayıt only |
-| LLM pipeline, embeddings, assistant | ✗ |
-| `documents` / RAG | ✗ migration 001’de var, app yok |
+| `ai_reports` tablosu + üretim akışı | ✓ rules fallback + opsiyonel Gemini |
+| LLM pipeline, embeddings, assistant | ◐ MVP mevcut |
+| `documents` / RAG | ✓ `011_team_memory_rag.sql` + app kullanımı |
 
 ### Faz 6 — Billing & Self-host ✗
 
@@ -174,30 +171,29 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 ## 7. Öncelikli Düzeltme / Tamamlama Önerileri
 
-**P0 — Ürün tutarlılığı**
+**P0 — Güvenlik ve kalite**
 
-1. Sporcu claim sonrası onboarding + `/athlete/profile` (veya claim içi form).
-2. Gerçek **athlete dashboard** (rol=`athlete` için check-in, kendi verisi).
-3. Sidebar / route guard: sporcu vs koç ayrımı.
+1. Admin client kullanımını normal kullanıcı akışlarından azaltmak; RLS geçişini testlerle kapatmak.
+2. Auth, org switch, invite/claim, athlete portal, session detail ve Team Memory için E2E temelini kurmak.
+3. Dokümanları kodla aynı gerçeklikte tutmak.
 
 **P1 — MVP vaadi**
 
-4. AI report: en azından session verisinden LLM özeti (manuel kayıt yerine veya yanında).
-5. Readiness/nutrition: sporcu self-service girişi.
-6. `personal_trainings` minimal CRUD.
-7. Davet e-postası (Resend vb.) veya net “link only” UX metni.
+4. Wearable OAuth + sync.
+5. CSV import ve session/file upload pipeline.
+6. Clerk Billing + entitlement sync.
+7. PDF/report export MVP.
 
-**P2 — Mimari sağlamlık**
+**P2 — AI/RAG olgunluğu**
 
-8. Server Action’larda `createSupabaseServerClient()` + RLS; admin yalnızca bootstrap/webhook.
-9. Zod şemaları.
-10. Staff invite akışı.
+8. Chunking, source metadata, corpus refresh ve retrieval kalite ölçümü.
+9. AI feature gate ve audit davranışı.
 
-**P3 — Fark özellikleri**
+**P3 — Ürünleştirme**
 
-11. Team Memory RAG assistant.
-12. Wearable OAuth + sync.
-13. Clerk Billing + entitlement sync.
+10. Self-host setup.
+11. `api_keys` UI.
+12. Davet e-postası veya bilinçli link-only ürün kararı.
 
 ---
 
@@ -207,11 +203,11 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 **Sıradaki mantıklı paketler:**
 
-1. Athlete claim sonrası profil + sporcu dashboard (P0)
-2. `sessions/[id]` detay sayfası
-3. Sporcu self-service readiness (P1)
-4. Server client + RLS geçişi (P2)
-5. AI report MVP pipeline (P1)
+1. RLS sertleştirme + negatif tenant testleri
+2. Wearable OAuth/sync ve file import
+3. Billing + feature gate
+4. Team Memory / AI kalite katmanı
+5. Reports + self-host setup
 
 ---
 
@@ -427,11 +423,11 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 
 | | |
 |---|---|
-| **Ne zaman** | P0 tamamlandığında (athlete dashboard, menü guard, profil tamamlama) |
+| **Ne zaman** | Athlete portal veya rol guard değiştiğinde |
 | **Kırılma** | BP-P4, BP-P5 |
-| **Durum** | ⬜ **Özellik yok — gelince zorunlu** |
+| **Durum** | ⬜ **Özellik mevcut, otomatik E2E eksik** |
 
-**Akış (hedef)**
+**Akış**
 
 1. Claim sonrası sporcu onboarding / profil tamamlama.
 2. Athlete login → yalnızca sporcu menüsü (check-in, nutrition, kendi seans özeti).
@@ -473,14 +469,15 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 |---|---|
 | **Ne zaman** | Daily data veya sporcu self-service gelince |
 | **Kırılma** | BP-S5, BP-S6 |
-| **Durum** | ⬜ (coach girişi) · athlete self-service için [E2E-07](#e2e-07--sporcu-paneli-ve-rol-ayrımı) ile birleştir |
+| **Durum** | ⬜ **Özellik mevcut, coach + athlete varyantı testlenmeli** |
 
-**Akış (bugün)**
+**Akış**
 
-1. `/readiness` → sporcu + tarih + skorlar + pain area select → kaydet.
-2. Aynı sporcu aynı gün tekrar → üzerine yazma.
-3. `/nutrition` → log kaydet.
-4. `/load-recovery` ve `/dashboard` metrikleri güncellenir (gözle).
+1. Coach/staff: `/readiness` → sporcu + tarih + skorlar + pain area select → kaydet.
+2. Athlete: `/athlete/check-in` → kendi kaydını gir.
+3. Aynı sporcu aynı gün tekrar → üzerine yazma.
+4. Coach/staff: `/nutrition`, athlete: `/athlete/nutrition` → log kaydet.
+5. `/load-recovery`, `/dashboard`, `/athlete/home` metrikleri güncellenir.
 
 ---
 
@@ -504,15 +501,16 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 
 | | |
 |---|---|
-| **Ne zaman** | LLM pipeline ilk kez devreye girdiğinde |
+| **Ne zaman** | Session analysis veya prompt/rule akışı değiştiğinde |
 | **Kırılma** | BP-AI1 |
-| **Durum** | ⬜ **Beklemede** (şu an yalnızca manuel kayıt smoke: form → `ai_reports` satırı) |
+| **Durum** | ⬜ **Özellik mevcut, otomatik E2E eksik** |
 
-**Akış (hedef)**
+**Akış**
 
 1. Tamamlanmış seans + attendance + check-in verisi olan takım.
-2. “Generate report” → `ai_reports` dolu, `model_provider != manual`.
-3. Koç UI’da özet okunabilir; medikal iddia yok (PromptEngineering).
+2. `/sessions/[id]` üzerinden “Generate report” → `ai_reports` dolu.
+3. Gemini varsa provider alanı LLM'i, yoksa rules fallback'i yansıtır.
+4. Koç UI’da özet okunabilir; medikal iddia yok (PromptEngineering).
 
 ---
 
@@ -537,11 +535,16 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 
 | | |
 |---|---|
-| **Ne zaman** | Assistant + embeddings ilk release |
+| **Ne zaman** | Assistant, embeddings veya retrieval değiştiğinde |
 | **Kırılma** | BP-AI2 |
-| **Durum** | ⬜ **Beklemede** (şu an: observation/pattern form → DB smoke yeterli) |
+| **Durum** | ⬜ **Özellik mevcut, retrieval kalite testi eksik** |
 
-**Smoke (bugün):** `/team-memory` → gözlem + pattern kaydet → liste.
+**Akış**
+
+1. `/team-memory` → gözlem + pattern kaydet.
+2. Assistant thread aç → ilgili kaynaklarla cevap al.
+3. Aynı sorgu başka org verisini döndürmez.
+4. Kaynaklar ve fallback davranışı görünür şekilde doğrulanır.
 
 ---
 
@@ -561,20 +564,13 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 
 ```text
 Şimdi koşulabilir (regresyon paketi):
-  E2E-01 → E2E-02 → E2E-05 → E2E-06 → E2E-08 → E2E-09
-  (+ team-memory / drills / ai-reports smoke: form kayıt)
-
-P0 sonrası zorunlu:
-  E2E-07 (sporcu paneli + rol)
-
-P1 sonrası:
-  E2E-11 (AI), E2E-09 athlete self-service genişletmesi
+  E2E-01 → E2E-02 → E2E-05 → E2E-06 → E2E-07 → E2E-08 → E2E-09 → E2E-11 → E2E-13
 
 P2 sonrası:
   E2E-12 (RLS)
 
-Faz 4–6:
-  E2E-10, E2E-14, E2E-13
+Faz 8–9 sonrası:
+  E2E-10, E2E-14
 ```
 
 ### Hızlı kontrol listesi (release öncesi minimum)
