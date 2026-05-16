@@ -92,6 +92,17 @@ export type AiReportType =
   | "nutrition_report"
   | "scout_report";
 
+export type DataSource =
+  | "manual"
+  | "csv_import"
+  | "strava"
+  | "garmin"
+  | "apple_health"
+  | "health_connect"
+  | "system"
+  | "ai"
+  | "other";
+
 export type Database = {
   public: {
     Tables: {
@@ -1067,6 +1078,114 @@ export type Database = {
           raw_output?: Json | null;
           created_by?: string | null;
           created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      athlete_observations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string;
+          athlete_id: string;
+          session_id: string | null;
+          ai_report_id: string | null;
+          source: DataSource | null;
+          category: string | null;
+          severity: string | null;
+          title: string | null;
+          observation: string;
+          recommendation: string | null;
+          is_resolved: boolean | null;
+          created_by: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id: string;
+          athlete_id: string;
+          session_id?: string | null;
+          ai_report_id?: string | null;
+          source?: DataSource | null;
+          category?: string | null;
+          severity?: string | null;
+          title?: string | null;
+          observation: string;
+          recommendation?: string | null;
+          is_resolved?: boolean | null;
+          created_by?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string;
+          athlete_id?: string;
+          session_id?: string | null;
+          ai_report_id?: string | null;
+          source?: DataSource | null;
+          category?: string | null;
+          severity?: string | null;
+          title?: string | null;
+          observation?: string;
+          recommendation?: string | null;
+          is_resolved?: boolean | null;
+          created_by?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      team_patterns: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string;
+          pattern_type: string;
+          title: string;
+          description: string | null;
+          severity: string | null;
+          occurrence_count: number | null;
+          first_seen_at: string | null;
+          last_seen_at: string | null;
+          status: string | null;
+          related_ai_report_id: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id: string;
+          pattern_type: string;
+          title: string;
+          description?: string | null;
+          severity?: string | null;
+          occurrence_count?: number | null;
+          first_seen_at?: string | null;
+          last_seen_at?: string | null;
+          status?: string | null;
+          related_ai_report_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string;
+          pattern_type?: string;
+          title?: string;
+          description?: string | null;
+          severity?: string | null;
+          occurrence_count?: number | null;
+          first_seen_at?: string | null;
+          last_seen_at?: string | null;
+          status?: string | null;
+          related_ai_report_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
         };
         Relationships: [];
       };

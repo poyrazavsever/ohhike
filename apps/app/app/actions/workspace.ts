@@ -256,6 +256,24 @@ export type CreateAiReportInput = {
   summary?: string;
 };
 
+export type CreateAthleteObservationInput = {
+  teamId: string;
+  athleteId: string;
+  title?: string;
+  category?: string;
+  severity?: string;
+  observation: string;
+  recommendation?: string;
+};
+
+export type CreateTeamPatternInput = {
+  teamId: string;
+  patternType: string;
+  title: string;
+  description?: string;
+  severity?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -2213,6 +2231,157 @@ export async function createAiReport(
   });
 
   revalidatePath("/ai-reports");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createAthleteObservation(
+  input: CreateAthleteObservationInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const observation = cleanString(input.observation);
+
+  if (!observation) {
+    return {
+      ok: false,
+      error: "Observation is required.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    ![
+      "owner",
+      "admin",
+      "head_coach",
+      "assistant_coach",
+      "analyst",
+      "physiotherapist",
+      "nutritionist",
+    ].includes(membership.role)
+  ) {
+    return {
+      ok: false,
+      error: "Only staff can create athlete observations.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id, team_id")
+    .eq("id", input.athleteId)
+    .eq("team_id", input.teamId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Please select a valid athlete.",
+    };
+  }
+
+  const { error } = await supabase.from("athlete_observations").insert({
+    organization_id: organization.id,
+    team_id: athlete.team_id,
+    athlete_id: athlete.id,
+    source: "manual",
+    title: cleanString(input.title),
+    category: cleanString(input.category),
+    severity: cleanString(input.severity),
+    observation,
+    recommendation: cleanString(input.recommendation),
+    is_resolved: false,
+    created_by: userId,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  revalidatePath("/team-memory");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createTeamPattern(
+  input: CreateTeamPatternInput,
+): Promise<WorkspaceActionResult> {
+  const title = cleanString(input.title);
+  const patternType = cleanString(input.patternType);
+
+  if (!title || !patternType) {
+    return {
+      ok: false,
+      error: "Pattern type and title are required.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can create team patterns.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: team } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("id", input.teamId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (!team) {
+    return {
+      ok: false,
+      error: "Please select a valid team.",
+    };
+  }
+
+  const { error } = await supabase.from("team_patterns").insert({
+    organization_id: organization.id,
+    team_id: team.id,
+    pattern_type: patternType,
+    title,
+    description: cleanString(input.description),
+    severity: cleanString(input.severity),
+    occurrence_count: 1,
+    status: "active",
+    metadata: {},
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  revalidatePath("/team-memory");
 
   return {
     ok: true,

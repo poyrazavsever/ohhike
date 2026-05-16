@@ -18,6 +18,8 @@ type NutritionLog = Tables<"nutrition_logs">;
 type Drill = Tables<"drills">;
 type WearableConnection = Tables<"wearable_connections">;
 type AiReport = Tables<"ai_reports">;
+type AthleteObservation = Tables<"athlete_observations">;
+type TeamPattern = Tables<"team_patterns">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -108,6 +110,15 @@ export type AiReportWithMeta = AiReport & {
   teamName: string | null;
   athleteName: string | null;
   sessionTitle: string | null;
+};
+
+export type AthleteObservationWithMeta = AthleteObservation & {
+  athleteName: string;
+  teamName: string | null;
+};
+
+export type TeamPatternWithMeta = TeamPattern & {
+  teamName: string | null;
 };
 
 export type WorkspaceShellData = {
@@ -1326,6 +1337,112 @@ export async function getAiReportsData(): Promise<{
       athleteReports: reportsWithMeta.filter((report) => report.athlete_id)
         .length,
       teamReports: reportsWithMeta.filter((report) => report.team_id).length,
+    },
+  };
+}
+
+export async function getTeamMemoryData(): Promise<{
+  workspace: CurrentWorkspace;
+  observations: AthleteObservationWithMeta[];
+  patterns: TeamPatternWithMeta[];
+  teams: AthleteTeamOption[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  totals: {
+    observations: number;
+    patterns: number;
+    unresolvedObservations: number;
+    activePatterns: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: observations, error: observationsError },
+    { data: patterns, error: patternsError },
+    { data: teams, error: teamsError },
+    { data: athletes, error: athletesError },
+  ] = await Promise.all([
+    supabase
+      .from("athlete_observations")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("team_patterns")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("last_seen_at", { ascending: false }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId),
+  ]);
+
+  if (observationsError) {
+    throw new Error(observationsError.message);
+  }
+
+  if (patternsError) {
+    throw new Error(patternsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  const observationsWithMeta =
+    observations?.map((observation) => {
+      const athlete = athletes?.find(
+        (currentAthlete) => currentAthlete.id === observation.athlete_id,
+      );
+      const team = teams?.find((currentTeam) => currentTeam.id === observation.team_id);
+      const athleteName = [
+        athlete?.number ? `#${athlete.number}` : null,
+        athlete?.first_name,
+        athlete?.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        ...observation,
+        athleteName: athleteName || "Unknown athlete",
+        teamName: team?.name ?? null,
+      };
+    }) ?? [];
+
+  const patternsWithMeta =
+    patterns?.map((pattern) => ({
+      ...pattern,
+      teamName: teams?.find((team) => team.id === pattern.team_id)?.name ?? null,
+    })) ?? [];
+
+  return {
+    workspace,
+    observations: observationsWithMeta,
+    patterns: patternsWithMeta,
+    teams: teams ?? [],
+    athletes: athletes ?? [],
+    totals: {
+      observations: observationsWithMeta.length,
+      patterns: patternsWithMeta.length,
+      unresolvedObservations: observationsWithMeta.filter(
+        (observation) => !observation.is_resolved,
+      ).length,
+      activePatterns: patternsWithMeta.filter(
+        (pattern) => pattern.status === "active",
+      ).length,
     },
   };
 }
