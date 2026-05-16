@@ -81,7 +81,8 @@ export default async function TeamMemoryPage({
         mascotSrc="/maskotlar/gozetleme.png"
       />
 
-      <TeamMemoryAssistant
+      <div className="mt-4">
+        <TeamMemoryAssistant
         threads={assistant.threads}
         messages={activeMessages}
         teams={teams}
@@ -89,6 +90,7 @@ export default async function TeamMemoryPage({
         initialThreadId={activeThreadId}
         geminiConfigured={geminiConfigured}
       />
+      </div>
 
       <div className="mt-4">
         <TeamMemoryForms teams={teams} athletes={athletes} />
