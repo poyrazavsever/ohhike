@@ -69,6 +69,20 @@ export type LoadRecoveryAthleteSummary = {
   painReports: number;
 };
 
+export type AthleteDashboardSummary = {
+  athleteId: string;
+  athleteName: string;
+  teamName: string | null;
+  status: Athlete["status"] | null;
+  position: string | null;
+  latestReadiness: number | null;
+  latestFatigue: number | null;
+  latestHydration: number | null;
+  latestMealQuality: number | null;
+  sevenDayLoad: number;
+  attendanceCount: number;
+};
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -764,6 +778,155 @@ export async function getLoadRecoveryData(): Promise<{
                 readinessValues.length,
             )
           : null,
+    },
+  };
+}
+
+export async function getAthleteDashboardData(): Promise<{
+  workspace: CurrentWorkspace;
+  summaries: AthleteDashboardSummary[];
+  totals: {
+    athletes: number;
+    activeAthletes: number;
+    averageReadiness: number | null;
+    totalLoad: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+
+  const [
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+    { data: sessions, error: sessionsError },
+    { data: checkins, error: checkinsError },
+    { data: nutritionLogs, error: nutritionError },
+  ] = await Promise.all([
+    supabase
+      .from("athletes")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("scheduled_at", since.toISOString()),
+    supabase
+      .from("wellness_checkins")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("checkin_date", since.toISOString().slice(0, 10))
+      .order("checkin_date", { ascending: false }),
+    supabase
+      .from("nutrition_logs")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("log_date", since.toISOString().slice(0, 10))
+      .order("log_date", { ascending: false }),
+  ]);
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (checkinsError) {
+    throw new Error(checkinsError.message);
+  }
+
+  if (nutritionError) {
+    throw new Error(nutritionError.message);
+  }
+
+  const sessionIds = (sessions ?? []).map((session) => session.id);
+  const { data: attendance, error: attendanceError } =
+    sessionIds.length > 0
+      ? await supabase
+          .from("session_attendance")
+          .select("*")
+          .in("session_id", sessionIds)
+      : { data: [], error: null };
+
+  if (attendanceError) {
+    throw new Error(attendanceError.message);
+  }
+
+  const summaries =
+    athletes?.map((athlete) => {
+      const team = teams?.find((currentTeam) => currentTeam.id === athlete.team_id);
+      const athleteCheckins =
+        checkins?.filter((checkin) => checkin.athlete_id === athlete.id) ?? [];
+      const athleteNutritionLogs =
+        nutritionLogs?.filter((log) => log.athlete_id === athlete.id) ?? [];
+      const athleteAttendance =
+        attendance?.filter((entry) => entry.athlete_id === athlete.id) ?? [];
+      const latestCheckin = athleteCheckins[0];
+      const latestNutrition = athleteNutritionLogs[0];
+      const sevenDayLoad = athleteAttendance.reduce(
+        (total, entry) =>
+          total + (entry.minutes_played ?? 0) * (entry.rpe ?? 0),
+        0,
+      );
+      const athleteName = [
+        athlete.number ? `#${athlete.number}` : null,
+        athlete.first_name,
+        athlete.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        athleteId: athlete.id,
+        athleteName,
+        teamName: team?.name ?? null,
+        status: athlete.status,
+        position: athlete.position,
+        latestReadiness: latestCheckin?.readiness_score ?? null,
+        latestFatigue: latestCheckin?.fatigue ?? null,
+        latestHydration: latestNutrition?.hydration_score ?? null,
+        latestMealQuality: latestNutrition?.meal_quality ?? null,
+        sevenDayLoad,
+        attendanceCount: athleteAttendance.length,
+      };
+    }) ?? [];
+
+  const readinessValues = summaries
+    .map((summary) => summary.latestReadiness)
+    .filter((score): score is number => score !== null);
+
+  return {
+    workspace,
+    summaries,
+    totals: {
+      athletes: summaries.length,
+      activeAthletes: summaries.filter((summary) => summary.status === "active")
+        .length,
+      averageReadiness:
+        readinessValues.length > 0
+          ? Math.round(
+              readinessValues.reduce((total, score) => total + score, 0) /
+                readinessValues.length,
+            )
+          : null,
+      totalLoad: summaries.reduce(
+        (total, summary) => total + summary.sevenDayLoad,
+        0,
+      ),
     },
   };
 }
