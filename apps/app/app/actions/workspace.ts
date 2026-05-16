@@ -1,11 +1,13 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { randomBytes } from "node:crypto";
 
 import type {
   AiReportType,
+  OrganizationRole,
   OrganizationType,
   SessionStatus,
   SessionType,
@@ -99,11 +101,23 @@ const aiReportTypes = [
 export type WorkspaceActionResult =
   | {
       ok: true;
+      /** Present when creating an athlete profile claim link. */
+      claimUrl?: string;
     }
   | {
       ok: false;
       error: string;
     };
+
+const organizationStaffRoles: OrganizationRole[] = [
+  "owner",
+  "admin",
+  "head_coach",
+  "assistant_coach",
+  "analyst",
+  "physiotherapist",
+  "nutritionist",
+];
 
 export type UpdateOrganizationInput = {
   name: string;
@@ -1219,6 +1233,311 @@ export async function deleteAthlete(
   revalidatePath("/athletes");
   revalidatePath("/dashboard");
   revalidatePath("/teams");
+
+  return {
+    ok: true,
+  };
+}
+
+async function getRequestOrigin(): Promise<string> {
+  const envBase = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (envBase) {
+    return envBase;
+  }
+
+  try {
+    const headerList = await headers();
+    const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+    if (!host) {
+      return "";
+    }
+    const proto = headerList.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${host}`;
+  } catch {
+    return "";
+  }
+}
+
+export async function createAthleteInvite(
+  athleteId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can invite athletes.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id, organization_id, team_id, user_id, email")
+    .eq("id", athleteId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Athlete could not be found.",
+    };
+  }
+
+  if (athlete.user_id) {
+    return {
+      ok: false,
+      error: "This athlete has already connected an account.",
+    };
+  }
+
+  await supabase
+    .from("athlete_invites")
+    .delete()
+    .eq("athlete_id", athlete.id)
+    .is("accepted_at", null);
+
+  const token = randomBytes(32).toString("base64url");
+  const expiresAt = new Date(
+    Date.now() + 14 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const { error: insertError } = await supabase.from("athlete_invites").insert({
+    athlete_id: athlete.id,
+    organization_id: organization.id,
+    team_id: athlete.team_id,
+    email: cleanString(athlete.email ?? undefined),
+    token,
+    invited_by: userId,
+    expires_at: expiresAt,
+  });
+
+  if (insertError) {
+    return {
+      ok: false,
+      error: insertError.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "athlete.invite_created",
+    entity_type: "athlete",
+    entity_id: athlete.id,
+  });
+
+  revalidatePath("/athletes");
+
+  const origin = await getRequestOrigin();
+  const claimPath = `/invite/athlete/${token}`;
+  const claimUrl = origin ? `${origin}${claimPath}` : claimPath;
+
+  return {
+    ok: true,
+    claimUrl,
+  };
+}
+
+export async function claimAthleteProfile(
+  token: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in before claiming this profile.",
+    };
+  }
+
+  const trimmed = token?.trim();
+  if (!trimmed) {
+    return {
+      ok: false,
+      error: "This invite link is invalid.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: invite, error: inviteError } = await supabase
+    .from("athlete_invites")
+    .select("*")
+    .eq("token", trimmed)
+    .maybeSingle();
+
+  if (inviteError || !invite) {
+    return {
+      ok: false,
+      error: "This invite link is not valid.",
+    };
+  }
+
+  if (invite.accepted_at) {
+    return {
+      ok: false,
+      error: "This invite has already been used.",
+    };
+  }
+
+  if (
+    invite.expires_at &&
+    new Date(invite.expires_at).getTime() < Date.now()
+  ) {
+    return {
+      ok: false,
+      error: "This invite has expired. Ask your coach for a new link.",
+    };
+  }
+
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id, organization_id, user_id, email")
+    .eq("id", invite.athlete_id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Athlete profile could not be found.",
+    };
+  }
+
+  if (athlete.user_id) {
+    return {
+      ok: false,
+      error: "This athlete profile is already connected to an account.",
+    };
+  }
+
+  const { data: existingClaim } = await supabase
+    .from("athletes")
+    .select("id")
+    .eq("organization_id", athlete.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingClaim) {
+    return {
+      ok: false,
+      error:
+        "Your account is already linked to another athlete in this organization.",
+    };
+  }
+
+  const { data: existingMember } = await supabase
+    .from("organization_members")
+    .select("id, role")
+    .eq("organization_id", invite.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (
+    existingMember &&
+    organizationStaffRoles.includes(existingMember.role as OrganizationRole)
+  ) {
+    return {
+      ok: false,
+      error:
+        "You are signed in as staff for this organization. Use a different account to claim this athlete profile.",
+    };
+  }
+
+  const clerkUser = await currentUser();
+  const primaryEmail =
+    clerkUser?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
+
+  if (athlete.email?.trim()) {
+    const athleteEmail = athlete.email.trim().toLowerCase();
+    if (primaryEmail && primaryEmail !== athleteEmail) {
+      return {
+        ok: false,
+        error:
+          "Sign in with the same email address as on your athlete profile, or ask your coach to update it.",
+      };
+    }
+  }
+
+  const { data: updatedAthlete, error: updateAthleteError } = await supabase
+    .from("athletes")
+    .update({ user_id: userId })
+    .eq("id", athlete.id)
+    .is("user_id", null)
+    .select("id")
+    .maybeSingle();
+
+  if (updateAthleteError || !updatedAthlete) {
+    return {
+      ok: false,
+      error: "Could not link this profile. It may have just been claimed.",
+    };
+  }
+
+  const { error: inviteUpdateError } = await supabase
+    .from("athlete_invites")
+    .update({
+      accepted_at: new Date().toISOString(),
+      accepted_by: userId,
+    })
+    .eq("id", invite.id);
+
+  if (inviteUpdateError) {
+    return {
+      ok: false,
+      error: inviteUpdateError.message,
+    };
+  }
+
+  const memberError = existingMember
+    ? (
+        await supabase
+          .from("organization_members")
+          .update({ role: "athlete", is_active: true })
+          .eq("id", existingMember.id)
+      ).error
+    : (
+        await supabase.from("organization_members").insert({
+          organization_id: invite.organization_id,
+          user_id: userId,
+          role: "athlete",
+          is_active: true,
+          invited_by: invite.invited_by,
+        })
+      ).error;
+
+  if (memberError) {
+    return {
+      ok: false,
+      error: memberError.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: invite.organization_id,
+    user_id: userId,
+    action: "athlete.claimed",
+    entity_type: "athlete",
+    entity_id: athlete.id,
+  });
+
+  revalidatePath("/athletes");
+  revalidatePath("/dashboard");
 
   return {
     ok: true,

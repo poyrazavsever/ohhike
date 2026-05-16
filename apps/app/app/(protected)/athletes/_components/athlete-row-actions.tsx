@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
+  createAthleteInvite,
   deleteAthlete,
   updateAthlete,
   type UpdateAthleteInput,
@@ -23,9 +24,11 @@ export function AthleteRowActions({
   teams: AthleteTeamOption[];
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"edit" | "delete" | null>(null);
+  const [mode, setMode] = useState<"edit" | "delete" | "invite" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [invitePending, startInviteTransition] = useTransition();
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [form, setForm] = useState<UpdateAthleteInput>({
     athleteId: athlete.id,
     teamId: athlete.team_id,
@@ -40,6 +43,21 @@ export function AthleteRowActions({
   function closeModal() {
     setError(null);
     setMode(null);
+    setInviteUrl(null);
+  }
+
+  function openInviteModal() {
+    setError(null);
+    setInviteUrl(null);
+    setMode("invite");
+    startInviteTransition(async () => {
+      const result = await createAthleteInvite(athlete.id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setInviteUrl(result.claimUrl ?? null);
+    });
   }
 
   function submitUpdate() {
@@ -76,7 +94,17 @@ export function AthleteRowActions({
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {athlete.user_id ? null : (
+          <button
+            type="button"
+            onClick={openInviteModal}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
+          >
+            <Icon icon="solar:letter-bold" className="size-3.5" />
+            Invite
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setMode("edit")}
@@ -249,6 +277,70 @@ export function AthleteRowActions({
                     {isPending ? "Saving..." : "Save changes"}
                   </button>
                 </div>
+              </>
+            ) : mode === "invite" ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-700">
+                      <Icon icon="solar:letter-bold" className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-base font-extrabold text-foreground">
+                        Claim link
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-muted-foreground">
+                        Share this link with the athlete. It expires in 14 days.
+                        Previous pending invites for this profile are replaced.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                  >
+                    <Icon icon="solar:close-circle-bold" className="size-3.5" />
+                    Close
+                  </button>
+                </div>
+
+                {invitePending && !inviteUrl && !error ? (
+                  <p className="mt-5 text-sm font-semibold text-muted-foreground">
+                    Creating link…
+                  </p>
+                ) : null}
+
+                {inviteUrl ? (
+                  <div className="mt-5">
+                    <label className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted-foreground">
+                      Link
+                    </label>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <input
+                        readOnly
+                        className={inputClassName()}
+                        value={inviteUrl}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(inviteUrl);
+                        }}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover"
+                      >
+                        <Icon icon="solar:copy-bold" className="size-4" />
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {error ? (
+                  <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+                    {error}
+                  </div>
+                ) : null}
               </>
             ) : (
               <>

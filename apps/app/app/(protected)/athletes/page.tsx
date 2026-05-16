@@ -51,7 +51,7 @@ export default async function AthletesPage() {
         <MetricCard
           label="Claimed"
           value={claimedCount.toString()}
-          helper={`${invitedCount} not invited yet`}
+          helper={`${invitedCount} unclaimed`}
           icon="solar:user-check-rounded-bold"
           tone="secondary"
         />
@@ -95,7 +95,7 @@ export default async function AthletesPage() {
                   {formatStatus(athlete.status)}
                 </p>
                 <p className="text-sm font-semibold text-muted-foreground">
-                  {athlete.user_id ? "Claimed" : "Not invited"}
+                  {athlete.user_id ? "Claimed" : "Unclaimed"}
                 </p>
                 <AthleteRowActions athlete={athlete} teams={teams} />
               </article>
