@@ -39,9 +39,7 @@ export default async function AthleteCheckInPage() {
         </p>
       ) : null}
 
-      <div className="mt-4 max-w-3xl">
-        <AthleteSelfCheckinForm athleteId={athlete.id} />
-      </div>
+      <AthleteSelfCheckinForm athleteId={athlete.id} />
     </section>
   );
 }

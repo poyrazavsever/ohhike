@@ -13,9 +13,78 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/self-host", label: "Self-host" },
-  { href: "/docs", label: "Docs" },
 ];
+
+const deploymentItems = [
+  {
+    href: "/self-host",
+    label: "Self-host",
+    description: "Run CoachOS on infrastructure you control.",
+  },
+  {
+    href: "/docs",
+    label: "Docs",
+    description: "Read setup, deployment, and product guidance.",
+  },
+];
+
+const communityItems = [
+  {
+    href: "/community",
+    label: "Community",
+    description: "See events and community sessions.",
+  },
+  {
+    href: "/blog",
+    label: "Blog",
+    description: "Read product notes and training insights.",
+  },
+];
+
+function NavDropdown({
+  items,
+  label,
+}: {
+  items: {
+    description: string;
+    href: string;
+    label: string;
+  }[];
+  label: string;
+}) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        aria-haspopup="menu"
+      >
+        {label}
+        <Icon
+          icon="solar:alt-arrow-down-linear"
+          className="size-4 translate-y-px transition-transform duration-200 ease-out group-hover:translate-y-0.5 group-hover:rotate-180 group-focus-within:translate-y-0.5 group-focus-within:rotate-180"
+        />
+      </button>
+
+      <div className="invisible absolute left-1/2 top-full z-50 mt-4 w-80 -translate-x-1/2 rounded-xl border border-border bg-background p-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+          >
+            <span className="block text-sm font-semibold text-foreground">
+              {item.label}
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+              {item.description}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -92,6 +161,8 @@ export function Navbar() {
             </Link>
           ))}
 
+          <NavDropdown label="Deployment" items={deploymentItems} />
+          <NavDropdown label="Community" items={communityItems} />
           <Link
             href="/about"
             className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
@@ -195,6 +266,52 @@ export function Navbar() {
                   />
                 </Link>
               ))}
+            </div>
+
+            <div className="mt-8">
+              <div className="px-4 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Deployment
+              </div>
+              <div className="mt-3 flex flex-col gap-2">
+                {deploymentItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className="rounded-2xl border border-border bg-card px-4 py-4 transition-colors hover:border-primary/35 hover:bg-primary-soft focus-visible:border-primary/35 focus-visible:bg-primary-soft focus-visible:outline-none"
+                  >
+                    <span className="block text-lg font-extrabold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <div className="px-4 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Community
+              </div>
+              <div className="mt-3 flex flex-col gap-2">
+                {communityItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className="rounded-2xl border border-border bg-card px-4 py-4 transition-colors hover:border-primary/35 hover:bg-primary-soft focus-visible:border-primary/35 focus-visible:bg-primary-soft focus-visible:outline-none"
+                  >
+                    <span className="block text-lg font-extrabold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             <div className="mt-auto grid gap-3 pt-8">

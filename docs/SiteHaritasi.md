@@ -216,25 +216,29 @@ Faz 1 tamamlandıktan sonra önerilen ana navbar:
 Home
 Features
 Pricing
-Self-host
-Docs
+Deployment
+  - Self-host
+  - Docs
+Community
+  - Community
+  - Blog
 About
 Get Started
 ```
 
-Üst navigasyonda dropdown kullanılmaz. Ana ürün keşfi için gerekli yollar doğrudan görünür kalır:
+Üst navigasyonda iki dropdown kullanılır:
 
 ```text
-Home
-Features
-Pricing
-Self-host
-Docs
-About
-Get Started
+Deployment
+- Self-host
+- Docs
+
+Community
+- Community
+- Blog
 ```
 
-`Self-host Docs`, `Security` ve blog gibi ikincil yollar üst navigasyona eklenmez. `Self-host Docs`, ileride `Docs` bilgi mimarisinin bir alt sayfasıdır; `Security` güven katmanıdır ve footer içinde kalır.
+`Self-host Docs` üst navigasyona ayrıca eklenmez; ileride `Docs` bilgi mimarisinin bir alt sayfasıdır. `Security` güven katmanıdır ve footer içinde kalır.
 
 ### 3.0.6 Önerilen Footer Yapısı
 

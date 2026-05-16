@@ -14,9 +14,7 @@ export default async function AthleteNutritionPage() {
         mascotSrc="/maskotlar/uykuu.png"
       />
 
-      <div className="mt-4 max-w-3xl">
-        <AthleteSelfNutritionForm athleteId={athlete.id} />
-      </div>
+      <AthleteSelfNutritionForm athleteId={athlete.id} />
     </section>
   );
 }

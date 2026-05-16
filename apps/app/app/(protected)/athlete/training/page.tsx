@@ -30,9 +30,7 @@ export default async function AthleteTrainingPage() {
         mascotSrc="/maskotlar/kosu.png"
       />
 
-      <div className="max-w-3xl">
-        <AthleteSelfPersonalTrainingForm athleteId={portal.athlete.id} />
-      </div>
+      <AthleteSelfPersonalTrainingForm athleteId={portal.athlete.id} />
 
       {trainings.length > 0 ? (
         <div className="mt-6 grid gap-3">
@@ -79,7 +77,7 @@ export default async function AthleteTrainingPage() {
       ) : (
         <EmptyStateCard
           title="No personal training yet"
-          description="Use the form above after gym work, skills practice or recovery sessions."
+          description="Use Log personal training after gym work, skills practice or recovery sessions."
           icon="solar:running-bold"
         />
       )}
