@@ -45,12 +45,14 @@ import {
   isCoachStaffRole,
   isInvitableOrganizationRole,
 } from "../../lib/org-roles";
-import { writeWorkspaceAuditLog } from "../../lib/audit-log";
+import {
+  writeAuditLogEntry,
+  writeWorkspaceAuditLog,
+} from "../../lib/audit-log";
 import {
   formatAssistantAnswerForChat,
   runTeamMemoryQuery,
 } from "../../lib/team-memory-assistant";
-import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import {
   createActionSupabase,
   formatSupabaseActionError,
@@ -545,7 +547,7 @@ function parseDistanceKm(value: string | undefined) {
 
 async function canCurrentWorkspaceCreateOrganization() {
   const { organization } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -608,7 +610,7 @@ export async function switchActiveOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: membership, error } = await supabase
     .from("organization_members")
@@ -674,7 +676,7 @@ export async function updateActiveOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { error } = await supabase
     .from("organizations")
@@ -753,7 +755,7 @@ export async function createAdditionalOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const organizationSlug = `${slugify(organizationName)}-${crypto.randomUUID().slice(0, 8)}`;
 
   const { data: organization, error: organizationError } = await supabase
@@ -853,22 +855,20 @@ export async function createAdditionalOrganization(
     path: "/",
   });
 
-  await supabase.from("audit_logs").insert([
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      action: "organization.created",
-      entity_type: "organization",
-      entity_id: organizationId,
-    },
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      action: "team.created",
-      entity_type: "team",
-      entity_id: teamId,
-    },
-  ]);
+  await writeAuditLogEntry({
+    organizationId: organizationId,
+    userId,
+    action: "organization.created",
+    entityType: "organization",
+    entityId: organizationId,
+  });
+  await writeAuditLogEntry({
+    organizationId: organizationId,
+    userId,
+    action: "team.created",
+    entityType: "team",
+    entityId: teamId,
+  });
 
   revalidatePath("/");
 
@@ -916,7 +916,7 @@ export async function createTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -969,12 +969,12 @@ export async function createTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "team.created",
-    entity_type: "team",
-    entity_id: team.id,
+    entityType: "team",
+    entityId: team.id,
   });
 
   revalidatePath("/teams");
@@ -1013,7 +1013,7 @@ export async function updateTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { error } = await supabase
     .from("teams")
@@ -1035,12 +1035,12 @@ export async function updateTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "team.updated",
-    entity_type: "team",
-    entity_id: input.teamId,
+    entityType: "team",
+    entityId: input.teamId,
   });
 
   revalidatePath("/teams");
@@ -1063,7 +1063,7 @@ export async function deleteTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { count: teamCount, error: teamCountError } = await supabase
     .from("teams")
@@ -1116,12 +1116,12 @@ export async function deleteTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "team.deleted",
-    entity_type: "team",
-    entity_id: teamId,
+    entityType: "team",
+    entityId: teamId,
   });
 
   revalidatePath("/teams");
@@ -1175,7 +1175,7 @@ export async function createAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -1213,11 +1213,11 @@ export async function createAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: userId,
     action: "athlete.created",
-    entity_type: "athlete",
+    entityType: "athlete",
   });
 
   revalidatePath("/athletes");
@@ -1263,7 +1263,7 @@ export async function updateAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -1302,12 +1302,12 @@ export async function updateAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "athlete.updated",
-    entity_type: "athlete",
-    entity_id: input.athleteId,
+    entityType: "athlete",
+    entityId: input.athleteId,
   });
 
   revalidatePath("/athletes");
@@ -1335,7 +1335,7 @@ export async function deleteAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { error } = await supabase
     .from("athletes")
@@ -1350,12 +1350,12 @@ export async function deleteAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "athlete.deleted",
-    entity_type: "athlete",
-    entity_id: athleteId,
+    entityType: "athlete",
+    entityId: athleteId,
   });
 
   revalidatePath("/athletes");
@@ -1411,7 +1411,7 @@ export async function createAthleteInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: athlete, error: athleteError } = await supabase
     .from("athletes")
@@ -1462,12 +1462,12 @@ export async function createAthleteInvite(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "athlete.invite_created",
-    entity_type: "athlete",
-    entity_id: athlete.id,
+    entityType: "athlete",
+    entityId: athlete.id,
   });
 
   revalidatePath("/athletes");
@@ -1502,7 +1502,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: invite, error: inviteError } = await supabase
     .from("athlete_invites")
@@ -1656,12 +1656,12 @@ export async function claimAthleteProfile(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: invite.organization_id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: invite.organization_id,
+    userId,
     action: "athlete.claimed",
-    entity_type: "athlete",
-    entity_id: athlete.id,
+    entityType: "athlete",
+    entityId: athlete.id,
   });
 
   revalidatePath("/athletes");
@@ -1710,7 +1710,7 @@ export async function createStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const teamId = cleanString(input.teamId);
 
   if (teamId) {
@@ -1794,11 +1794,11 @@ export async function createStaffInvite(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: userId,
     action: "staff.invite_created",
-    entity_type: "organization_staff_invite",
+    entityType: "organization_staff_invite",
   });
 
   revalidatePath("/settings/staff");
@@ -1833,7 +1833,7 @@ export async function claimStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: invite, error: inviteError } = await supabase
     .from("organization_staff_invites")
@@ -1967,12 +1967,12 @@ export async function claimStaffInvite(
     path: "/",
   });
 
-  await supabase.from("audit_logs").insert({
-    organization_id: invite.organization_id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: invite.organization_id,
+    userId,
     action: "staff.invite_claimed",
-    entity_type: "organization_staff_invite",
-    entity_id: invite.id,
+    entityType: "organization_staff_invite",
+    entityId: invite.id,
   });
 
   revalidatePath("/settings/staff");
@@ -2005,7 +2005,7 @@ export async function revokeStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { error } = await supabase
     .from("organization_staff_invites")
@@ -2067,7 +2067,7 @@ export async function completeAthletePortalProfile(
   }
 
   const lastName = cleanString(input.lastName);
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const existingMeta = getAthleteMetadata(athlete);
 
   const { error } = await supabase
@@ -2096,12 +2096,12 @@ export async function completeAthletePortalProfile(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "athlete.profile_completed",
-    entity_type: "athlete",
-    entity_id: athlete.id,
+    entityType: "athlete",
+    entityId: athlete.id,
   });
 
   revalidatePath("/athlete/home");
@@ -2169,7 +2169,7 @@ export async function createSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -2256,12 +2256,12 @@ export async function createSession(
     }
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "session.created",
-    entity_type: "session",
-    entity_id: session.id,
+    entityType: "session",
+    entityId: session.id,
   });
 
   revalidatePath("/sessions");
@@ -2326,7 +2326,7 @@ export async function updateSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const [{ data: session }, { data: team, error: teamError }] =
     await Promise.all([
@@ -2397,12 +2397,12 @@ export async function updateSession(
     }
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "session.updated",
-    entity_type: "session",
-    entity_id: input.sessionId,
+    entityType: "session",
+    entityId: input.sessionId,
   });
 
   revalidatePath("/sessions");
@@ -2430,7 +2430,7 @@ export async function completeSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
@@ -2481,12 +2481,12 @@ export async function completeSession(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "session.completed",
-    entity_type: "session",
-    entity_id: sessionId,
+    entityType: "session",
+    entityId: sessionId,
   });
 
   revalidatePath("/sessions");
@@ -2515,7 +2515,7 @@ export async function deleteSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: session } = await supabase
     .from("sessions")
@@ -2544,12 +2544,12 @@ export async function deleteSession(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "session.deleted",
-    entity_type: "session",
-    entity_id: sessionId,
+    entityType: "session",
+    entityId: sessionId,
   });
 
   revalidatePath("/sessions");
@@ -2577,7 +2577,7 @@ export async function updateSessionAttendance(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
@@ -2698,12 +2698,12 @@ export async function updateSessionAttendance(
     }
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "session.attendance_updated",
-    entity_type: "session",
-    entity_id: session.id,
+    entityType: "session",
+    entityId: session.id,
   });
 
   revalidatePath("/sessions");
@@ -2768,7 +2768,7 @@ export async function updateSessionTrainingBlocks(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
@@ -2819,12 +2819,12 @@ export async function updateSessionTrainingBlocks(
     }
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: membership.user_id,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: membership.user_id,
     action: "session.training_blocks_updated",
-    entity_type: "session",
-    entity_id: session.id,
+    entityType: "session",
+    entityId: session.id,
   });
 
   revalidatePath("/sessions");
@@ -3272,7 +3272,7 @@ export async function updatePersonalTraining(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: existing } = await supabase
     .from("personal_trainings")
@@ -3342,12 +3342,12 @@ export async function updatePersonalTraining(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "personal_training.updated",
-    entity_type: "personal_training",
-    entity_id: input.trainingId,
+    entityType: "personal_training",
+    entityId: input.trainingId,
   });
 
   revalidatePath("/personal-training");
@@ -3372,7 +3372,7 @@ export async function deletePersonalTraining(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: existing } = await supabase
     .from("personal_trainings")
@@ -3421,12 +3421,12 @@ export async function deletePersonalTraining(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "personal_training.deleted",
-    entity_type: "personal_training",
-    entity_id: trainingId,
+    entityType: "personal_training",
+    entityId: trainingId,
   });
 
   revalidatePath("/personal-training");
@@ -3504,7 +3504,7 @@ export async function createDrill(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const { error } = await supabase.from("drills").insert({
     organization_id: organization.id,
     created_by: userId,
@@ -3532,11 +3532,11 @@ export async function createDrill(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: userId,
     action: "drill.created",
-    entity_type: "drill",
+    entityType: "drill",
   });
 
   revalidatePath("/drills");
@@ -3579,7 +3579,7 @@ export async function createWearableConnection(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const { data: athlete, error: athleteError } = await supabase
     .from("athletes")
     .select("id")
@@ -3617,11 +3617,11 @@ export async function createWearableConnection(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: userId,
     action: "wearable_connection.upserted",
-    entity_type: "wearable_connection",
+    entityType: "wearable_connection",
   });
 
   revalidatePath("/wearables");
@@ -3672,7 +3672,7 @@ export async function createAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const teamId = cleanString(input.teamId);
   const athleteId = cleanString(input.athleteId);
   const sessionId = cleanString(input.sessionId);
@@ -3750,11 +3750,11 @@ export async function createAiReport(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId: userId,
     action: "ai_report.created",
-    entity_type: "ai_report",
+    entityType: "ai_report",
   });
 
   revalidatePath("/ai-reports");
@@ -3789,7 +3789,7 @@ export async function generateSessionAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
@@ -3941,12 +3941,12 @@ export async function generateSessionAiReport(
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeAuditLogEntry({
+    organizationId: organization.id,
+    userId,
     action: "ai_report.generated",
-    entity_type: "ai_report",
-    entity_id: inserted.id,
+    entityType: "ai_report",
+    entityId: inserted.id,
   });
 
   revalidatePath("/ai-reports");
@@ -3985,7 +3985,7 @@ export async function deleteAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   const { data: report } = await supabase
     .from("ai_reports")
@@ -4075,7 +4075,7 @@ export async function createAthleteObservation(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const { data: athlete, error: athleteError } = await supabase
     .from("athletes")
     .select("id, team_id")
@@ -4192,7 +4192,7 @@ export async function createTeamPattern(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const { data: team } = await supabase
     .from("teams")
     .select("id")
@@ -4280,7 +4280,7 @@ export async function sendTeamMemoryMessage(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const teamId = cleanString(input.teamId);
   const athleteId = cleanString(input.athleteId);
 

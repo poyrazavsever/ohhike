@@ -1,6 +1,6 @@
 import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
 import { getAthletePortalContext } from "../../../../lib/athlete-portal";
-import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
+import { createWorkspaceSupabase } from "../../../../lib/supabase-action";
 import { AthleteSelfCheckinForm } from "../_components/athlete-portal-forms";
 
 function formatDay(value: string) {
@@ -12,7 +12,7 @@ function formatDay(value: string) {
 export default async function AthleteCheckInPage() {
   const { athlete, teamName, workspace } = await getAthletePortalContext();
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createWorkspaceSupabase();
   const { data: latest } = await supabase
     .from("wellness_checkins")
     .select("checkin_date, readiness_score, fatigue")
