@@ -14,9 +14,7 @@ const footerGroups = [
   {
     title: "Docs",
     links: [
-      { label: "Docs", href: "/docs" },
-      { label: "Self-host Docs", href: "/docs/self-host" },
-      { label: "Security", href: "/security" },
+      { label: "Documentation", href: "/docs" },
     ],
   },
   {
@@ -29,10 +27,11 @@ const footerGroups = [
     ],
   },
   {
-    title: "Community",
+    title: "Resources",
     links: [
       { label: "Blog", href: "/blog" },
       { label: "Community", href: "/community" },
+      { label: "Security", href: "/security" },
       { label: "GitHub", href: "https://github.com" },
     ],
   },

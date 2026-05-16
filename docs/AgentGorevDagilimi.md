@@ -50,6 +50,7 @@ Mevcut kod durumu (2026-05-16 guncellemesi):
   - ◐ Sporcu dashboard koç aggregate; claim sonrasi profil tamamlama yok.
   - ✗ Staff davet, gercek AI/RAG, wearable OAuth, personal_trainings, Clerk Billing sync, self-host.
   - Detayli uyum/eksik analizi: `docs/UrunUyumVeEksikler.md`.
+- Kirilma noktalari ve E2E test kapilari: `docs/UrunUyumVeEksikler.md` §9–§11 (ozellik "done" olmadan ilgili E2E kosulmali).
 
 ---
 

@@ -222,18 +222,19 @@ About
 Get Started
 ```
 
-Faz 1 için önerilen `Resources` dropdown:
+Üst navigasyonda dropdown kullanılmaz. Ana ürün keşfi için gerekli yollar doğrudan görünür kalır:
 
 ```text
-Resources
-- Self-host Docs
-- Security
-- Blog
+Home
+Features
+Pricing
+Self-host
+Docs
+About
+Get Started
 ```
 
-`/docs/integrations` tamamlandığında `Integrations` bu gruba eklenir.
-
-`Features`, `Pricing`, `Self-host` ve `Docs` ana navbar’da doğrudan yer aldığı için ayrıca `Product` dropdown açılmaz ve `Docs`, `Resources` içinde tekrar edilmez. Aynı hedeflere iki ayrı menü yolu vermek navigasyonu gereksiz tekrarlar.
+`Self-host Docs`, `Security` ve blog gibi ikincil yollar üst navigasyona eklenmez. `Self-host Docs`, ileride `Docs` bilgi mimarisinin bir alt sayfasıdır; `Security` güven katmanıdır ve footer içinde kalır.
 
 ### 3.0.6 Önerilen Footer Yapısı
 
@@ -242,14 +243,9 @@ Product
 - Features
 - Pricing
 - Self-host
-- Open Source
-- Roadmap
 
 Docs
-- Docs
-- Self-host Docs
-- Integrations
-- Security
+- Documentation
 
 Company
 - About
@@ -257,13 +253,159 @@ Company
 - Privacy
 - Terms
 
-Community
+Resources
 - Blog
 - Community
+- Security
 - GitHub
 ```
 
 Eksik route’lar tamamlanana kadar footer yalnızca mevcut veya aynı faz içinde tamamlanan sayfalara link vermelidir.
+
+### 3.0.7 Public Web Sayfa Aileleri
+
+`apps/web` içinde her sayfa aynı layout şablonunu kullanmaz. Sayfa amacı değiştikçe bilgi yoğunluğu, hero boyutu, görsel kullanım ve container yapısı da değişir.
+
+#### 1. Marketing Pages
+
+Örnek route’lar:
+
+- `/`
+- `/features`
+- `/pricing`
+- `/self-host`
+- ileride `/open-source`
+
+Amaç:
+
+- Ürün vaadini anlatmak
+- Kullanıcıyı özellik, fiyat veya kurulum kararına yaklaştırmak
+- Marka görsellerini ve maskotu kontrollü şekilde kullanmak
+
+Tasarım kuralları:
+
+- İlk viewport güçlü bir hero taşıyabilir.
+- Hero yalnızca metin bloğu değil; sahne, ürün hissi veya konuyla ilgili güçlü görsel bağlam içermelidir.
+- Ana içerik `max-w-7xl` ritminde ilerler.
+- Sayfa section’ları tek tip kart yığınına dönüşmez; tam genişlik band, grid, karşılaştırma veya framed tool düzenleri bağlama göre seçilir.
+- CTA’lar görünürdür ama her section CTA ile boğulmaz.
+
+Mevcut referanslar:
+
+- Landing hero ve section ritmi
+- `/features` içindeki büyük hero + tekrar eden feature shell yapısı
+- `/pricing` içindeki tek sayfa yoğunlaştırılmış pricing kompozisyonu
+
+#### 2. Docs Pages
+
+Örnek route’lar:
+
+- `/docs`
+- `/docs/self-host`
+- ileride `/docs/integrations`
+- ileride `/docs/api-keys`
+- ileride `/docs/deployment`
+- ileride `/docs/troubleshooting`
+
+Amaç:
+
+- Kullanıcıyı konu başlıkları arasında gezdirmek
+- Teknik bilgiyi okunabilir ve sürdürülebilir şekilde sunmak
+- Self-host, deployment ve entegrasyon içeriklerini tek bir dokümantasyon ağacında toplamak
+
+Tasarım kuralları:
+
+- `Docs`, üst navigasyondaki tek giriş noktasıdır.
+- `/docs/self-host` gibi route’lar docs ağacının alt sayfalarıdır; üst navigasyonda bağımsız ürün sayfası gibi görünmez.
+- Landing-style full-screen hero kullanılmaz.
+- Ana layout içerik odaklıdır: docs sidebar / bölüm navigasyonu + dar okuma kolonu + gerektiğinde sağ içindekiler sütunu.
+- Uzun metin, liste, tablo ve kod blokları için rahat okuma genişliği korunur.
+- Dokümantasyon sayfaları pazarlama kartlarıyla değil, bilgi mimarisiyle yönlendirilir.
+
+#### 3. Trust / Legal Pages
+
+Örnek route’lar:
+
+- `/security`
+- `/privacy`
+- `/terms`
+
+Amaç:
+
+- Güven, veri işleme ve yasal sınırları açıkça anlatmak
+- Kullanıcıya satış yapmak değil, netlik vermek
+
+Tasarım kuralları:
+
+- Navbar’da yer almaz; footer’dan erişilir.
+- Full-screen marketing hero kullanılmaz.
+- Kompakt page header + uzun okuma alanı kullanılır.
+- Genişlik tercihi `max-w-4xl` veya `max-w-5xl` aralığıdır.
+- Başlık hiyerarşisi sade, ton ciddi ve metin odaklıdır.
+- Gerekirse kısa callout blokları kullanılır; tekrarlı feature card grid’leri kullanılmaz.
+
+#### 4. Company / Content Pages
+
+Örnek route’lar:
+
+- `/about`
+- `/contact`
+- `/blog`
+- `/community`
+
+Amaç:
+
+- Marka, ekip, iletişim ve içerik deneyimlerini taşımak
+
+Tasarım kuralları:
+
+- Sayfa bağlamına göre özgün kompozisyon seçilir.
+- `/about` hikaye odaklı olabilir.
+- `/contact` form veya yönlendirme odaklıdır.
+- `/blog` içerik grid’i kullanabilir.
+- `/community` etkinlik veya katılım odaklı bloklar kullanabilir.
+- Bu grup için tek zorunlu layout yoktur; marka dili korunur ama sayfa tipi kendi işini yapar.
+
+### 3.0.8 Public Web Layout Kuralları
+
+#### Container sistemi
+
+| Kullanım | Önerilen genişlik |
+|---|---|
+| Marketing hero / geniş section | `max-w-6xl` veya `max-w-7xl` |
+| Marketing içerik section’ları | `max-w-7xl` |
+| Docs okuma alanı | ana kolon yaklaşık `max-w-3xl`, shell daha geniş olabilir |
+| Legal / trust içerik | `max-w-4xl` veya `max-w-5xl` |
+| Blog / community grid | `max-w-7xl` |
+
+#### Hero sistemi
+
+- Marketing hero yalnızca ürün anlatımı için kullanılır.
+- Docs, legal ve trust sayfaları aynı full-screen hero kalıbını tekrar etmez.
+- Her sayfa ailesi aynı yüksekliği, aynı background overlay’i ve aynı kart grid’ini kullanmak zorunda değildir.
+- Hero metni ile sayfanın geri kalanı arasında görsel bağlam farkı olmalıdır; tüm sayfalar birbirinin varyasyonu gibi görünmemelidir.
+
+#### Kart kullanımı
+
+- Kartlar yalnızca gerçekten çerçevelenmesi gereken tekrar eden öğeler için kullanılır.
+- Sayfa bölümleri kart içine kart mantığıyla kurulmaz.
+- Legal ve docs içerikleri feature card grid’ine dönüştürülmez.
+
+#### Maskot ve görsel kullanımı
+
+- Maskot marketing ve marka sayfalarında bağlama uygun biçimde kullanılabilir.
+- Docs ve legal sayfalarda maskot zorunlu değildir; içerik ciddiyetini zayıflatıyorsa kullanılmaz.
+- Görseller dekor değil, sayfanın konusunu taşıyan bağlam unsurlarıdır.
+
+### 3.0.9 Tasarım Yenileme Sırası
+
+1. `Docs` sayfa ailesi için layout sistemi tanımlanır.
+2. `/docs` yeniden tasarlanır.
+3. `/self-host` marketing sayfası mevcut landing/features kalitesine çıkarılır.
+4. Trust/legal sayfaları için sade layout sistemi kurulur.
+5. `/security`, `/privacy`, `/terms` yeniden yapılır.
+6. `/contact` kendi company/content kompozisyonuna alınır.
+7. Geçici jenerik `ContentHero / ContentSection / TextSection` yaklaşımı kaldırılır veya yalnızca gerçekten uygun olan sınırlı alanlarda tutulur.
 
 ---
 
