@@ -37,7 +37,12 @@ import {
   getSessionAnalysisPromptVersion,
   tryGenerateSessionAnalysisWithOpenAI,
 } from "../../lib/ai/session-analysis";
-import { isAthleteRole, isCoachStaffRole } from "../../lib/org-roles";
+import {
+  canManageStaffInvites,
+  isAthleteRole,
+  isCoachStaffRole,
+  isInvitableOrganizationRole,
+} from "../../lib/org-roles";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
@@ -288,6 +293,12 @@ export type UpdatePersonalTrainingInput = CreatePersonalTrainingInput & {
   trainingId: string;
   coachReviewed?: boolean;
   coachNote?: string;
+};
+
+export type CreateStaffInviteInput = {
+  role: OrganizationRole;
+  email?: string;
+  teamId?: string;
 };
 
 export type CreateDrillInput = {
@@ -1644,6 +1655,360 @@ export async function claimAthleteProfile(
   revalidatePath("/dashboard");
   revalidatePath("/athlete/home");
   revalidatePath("/athlete/onboarding");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createStaffInvite(
+  input: CreateStaffInviteInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (!canManageStaffInvites(membership.role)) {
+    return {
+      ok: false,
+      error: "Only owners and admins can invite staff.",
+    };
+  }
+
+  if (!isInvitableOrganizationRole(input.role)) {
+    return {
+      ok: false,
+      error: "Invalid staff role for an invite.",
+    };
+  }
+
+  const email = cleanString(input.email);
+  if (email && !isValidEmail(email)) {
+    return {
+      ok: false,
+      error: "Enter a valid email address or leave it empty.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const teamId = cleanString(input.teamId);
+
+  if (teamId) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("id", teamId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!team) {
+      return {
+        ok: false,
+        error: "Please select a valid team.",
+      };
+    }
+  }
+
+  if (email) {
+    const normalizedEmail = email.toLowerCase();
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingUser) {
+      const { data: existingMember } = await supabase
+        .from("organization_members")
+        .select("id, role")
+        .eq("organization_id", organization.id)
+        .eq("user_id", existingUser.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (existingMember && isCoachStaffRole(existingMember.role)) {
+        return {
+          ok: false,
+          error: "This person is already a staff member of the organization.",
+        };
+      }
+    }
+  }
+
+  if (email) {
+    await supabase
+      .from("organization_staff_invites")
+      .delete()
+      .eq("organization_id", organization.id)
+      .is("accepted_at", null)
+      .eq("email", email.toLowerCase());
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  const expiresAt = new Date(
+    Date.now() + 14 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const { error: insertError } = await supabase
+    .from("organization_staff_invites")
+    .insert({
+      organization_id: organization.id,
+      team_id: teamId,
+      email: email ? email.toLowerCase() : null,
+      role: input.role,
+      token,
+      invited_by: userId,
+      expires_at: expiresAt,
+    });
+
+  if (insertError) {
+    const missingTable = insertError.message.includes(
+      "organization_staff_invites",
+    );
+
+    return {
+      ok: false,
+      error: missingTable
+        ? "Staff invites table is missing. Run docs/supabase/010_organization_staff_invites.sql in Supabase, then retry."
+        : insertError.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "staff.invite_created",
+    entity_type: "organization_staff_invite",
+  });
+
+  revalidatePath("/settings/staff");
+
+  const origin = await getRequestOrigin();
+  const invitePath = `/invite/staff/${token}`;
+  const claimUrl = origin ? `${origin}${invitePath}` : invitePath;
+
+  return {
+    ok: true,
+    claimUrl,
+  };
+}
+
+export async function claimStaffInvite(
+  token: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in before accepting this invite.",
+    };
+  }
+
+  const trimmed = token?.trim();
+  if (!trimmed) {
+    return {
+      ok: false,
+      error: "This invite link is invalid.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: invite, error: inviteError } = await supabase
+    .from("organization_staff_invites")
+    .select("*")
+    .eq("token", trimmed)
+    .maybeSingle();
+
+  if (inviteError || !invite) {
+    return {
+      ok: false,
+      error: "This invite link is not valid.",
+    };
+  }
+
+  if (invite.accepted_at) {
+    return {
+      ok: false,
+      error: "This invite has already been used.",
+    };
+  }
+
+  if (
+    invite.expires_at &&
+    new Date(invite.expires_at).getTime() < Date.now()
+  ) {
+    return {
+      ok: false,
+      error: "This invite has expired. Ask for a new staff invite link.",
+    };
+  }
+
+  const clerkUser = await currentUser();
+  const primaryEmail =
+    clerkUser?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
+
+  if (invite.email?.trim()) {
+    const inviteEmail = invite.email.trim().toLowerCase();
+    if (primaryEmail && primaryEmail !== inviteEmail) {
+      return {
+        ok: false,
+        error:
+          "Sign in with the email address this invite was sent to, or ask an admin to resend it.",
+      };
+    }
+  }
+
+  const { data: existingAthlete } = await supabase
+    .from("athletes")
+    .select("id")
+    .eq("organization_id", invite.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingAthlete) {
+    return {
+      ok: false,
+      error:
+        "Your account is linked as an athlete in this organization. Use a separate account for staff access.",
+    };
+  }
+
+  const { data: existingMember } = await supabase
+    .from("organization_members")
+    .select("id, role, is_active")
+    .eq("organization_id", invite.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingMember?.is_active && isCoachStaffRole(existingMember.role)) {
+    return {
+      ok: false,
+      error: "You are already a staff member of this organization.",
+    };
+  }
+
+  const { error: memberError } = existingMember
+    ? await supabase
+        .from("organization_members")
+        .update({
+          role: invite.role,
+          is_active: true,
+          invited_by: invite.invited_by,
+        })
+        .eq("id", existingMember.id)
+    : await supabase.from("organization_members").insert({
+        organization_id: invite.organization_id,
+        user_id: userId,
+        role: invite.role,
+        is_active: true,
+        invited_by: invite.invited_by,
+      });
+
+  if (memberError) {
+    return {
+      ok: false,
+      error: memberError.message,
+    };
+  }
+
+  if (invite.team_id) {
+    await supabase.from("team_staff").upsert(
+      {
+        team_id: invite.team_id,
+        user_id: userId,
+        role: invite.role,
+        assigned_by: invite.invited_by,
+      },
+      { onConflict: "team_id,user_id,role", ignoreDuplicates: true },
+    );
+  }
+
+  const { error: inviteUpdateError } = await supabase
+    .from("organization_staff_invites")
+    .update({
+      accepted_at: new Date().toISOString(),
+      accepted_by: userId,
+    })
+    .eq("id", invite.id);
+
+  if (inviteUpdateError) {
+    return {
+      ok: false,
+      error: inviteUpdateError.message,
+    };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_ORGANIZATION_COOKIE, invite.organization_id, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  await supabase.from("audit_logs").insert({
+    organization_id: invite.organization_id,
+    user_id: userId,
+    action: "staff.invite_claimed",
+    entity_type: "organization_staff_invite",
+    entity_id: invite.id,
+  });
+
+  revalidatePath("/settings/staff");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    redirectTo: "/dashboard",
+  };
+}
+
+export async function revokeStaffInvite(
+  inviteId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (!canManageStaffInvites(membership.role)) {
+    return {
+      ok: false,
+      error: "Only owners and admins can revoke invites.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { error } = await supabase
+    .from("organization_staff_invites")
+    .delete()
+    .eq("id", inviteId)
+    .eq("organization_id", organization.id)
+    .is("accepted_at", null);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  revalidatePath("/settings/staff");
 
   return {
     ok: true,

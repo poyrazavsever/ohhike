@@ -2,7 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { Tables } from "./database.types";
+import type { OrganizationRole, Tables } from "./database.types";
+import { canManageStaffInvites } from "./org-roles";
 import { createSupabaseAdminClient } from "./supabase-admin";
 
 type Organization = Tables<"organizations">;
@@ -59,6 +60,15 @@ export type NutritionLogWithAthlete = NutritionLog & {
 
 export type PersonalTrainingWithAthlete = PersonalTraining & {
   athleteName: string;
+  teamName: string | null;
+};
+
+export type StaffMemberRow = Tables<"organization_members"> & {
+  email: string | null;
+  displayName: string | null;
+};
+
+export type StaffInviteRow = Tables<"organization_staff_invites"> & {
   teamName: string | null;
 };
 
@@ -821,6 +831,93 @@ export async function getPersonalTrainingsData(): Promise<{
     }),
     athletes: athletes ?? [],
     teams: teams ?? [],
+  };
+}
+
+export async function getStaffSettingsData(): Promise<{
+  workspace: CurrentWorkspace;
+  members: StaffMemberRow[];
+  pendingInvites: StaffInviteRow[];
+  teams: AthleteTeamOption[];
+  canManage: boolean;
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+  const canManage = canManageStaffInvites(workspace.membership.role);
+
+  const [
+    { data: members, error: membersError },
+    { data: invites, error: invitesError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("organization_members")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("joined_at", { ascending: true }),
+    canManage
+      ? supabase
+          .from("organization_staff_invites")
+          .select("*")
+          .eq("organization_id", organizationId)
+          .is("accepted_at", null)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (membersError) {
+    throw new Error(membersError.message);
+  }
+
+  if (invitesError) {
+    throw new Error(invitesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  const userIds = (members ?? []).map((member) => member.user_id);
+
+  const { data: users, error: usersError } =
+    userIds.length > 0
+      ? await supabase
+          .from("users")
+          .select("id, email, display_name")
+          .in("id", userIds)
+      : { data: [], error: null };
+
+  if (usersError) {
+    throw new Error(usersError.message);
+  }
+
+  const userMap = new Map(
+    (users ?? []).map((user) => [user.id, user]),
+  );
+
+  return {
+    workspace,
+    canManage,
+    teams: teams ?? [],
+    members: (members ?? []).map((member) => {
+      const user = userMap.get(member.user_id);
+      return {
+        ...member,
+        email: user?.email ?? null,
+        displayName: user?.display_name ?? null,
+      };
+    }),
+    pendingInvites: (invites ?? []).map((invite) => ({
+      ...invite,
+      teamName:
+        teams?.find((team) => team.id === invite.team_id)?.name ?? null,
+    })),
   };
 }
 

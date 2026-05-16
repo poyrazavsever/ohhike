@@ -367,6 +367,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      organization_staff_invites: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          email: string | null;
+          role: OrganizationRole;
+          token: string;
+          invited_by: string | null;
+          accepted_by: string | null;
+          expires_at: string | null;
+          accepted_at: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          email?: string | null;
+          role: OrganizationRole;
+          token: string;
+          invited_by?: string | null;
+          accepted_by?: string | null;
+          expires_at?: string | null;
+          accepted_at?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          email?: string | null;
+          role?: OrganizationRole;
+          token?: string;
+          invited_by?: string | null;
+          accepted_by?: string | null;
+          expires_at?: string | null;
+          accepted_at?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       athlete_invites: {
         Row: {
           id: string;
