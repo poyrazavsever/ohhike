@@ -1,20 +1,30 @@
-import { PageHeader } from "../../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+} from "../../../../components/dashboard/dashboard-cards";
+import { SettingsNotice } from "../_components/settings-notice";
 
 export default function BillingSettingsPage() {
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Settings"
         title="Billing"
-        description="Team-level Basic, Pro and Pro Plus entitlements will be managed from this page."
+        subtitle="Team-level Basic, Pro and Pro Plus entitlements are enforced from team billing records."
+        mascotSrc="/maskotlar/harita.png"
       />
 
-      <div className="mt-6 rounded-3xl border border-border bg-card p-6">
-        <p className="text-sm font-bold text-foreground">Current model</p>
-        <p className="mt-2 text-sm font-medium leading-6 text-muted-foreground">
-          Billing is team-based. Feature gates will read from
-          team_billing_entitlements for the active team.
-        </p>
+      <SettingsNotice
+        title="Current model"
+        body="Billing is team-based. Feature gates read from team_billing_entitlements for the active team. Clerk Billing webhooks and plan upgrades will extend this page in a later phase."
+      />
+
+      <div className="mt-4 grid gap-2 md:grid-cols-2">
+        <DetailStat
+          label="Entitlements source"
+          value="team_billing_entitlements"
+        />
+        <DetailStat label="Next step" value="Clerk Billing + sync" />
       </div>
     </section>
   );

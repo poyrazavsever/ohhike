@@ -1,4 +1,4 @@
-import { PageHeader } from "../../../../../components/layout/page-header";
+import { DashboardHero } from "../../../../../components/dashboard/dashboard-cards";
 import { getWorkspaceShellData } from "../../../../../lib/workspace";
 import { NewOrganizationForm } from "./_components/new-organization-form";
 
@@ -6,14 +6,17 @@ export default async function NewOrganizationPage() {
   const workspace = await getWorkspaceShellData();
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Settings"
         title="New organization"
-        description="Create another organization and its first team. Available on Pro and Pro Plus plans."
+        subtitle="Create another organization and its first team. Available on Pro and Pro Plus plans."
+        mascotSrc="/maskotlar/basardin.png"
       />
 
-      <NewOrganizationForm canCreate={workspace.canCreateOrganization} />
+      <div className="mt-4">
+        <NewOrganizationForm canCreate={workspace.canCreateOrganization} />
+      </div>
     </section>
   );
 }

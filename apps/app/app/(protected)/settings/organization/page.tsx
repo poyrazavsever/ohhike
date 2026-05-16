@@ -1,4 +1,4 @@
-import { PageHeader } from "../../../../components/layout/page-header";
+import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
 import { getCurrentWorkspace } from "../../../../lib/workspace";
 import { OrganizationSettingsForm } from "./_components/organization-settings-form";
 
@@ -7,22 +7,25 @@ export default async function OrganizationSettingsPage() {
   const canUpdate = membership.role === "owner" || membership.role === "admin";
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Settings"
         title="Organization"
-        description="Update the active organization profile used across CoachOS."
+        subtitle="Update the active organization profile used across CoachOS."
+        mascotSrc="/maskotlar/gozetleme.png"
       />
 
-      <OrganizationSettingsForm
-        canUpdate={canUpdate}
-        initialValues={{
-          name: organization.name,
-          type: organization.type,
-          city: organization.city ?? "",
-          country: organization.country ?? "",
-        }}
-      />
+      <div className="mt-4">
+        <OrganizationSettingsForm
+          canUpdate={canUpdate}
+          initialValues={{
+            name: organization.name,
+            type: organization.type,
+            city: organization.city ?? "",
+            country: organization.country ?? "",
+          }}
+        />
+      </div>
     </section>
   );
 }
