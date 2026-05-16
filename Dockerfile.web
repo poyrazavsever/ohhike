@@ -9,8 +9,9 @@ FROM base AS builder
 COPY . .
 RUN pnpm install --frozen-lockfile
 
-# This is baked into static/client output; Dokploy must pass it at build time.
-ARG NEXT_PUBLIC_APP_URL
+# This is baked into static/client output. Default matches the hosted OhHike app;
+# Dokploy can still override it with a build-time argument for other domains.
+ARG NEXT_PUBLIC_APP_URL=https://app.ohhike.com
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 

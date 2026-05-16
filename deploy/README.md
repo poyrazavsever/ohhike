@@ -27,7 +27,7 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 - **Clerk 500 / Missing publishableKey:** Runtime env must include `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or `CLERK_PUBLISHABLE_KEY` with the same `pk_` value) and `CLERK_SECRET_KEY`. No quotes around values. After changing env, **restart** the container.
 - **Webhook signing secret:** Prefer Clerk's official env name `CLERK_WEBHOOK_SIGNING_SECRET=whsec_...`. The app still accepts legacy `CLERK_WEBHOOK_SECRET`, but new deployments should use the canonical name.
 - **Clerk encryption_key_missing / 502 on start:** When `CLERK_SECRET_KEY` is set in Docker, also set `CLERK_ENCRYPTION_KEY` (generate once: `openssl rand -base64 32`). Use the **same** value in local `.env.local` and Dokploy. Without it, the container entrypoint exits → **502 Bad Gateway**.
-- **Web app:** set `NEXT_PUBLIC_APP_URL` to your **coach app** URL (e.g. `https://app.example.com`), not the marketing domain. This value must be set both in Environment and as a web **Build-time Argument** because Next.js bakes it into static/client output. The web Docker build now fails if it is missing instead of silently embedding `http://localhost:3001`.
+- **Web app:** set `NEXT_PUBLIC_APP_URL` to your **coach app** URL (e.g. `https://app.example.com`), not the marketing domain. This value should be set both in Environment and as a web **Build-time Argument** because Next.js bakes it into static/client output. `Dockerfile.web` defaults to `https://app.ohhike.com` for the hosted deployment, but override it when deploying another domain.
 
 `NEXT_PUBLIC_*` values are baked into the Next.js bundle at build time.
 
