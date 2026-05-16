@@ -7,6 +7,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `001_initial_schema.sql`: Ilk migration. Extension, enum, tablo, index, storage bucket, RLS helper, tablo RLS policy ve storage policy tanimlarini icerir.
 - `002_phase1_foundation.sql`: Faz 1 foundation overlay. Mevcut `001_initial_schema.sql` dosyasini ezmeden foundation tablolari, RLS helper/policy'leri ve takim bazli `team_billing_entitlements` modelini idempotent sekilde kurar.
 - `003_sessions.sql`: Sessions modulunun minimal temelini kurar. `sessions`, `session_attendance`, `training_blocks`, index'ler ve RLS policy'lerini icerir.
+- `004_daily_data.sql`: Performance Data baslangici icin `wellness_checkins` ve `nutrition_logs` tablolarini, index'leri ve RLS policy'lerini idempotent sekilde kurar.
 
 ## Kapsam
 
@@ -38,4 +39,5 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `billing_entitlements` v3.0 dokumanindaki organization-level modeli takip eder. `docs/PricingPolicy.md` takim bazli v3.1 modeli tarif ettigi icin billing implementasyonu sirasinda ek bir `team_billing_entitlements` migration'i yazilmalidir.
 - `002_phase1_foundation.sql`, `docs/PricingPolicy.md` v3.1 kararini uygulamak icin `team_billing_entitlements` tablosunu ekler. Bundan sonraki app onboarding ve feature gate isleri takim bazli entitlement okumalidir.
 - `003_sessions.sql`, Faz 3 session akisini app tarafinda baslatmak icin incremental ve idempotent olarak tutulur. `001_initial_schema.sql` zaten uygulanmissa tablo/policy'leri ezmeden gunceller.
+- `004_daily_data.sql`, `/readiness` ve `/nutrition` route'lari icin incremental daily data katmanidir. `001_initial_schema.sql` zaten uygulanmissa tablo/policy'leri ezmeden gunceller.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.

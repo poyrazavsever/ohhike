@@ -173,6 +173,19 @@ export type UpdateSessionTrainingBlocksInput = {
   blocks: TrainingBlockInput[];
 };
 
+export type UpsertReadinessCheckinInput = {
+  athleteId: string;
+  checkinDate: string;
+  sleepQuality?: string;
+  sleepHours?: string;
+  fatigue?: string;
+  muscleSoreness?: string;
+  stress?: string;
+  mood?: string;
+  painArea?: string;
+  notes?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -218,6 +231,51 @@ function parsePositiveInteger(value: string | undefined) {
 function parseIntensity(value: string | undefined) {
   const parsed = parsePositiveInteger(value);
   return parsed !== null && parsed >= 1 && parsed <= 10 ? parsed : null;
+}
+
+function parsePositiveNumber(value: string | undefined) {
+  const cleaned = cleanString(value);
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parseScore(value: string | undefined) {
+  const parsed = parsePositiveInteger(value);
+  return parsed !== null && parsed >= 1 && parsed <= 10 ? parsed : null;
+}
+
+function calculateReadinessScore(input: UpsertReadinessCheckinInput) {
+  const positiveScores = [
+    parseScore(input.sleepQuality),
+    parseScore(input.mood),
+  ].filter((score): score is number => score !== null);
+  const negativeScores = [
+    parseScore(input.fatigue),
+    parseScore(input.muscleSoreness),
+    parseScore(input.stress),
+  ].filter((score): score is number => score !== null);
+
+  if (positiveScores.length === 0 && negativeScores.length === 0) {
+    return null;
+  }
+
+  const positiveAverage =
+    positiveScores.length > 0
+      ? positiveScores.reduce((total, score) => total + score, 0) /
+        positiveScores.length
+      : 5;
+  const negativeAverage =
+    negativeScores.length > 0
+      ? negativeScores.reduce((total, score) => total + score, 0) /
+        negativeScores.length
+      : 5;
+
+  return Math.round(((positiveAverage + (11 - negativeAverage)) / 20) * 100);
 }
 
 function isValidEmail(value: string) {
@@ -1572,6 +1630,100 @@ export async function updateSessionTrainingBlocks(
   });
 
   revalidatePath("/sessions");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function upsertReadinessCheckin(
+  input: UpsertReadinessCheckinInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const checkinDate = cleanString(input.checkinDate);
+
+  if (!checkinDate) {
+    return {
+      ok: false,
+      error: "Check-in date is required.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "physiotherapist"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and medical staff can manage readiness check-ins.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id, team_id")
+    .eq("id", input.athleteId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Please select a valid athlete.",
+    };
+  }
+
+  const { error } = await supabase.from("wellness_checkins").upsert(
+    {
+      organization_id: organization.id,
+      team_id: athlete.team_id,
+      athlete_id: athlete.id,
+      checkin_date: checkinDate,
+      sleep_quality: parseScore(input.sleepQuality),
+      sleep_hours: parsePositiveNumber(input.sleepHours),
+      fatigue: parseScore(input.fatigue),
+      muscle_soreness: parseScore(input.muscleSoreness),
+      stress: parseScore(input.stress),
+      mood: parseScore(input.mood),
+      readiness_score: calculateReadinessScore(input),
+      pain_area: cleanString(input.painArea),
+      notes: cleanString(input.notes),
+      created_by: userId,
+    },
+    {
+      onConflict: "athlete_id,checkin_date",
+    },
+  );
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "readiness_checkin.upserted",
+    entity_type: "wellness_checkin",
+  });
+
+  revalidatePath("/readiness");
   revalidatePath("/dashboard");
 
   return {

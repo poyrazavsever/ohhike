@@ -607,6 +607,117 @@ export type Database = {
         };
         Relationships: [];
       };
+      wellness_checkins: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string;
+          checkin_date: string;
+          sleep_quality: number | null;
+          sleep_hours: number | null;
+          fatigue: number | null;
+          muscle_soreness: number | null;
+          stress: number | null;
+          mood: number | null;
+          readiness_score: number | null;
+          pain_area: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id: string;
+          checkin_date?: string;
+          sleep_quality?: number | null;
+          sleep_hours?: number | null;
+          fatigue?: number | null;
+          muscle_soreness?: number | null;
+          stress?: number | null;
+          mood?: number | null;
+          readiness_score?: number | null;
+          pain_area?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string;
+          checkin_date?: string;
+          sleep_quality?: number | null;
+          sleep_hours?: number | null;
+          fatigue?: number | null;
+          muscle_soreness?: number | null;
+          stress?: number | null;
+          mood?: number | null;
+          readiness_score?: number | null;
+          pain_area?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      nutrition_logs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string;
+          log_date: string;
+          hydration_score: number | null;
+          meal_quality: number | null;
+          protein_servings: number | null;
+          carbs_timing: string | null;
+          supplements: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id: string;
+          log_date?: string;
+          hydration_score?: number | null;
+          meal_quality?: number | null;
+          protein_servings?: number | null;
+          carbs_timing?: string | null;
+          supplements?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string;
+          log_date?: string;
+          hydration_score?: number | null;
+          meal_quality?: number | null;
+          protein_servings?: number | null;
+          carbs_timing?: string | null;
+          supplements?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;

@@ -13,6 +13,7 @@ type TeamEntitlement = Tables<"team_billing_entitlements">;
 type Session = Tables<"sessions">;
 type SessionAttendance = Tables<"session_attendance">;
 type TrainingBlock = Tables<"training_blocks">;
+type WellnessCheckin = Tables<"wellness_checkins">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -37,6 +38,11 @@ export type SessionWithMeta = Session & {
   attendanceCount: number;
   attendance: SessionAttendance[];
   trainingBlocks: TrainingBlock[];
+};
+
+export type ReadinessCheckinWithAthlete = WellnessCheckin & {
+  athleteName: string;
+  teamName: string | null;
 };
 
 export type WorkspaceShellData = {
@@ -414,5 +420,77 @@ export async function getSessionsData(): Promise<{
     sessions: sessionsWithMeta,
     teams: teams ?? [],
     athletes: athletes ?? [],
+  };
+}
+
+export async function getReadinessData(): Promise<{
+  workspace: CurrentWorkspace;
+  checkins: ReadinessCheckinWithAthlete[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  teams: AthleteTeamOption[];
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: checkins, error: checkinsError },
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("wellness_checkins")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("checkin_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (checkinsError) {
+    throw new Error(checkinsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  return {
+    workspace,
+    checkins: (checkins ?? []).map((checkin) => {
+      const athlete = athletes?.find(
+        (currentAthlete) => currentAthlete.id === checkin.athlete_id,
+      );
+      const team = teams?.find((currentTeam) => currentTeam.id === checkin.team_id);
+      const athleteName = [
+        athlete?.number ? `#${athlete.number}` : null,
+        athlete?.first_name,
+        athlete?.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        ...checkin,
+        athleteName: athleteName || "Unknown athlete",
+        teamName: team?.name ?? null,
+      };
+    }),
+    athletes: athletes ?? [],
+    teams: teams ?? [],
   };
 }
