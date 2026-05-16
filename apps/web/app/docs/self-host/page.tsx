@@ -1,66 +1,54 @@
 import {
-  ContentHero,
-  ContentSection,
-  TextSection,
-} from "../../../components/marketing/content-page";
+  DocsArticle,
+  DocsSection,
+  DocsShell,
+} from "../../../components/docs/docs-shell";
+
+const setupSteps = [
+  "Prepare database, storage, public URL, and encryption settings.",
+  "Deploy the app with Docker Compose or your chosen platform.",
+  "Apply migrations and verify app, database, and storage connectivity.",
+  "Create the first admin, organization, and team.",
+  "Add AI provider keys and optional wearable provider credentials.",
+  "Define backup, restore, update, and secret rotation procedures.",
+];
 
 export default function SelfHostDocsPage() {
   return (
-    <main>
-      <ContentHero
-        badge="self-host docs"
-        title="Set up CoachOS on your own infrastructure"
-        description="The self-host path covers deployment, database setup, storage, provider keys, backups, and operational ownership."
-        image="/arkaplanlar/1861662_Image.png"
-        actions={[
-          { href: "/self-host", label: "Why Self-host" },
-          { href: "/contact", label: "Contact Us" },
-        ]}
-      />
+    <DocsShell currentPath="/docs/self-host">
+      <DocsArticle
+        title="Self-host CoachOS on infrastructure you control"
+        description="This track documents the operational path for clubs or technical teams running their own deployment."
+      >
+        <DocsSection title="Before you begin">
+          <p>
+            Self-hosting is an operations choice. Your organization controls
+            the database, storage, provider keys, backups, updates, and
+            production security posture.
+          </p>
+        </DocsSection>
 
-      <ContentSection
-        eyebrow="Setup path"
-        title="The core self-host checklist"
-        items={[
-          {
-            title: "1. System requirements",
-            description:
-              "Prepare a server, PostgreSQL/Supabase-compatible database, storage access, public URL, and encryption settings.",
-          },
-          {
-            title: "2. Deploy the app",
-            description:
-              "Use Docker Compose or your preferred deployment platform, then verify app, database, and storage connectivity.",
-          },
-          {
-            title: "3. Configure providers",
-            description:
-              "Add AI provider keys, optional wearable provider credentials, and the storage configuration your team will use.",
-          },
-          {
-            title: "4. Complete setup",
-            description:
-              "Create the first admin, organization, and team before inviting athletes or staff.",
-          },
-          {
-            title: "5. Operate safely",
-            description:
-              "Plan backup, restore, update, and secret rotation procedures before production use.",
-          },
-        ]}
-      />
+        <DocsSection title="Setup checklist">
+          <ol className="grid gap-3">
+            {setupSteps.map((step, index) => (
+              <li key={step} className="flex gap-3">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-extrabold text-primary-700">
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </DocsSection>
 
-      <TextSection title="What this guide will expand next">
-        <p>
-          The next documentation pass should add exact Docker Compose commands,
-          environment variable references, migration steps, backup examples,
-          and provider-specific setup instructions.
-        </p>
-        <p>
-          Until then, this page establishes the canonical deployment flow and
-          keeps self-host expectations aligned with the product architecture.
-        </p>
-      </TextSection>
-    </main>
+        <DocsSection title="What this guide will expand next">
+          <p>
+            The next docs pass should add exact commands, environment variable
+            references, migration notes, provider-specific setup, backup
+            examples, and update instructions.
+          </p>
+        </DocsSection>
+      </DocsArticle>
+    </DocsShell>
   );
 }

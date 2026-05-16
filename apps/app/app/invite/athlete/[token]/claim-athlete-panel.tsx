@@ -28,7 +28,7 @@ export function ClaimAthletePanel({
         setError(result.error);
         return;
       }
-      router.push("/dashboard");
+      router.push("/athlete/onboarding");
       router.refresh();
     });
   }

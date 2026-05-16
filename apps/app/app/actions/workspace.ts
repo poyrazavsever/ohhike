@@ -25,6 +25,11 @@ import {
   isOptionalSessionFocusArea,
   isTeamPatternType,
 } from "../../lib/coach-vocabulary";
+import {
+  getAthleteMetadata,
+  getLinkedAthleteForUser,
+} from "../../lib/athlete-portal";
+import { isAthleteRole, isCoachStaffRole } from "../../lib/org-roles";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
@@ -169,6 +174,14 @@ export type CreateAthleteInput = {
 
 export type UpdateAthleteInput = CreateAthleteInput & {
   athleteId: string;
+};
+
+export type CompleteAthletePortalProfileInput = {
+  firstName: string;
+  lastName?: string;
+  phone?: string;
+  position?: string;
+  dominantSide?: string;
 };
 
 export type CreateSessionInput = {
@@ -1559,6 +1572,93 @@ export async function claimAthleteProfile(
 
   revalidatePath("/athletes");
   revalidatePath("/dashboard");
+  revalidatePath("/athlete/home");
+  revalidatePath("/athlete/onboarding");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function completeAthletePortalProfile(
+  input: CompleteAthletePortalProfileInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const firstName = cleanString(input.firstName);
+  if (!firstName) {
+    return {
+      ok: false,
+      error: "First name is required.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (!isAthleteRole(membership.role)) {
+    return {
+      ok: false,
+      error: "Only athletes can complete this profile step.",
+    };
+  }
+
+  const athlete = await getLinkedAthleteForUser(userId, organization.id);
+
+  if (!athlete) {
+    return {
+      ok: false,
+      error: "No athlete profile is linked to your account yet.",
+    };
+  }
+
+  const lastName = cleanString(input.lastName);
+  const supabase = createSupabaseAdminClient();
+  const existingMeta = getAthleteMetadata(athlete);
+
+  const { error } = await supabase
+    .from("athletes")
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      display_name: [firstName, lastName].filter(Boolean).join(" "),
+      phone: cleanString(input.phone),
+      position: cleanString(input.position),
+      dominant_side: cleanString(input.dominantSide),
+      metadata: {
+        ...existingMeta,
+        profile_completed: true,
+        profile_completed_at: new Date().toISOString(),
+      },
+    })
+    .eq("id", athlete.id)
+    .eq("organization_id", organization.id)
+    .eq("user_id", userId);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "athlete.profile_completed",
+    entity_type: "athlete",
+    entity_id: athlete.id,
+  });
+
+  revalidatePath("/athlete/home");
+  revalidatePath("/athlete/onboarding");
+  revalidatePath("/athlete/profile");
 
   return {
     ok: true,
@@ -2220,31 +2320,43 @@ export async function upsertReadinessCheckin(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
 
-  if (
-    !["owner", "admin", "head_coach", "assistant_coach", "physiotherapist"].includes(
+  let athlete: { id: string; team_id: string } | null = null;
+
+  if (isAthleteRole(membership.role)) {
+    const linked = await getLinkedAthleteForUser(userId, organization.id);
+    if (!linked || linked.id !== input.athleteId) {
+      return {
+        ok: false,
+        error: "You can only submit check-ins for your own profile.",
+      };
+    }
+    athlete = { id: linked.id, team_id: linked.team_id };
+  } else if (
+    isCoachStaffRole(membership.role) &&
+    ["owner", "admin", "head_coach", "assistant_coach", "physiotherapist"].includes(
       membership.role,
     )
   ) {
+    const { data, error: athleteError } = await supabase
+      .from("athletes")
+      .select("id, team_id")
+      .eq("id", input.athleteId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (athleteError || !data) {
+      return {
+        ok: false,
+        error: "Please select a valid athlete.",
+      };
+    }
+    athlete = data;
+  } else {
     return {
       ok: false,
-      error: "Only coaches and medical staff can manage readiness check-ins.",
-    };
-  }
-
-  const supabase = createSupabaseAdminClient();
-
-  const { data: athlete, error: athleteError } = await supabase
-    .from("athletes")
-    .select("id, team_id")
-    .eq("id", input.athleteId)
-    .eq("organization_id", organization.id)
-    .maybeSingle();
-
-  if (athleteError || !athlete) {
-    return {
-      ok: false,
-      error: "Please select a valid athlete.",
+      error: "You do not have permission to manage readiness check-ins.",
     };
   }
 
@@ -2293,6 +2405,8 @@ export async function upsertReadinessCheckin(
   });
 
   revalidatePath("/readiness");
+  revalidatePath("/athlete/check-in");
+  revalidatePath("/athlete/home");
   revalidatePath("/dashboard");
 
   return {
@@ -2322,9 +2436,22 @@ export async function upsertNutritionLog(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
 
-  if (
-    ![
+  let athlete: { id: string; team_id: string } | null = null;
+
+  if (isAthleteRole(membership.role)) {
+    const linked = await getLinkedAthleteForUser(userId, organization.id);
+    if (!linked || linked.id !== input.athleteId) {
+      return {
+        ok: false,
+        error: "You can only submit nutrition logs for your own profile.",
+      };
+    }
+    athlete = { id: linked.id, team_id: linked.team_id };
+  } else if (
+    isCoachStaffRole(membership.role) &&
+    [
       "owner",
       "admin",
       "head_coach",
@@ -2332,25 +2459,24 @@ export async function upsertNutritionLog(
       "nutritionist",
     ].includes(membership.role)
   ) {
+    const { data, error: athleteError } = await supabase
+      .from("athletes")
+      .select("id, team_id")
+      .eq("id", input.athleteId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (athleteError || !data) {
+      return {
+        ok: false,
+        error: "Please select a valid athlete.",
+      };
+    }
+    athlete = data;
+  } else {
     return {
       ok: false,
-      error: "Only coaches and nutrition staff can manage nutrition logs.",
-    };
-  }
-
-  const supabase = createSupabaseAdminClient();
-
-  const { data: athlete, error: athleteError } = await supabase
-    .from("athletes")
-    .select("id, team_id")
-    .eq("id", input.athleteId)
-    .eq("organization_id", organization.id)
-    .maybeSingle();
-
-  if (athleteError || !athlete) {
-    return {
-      ok: false,
-      error: "Please select a valid athlete.",
+      error: "You do not have permission to manage nutrition logs.",
     };
   }
 
@@ -2388,6 +2514,8 @@ export async function upsertNutritionLog(
   });
 
   revalidatePath("/nutrition");
+  revalidatePath("/athlete/nutrition");
+  revalidatePath("/athlete/home");
   revalidatePath("/dashboard");
 
   return {

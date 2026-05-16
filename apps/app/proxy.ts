@@ -5,6 +5,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/clerk(.*)",
   "/login(.*)",
   "/register(.*)",
+  "/invite(.*)",
+  "/onboarding(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -16,6 +18,10 @@ export default clerkMiddleware(async (auth, req) => {
 
     return NextResponse.redirect(loginUrl);
   }
+
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", req.nextUrl.pathname);
+  return response;
 });
 
 export const config = {
