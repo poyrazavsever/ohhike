@@ -1,7 +1,7 @@
 # OhHike CoachOS — Ürün Uyumu ve Eksiklik Raporu
 
 **Tarih:** 2026-05-16  
-**Kaynaklar:** `PRD.md`, `UserFlows.md`, `DatabaseSchema.md`, `SystemArchitecture.md`, `SiteHaritasi.md`, `AgentGorevDagilimi.md`, `docs/supabase/README.md`, `apps/app` kod incelemesi.
+**Kaynaklar:** `PRD.md`, `UserFlows.md`, `DatabaseSchema.md`, `SystemArchitecture.md`, `SiteHaritasi.md`, `DurumVeYolHaritasi.md`, `docs/supabase/README.md`, `apps/app` kod incelemesi.
 
 ---
 
@@ -11,9 +11,9 @@ Genel yön **doğru**: coach-first kadro modeli, organizasyon → takım → spo
 
 **Production MVP hedefi:** Hızlıca canlıya alıp sunmak. Omurga (auth, org, takım, sporcu, seans, günlük veri, davetler, AI/Team Memory MVP) çalışır durumda.
 
-**Bilinçli ertelenenler (Post-MVP):** RLS geçişi, Clerk JWT template zorunluluğu, E2E otomasyon, wearable OAuth/sync, billing sync, PDF, self-host, AI/RAG olgunluk.
+**Bilinçli ertelenenler (Post-MVP):** RLS geçişi, Clerk JWT template zorunluluğu, E2E otomasyon, wearable OAuth/sync, PDF, self-host, AI/RAG olgunluk. Billing sync artık aktif önceliktir.
 
-**Şu anki teknik karar:** Supabase **service role (admin client)** — org/rol filtreleri uygulama katmanında. Detaylı faz planı: `docs/AgentGorevDagilimi.md`.
+**Şu anki teknik karar:** Supabase **service role (admin client)** — org/rol filtreleri uygulama katmanında. Güncel faz planı: `docs/DurumVeYolHaritasi.md`.
 
 **Test rehberi:** Kırılma noktaları ve uçtan uca (E2E) test kapıları → [§9](#9-kırılma-noktaları-breaking-points) ve [§10](#10-uçtan-uca-test-kapıları-e2e-gates).
 
@@ -83,9 +83,9 @@ Bu **bilinçli coach-first** modeldir; “her şeyi sporcu girer” değildir.
 
 **MVP risk notu:** RLS devre dışı; org izolasyonu action’lardaki `organization_id` + rol kontrollerine bağlı. Production sonrası Post-MVP’de RLS planlanır.
 
-### 4.2 Migration tablosu (`AgentGorevDagilimi.md` §6)
+### 4.2 Migration tablosu
 
-Dokümandaki §6 tablo **güncel değil**. Gerçek durum `docs/supabase/README.md` ile uyumlu:
+Güncel durum `docs/supabase/README.md` ile uyumlu:
 
 - `003_sessions.sql` … `008_team_memory.sql` **mevcut ve app route’larına bağlı**.
 - `004_wearables_files.sql` / `005_ai_rag.sql` numaraları dokümanda farklı isimlendirilmiş; dosya adları `004_daily_data`, `005_drills`, vb.
@@ -174,7 +174,7 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 ## 7. Öncelik sırası (MVP production)
 
-Canonical plan: **`docs/AgentGorevDagilimi.md`**
+Canonical plan: **`docs/DurumVeYolHaritasi.md`**
 
 | Öncelik | Faz | İçerik |
 |---------|-----|--------|
@@ -182,13 +182,13 @@ Canonical plan: **`docs/AgentGorevDagilimi.md`**
 | **Şimdi** | M2 | Davet URL’leri, billing/integrations/reports placeholder copy, hata mesajları |
 | **Şimdi** | M3 | `apps/web` link audit, temel legal/pricing |
 | İsteğe bağlı | M4 | Dashboard kartları, Resend davet, basit reports listesi |
-| **En son** | Post-MVP | RLS, E2E, wearables OAuth, billing, AI/RAG, PDF, self-host |
+| **En son** | Post-MVP | RLS, E2E, wearables OAuth, AI/RAG, PDF, self-host |
 
 ---
 
 ## 8. Sıradaki işler (özet)
 
-**Aktif geliştirme:** FAZ M1 → M2 → M3 (`AgentGorevDagilimi.md`).
+**Aktif geliştirme:** canlı auth/smoke kapatma → Billing → plan gate (`DurumVeYolHaritasi.md`).
 
 **Ertelenen (Post-MVP backlog):** RLS + Clerk JWT, Playwright, Strava/CSV, Clerk Billing, PDF, self-host, RAG kalite, Zod, org arşiv.
 
@@ -569,4 +569,4 @@ Faz 8–9 sonrası:
 
 ---
 
-*Bu dosya canlı tutulmalı; `AgentGorevDagilimi.md` içindeki tikler teknik görev takibi, bu dosya PRD/akış uyumu ve E2E kapıları için referanstır.*
+*Bu dosya canlı tutulmalı; `DurumVeYolHaritasi.md` teknik görev sırası için, bu dosya PRD/akış uyumu ve E2E kapıları için referanstır.*

@@ -1,13 +1,12 @@
 # OhHike — Yapılanlar ve Yol Haritası
 
-**Güncelleme:** 2026-05-16  
+**Güncelleme:** 2026-05-17  
 **Amaç:** Şu ana kadar tamamlanan işler, devam edenler ve öncelik sırasıyla yapılacakların tek kaynak özeti.
 
 **İlgili dokümanlar:**
 
 | Doküman | İçerik |
 |---------|--------|
-| `docs/AgentGorevDagilimi.md` | MVP fazları M1–M4, agent kuralları |
 | `docs/UrunUyumVeEksikler.md` | PRD uyumu, kırılma noktaları, E2E kapıları |
 | `docs/PricingPolicy.md` | Basic / Pro / Pro Plus plan tanımları |
 | `docs/supabase/README.md` | SQL migration `002`–`011` |
@@ -17,7 +16,7 @@
 
 ## 1. Özet
 
-OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, organizasyon, takım, sporcu, seans, günlük veri, davetler, AI raporları ve Team Memory MVP repoda. Production deploy altyapısı (Docker, Dokploy rehberi) eklendi; canlı ortamda env / Clerk / smoke testleri tamamlanmayı bekliyor.
+OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, organizasyon, takım, sporcu, seans, günlük veri, davetler, AI raporları ve Team Memory MVP repoda. Production deploy altyapısı (Docker, Dokploy rehberi) eklendi; `apps/web` canlı ve public Faz 1 sayfaları tamamlandı. `apps/app` canlıya alınmış durumda; kalan deploy riski Clerk production DNS / auth doğrulaması ve manuel smoke paketidir.
 
 **Yeni ürün önceliği (senin kararın):**
 
@@ -33,8 +32,8 @@ OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, org
 
 | Alan | Durum | Notlar |
 |------|--------|--------|
-| Clerk auth (login, register, middleware) | ✅ | `proxy.ts`, `ClerkProvider`; Docker için runtime key okuma (`lib/clerk-env.ts`) |
-| Clerk webhook → `users` | ✅ | `/api/webhooks/clerk` |
+| Clerk auth (login, register, middleware) | ✅ kod / ◐ canlı doğrulama | `proxy.ts`, `ClerkProvider`; production form için Clerk FAPI DNS (`clerk.<domain>`) doğrulanmalı |
+| Clerk webhook → `users` | ✅ kod / ◐ canlı doğrulama | `/api/webhooks/clerk`; canonical env `CLERK_WEBHOOK_SIGNING_SECRET` |
 | Onboarding (org + team) | ✅ | `app/onboarding/` |
 | Org switch, workspace context | ✅ | `lib/workspace.ts` |
 | Takım / sporcu CRUD | ✅ | Kadro modeli, coach-first |
@@ -87,15 +86,16 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 |------|--------|
 | Landing, pricing, product sayfaları | ✅ |
 | `output: "standalone"` + `Dockerfile.web` | ✅ |
-| CTA → app URL (`lib/site-url.ts`) | ✅ — boş env için build fallback düzeltildi |
-| Dokploy deploy | ⬜ senin ortamında doğrulanacak |
+| CTA → app URL (`lib/site-url.ts`) | ✅ — Docker build arg doğrulaması var |
+| Navbar/footer asset fixleri | ✅ | Linux case-sensitive logo yolu düzeltildi |
+| Dokploy deploy | ✅ | Canlı web yayında |
 
 ### 2.5 Deploy ve DevOps (kod)
 
 | Dosya / özellik | Açıklama |
 |-----------------|----------|
-| `Dockerfile` | Coach app, monorepo kökünden `pnpm turbo build --filter=app` |
-| `Dockerfile.web` | Marketing web |
+| `Dockerfile` | Coach app, monorepo kökünden `pnpm turbo build --filter=app`; `NEXT_PUBLIC_*` build arg yoksa fail-fast |
+| `Dockerfile.web` | Marketing web; hosted default app URL + build-time doğrulama |
 | `.dockerignore` | Build context |
 | `deploy/README.md` | İki Dokploy app, port 3000, env, sorun giderme |
 | `deploy/dokploy.env.app.example` | App env şablonu |
@@ -104,7 +104,8 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 | `apps/app/vercel.json` | Alternatif Vercel deploy |
 | `apps/app/lib/clerk-env.ts` | Runtime Clerk keys (Docker build inline sorunu) |
 | `apps/app/lib/production-env.ts` | Zorunlu env listesi |
-| `apps/web/lib/site-url.ts` | Geçersiz/boş `NEXT_PUBLIC_APP_URL` koruması |
+| `apps/web/lib/site-url.ts` | App URL linkleri |
+| `apps/web/scripts/validate-docker-build-env.mjs` | Web image build arg doğrulaması |
 
 **Git (son commit’ler — örnek):** Docker deploy, Clerk encryption, HOSTNAME bind, health API, Team Memory, AI reports, MVP plan revizyonu, admin client (RLS revert sonrası).
 
@@ -125,17 +126,20 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 | ID | Görev | Durum |
 |----|--------|--------|
 | M1.1 | Supabase prod + migration `002`–`011` | ⬜ panel |
-| M1.2 | Clerk prod (live keys, webhook, redirect) | ⬜ panel |
-| M1.3 | Dokploy app + web (Dockerfile, context `.`, port 3000) | ◐ build oldu; env / 502 / Clerk logları giderildi (kod); redeploy doğrulama |
+| M1.2 | Clerk prod (live keys, webhook, redirect, FAPI DNS) | ◐ live env + webhook var; login form için `clerk.<domain>` DNS/FAPI doğrulaması kapanmalı |
+| M1.3 | Dokploy app + web (Dockerfile, context `.`, port 3000) | ✅ app + web deploy yolu çalışıyor; build-time args zorunlu hale getirildi |
 | M1.4 | Manuel smoke checklist (14 akış) | ⬜ |
 
 **Deploy sırasında çözülen teknik konular (rehber + kod):**
 
 - Monorepo root + pnpm (Nixpacks `workspace:*` hatası)
-- Web build: boş `NEXT_PUBLIC_APP_URL` → `Invalid URL`
+- Web build: yanlış / eksik build-time `NEXT_PUBLIC_APP_URL`
 - App: `Missing publishableKey` → runtime Clerk env + build-args
+- App/Web: `NEXT_PUBLIC_*` değerleri runtime değil build sırasında da verilmek zorunda
 - App: `CLERK_ENCRYPTION_KEY` (middleware dynamic `secretKey`)
 - Traefik 502: container `HOSTNAME` → `0.0.0.0` bind
+- Web: Linux deploy’da case-sensitive logo yolu
+- Clerk prod: publishable key içindeki FAPI domain (`clerk.<domain>`) DNS çözümlemesi
 - App ve web aynı container port **3000** (ayrı container — çakışma yok)
 
 ### 3.2 Sunum UX (FAZ M2)
@@ -151,8 +155,8 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 
 | ID | Görev | Durum |
 |----|--------|--------|
-| M3.1 | Link audit (CTA, footer) | ⬜ |
-| M3.2 | Privacy / terms içerik | ⬜ |
+| M3.1 | Link audit (CTA, footer, GitHub) | ✅ temel audit yapıldı |
+| M3.2 | Privacy / terms içerik | ✅ temel sayfalar mevcut |
 
 ---
 
@@ -193,22 +197,22 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 
 **Kodda bugün kısmen var:** `canCreateOrganization` (Pro+), yeni team → `basic_team`; tam AI/PDF/Memory gate yok.
 
-### FAZ B3 — Diğer özellikler (Billing + planlardan sonra)
+### FAZ B3 — Canlı stabilizasyon ve gelir sonrası ürün tamamlama
 
 Sıra önerisi; ihtiyaca göre kaydırılabilir.
 
 | Sıra | Özellik | Kapsam |
 |------|---------|--------|
-| 1 | M1.4 smoke + M2 polish | Canlı stabilite |
-| 2 | M4.3 `/reports` liste (PDF yok) | DB özet |
+| 1 | Canlı auth + smoke kapatma | Clerk FAPI DNS, webhook test, register → onboarding → dashboard |
+| 2 | `/reports` liste (PDF yok) | DB özet |
 | 3 | **PDF export** | Pro gate ile; şablon + indirme |
 | 4 | **Strava** OAuth + sync | `006_wearables` üzerine |
-| 5 | M4.2 davet e-postası (Resend) | |
-| 6 | M4.1 dashboard metrik kartları | |
+| 5 | Davet e-postası (Resend) | |
+| 6 | Dashboard metrik kartları | |
 | 7 | Wearable CSV import | |
 | 8 | Session file upload pipeline | |
 | 9 | AI/RAG olgunluk (chunking, eval) | |
-| 10 | Self-host setup UI | |
+| 10 | Self-host setup UI + `api_keys` | |
 
 ### FAZ B4 — Güvenlik ve kalite (paralel veya B3 sonrası)
 
@@ -250,7 +254,7 @@ NEXT_PUBLIC_APP_URL=https://app.<domain>
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
 CLERK_SECRET_KEY=sk_live_...
 CLERK_ENCRYPTION_KEY=<openssl rand -base64 32>
-CLERK_WEBHOOK_SECRET=whsec_...
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
@@ -258,7 +262,18 @@ PORT=3000
 HOSTNAME=0.0.0.0
 ```
 
-Build-time: `NEXT_PUBLIC_*` Dokploy’da build’e geçmeli.
+Build-time arguments:
+
+```env
+NEXT_PUBLIC_APP_URL=https://app.<domain>
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/register
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
+```
 
 ### Web (Dokploy)
 
@@ -270,6 +285,7 @@ PORT=3000
 ### Doğrulama
 
 - [ ] `https://app.<domain>/api/health` → `ok: true`
+- [ ] `clerk.<domain>` DNS çözülüyor ve HTTPS cevap veriyor
 - [ ] Kayıt → onboarding → dashboard
 - [ ] Web CTA → app domain
 
@@ -308,7 +324,6 @@ deploy/
 
 docs/
   PricingPolicy.md                          → plan tanımları
-  AgentGorevDagilimi.md                     → M1–M4 fazları
   UrunUyumVeEksikler.md                     → uyum + test kapıları
   supabase/README.md                        → migration sırası
 ```
@@ -323,4 +338,4 @@ Bu dosya şu durumlarda güncellenir:
 - Yeni migration (`012_…`) eklendiğinde §2.2 ve `supabase/README.md` senkron tutulur.
 - Öncelik değişince §4 sırası revize edilir.
 
-**Son güncelleme notu:** Billing + plan gate’ler Post-MVP listesinden **aktif önceliğe** alındı (B1 → B2 → B3). M1 deploy ve smoke hâlâ canlıya çıkış kapısı olarak geçerli.
+**Son güncelleme notu:** Public web ve Docker deploy hattı canlıya alındı. Aktif sıra artık `canlı auth/smoke kapatma → B1 Billing → B2 plan gate → B3 gelir sonrası ürün tamamlama`. M1’de kalan ana kapı Clerk production FAPI DNS ve manuel smoke paketidir.
