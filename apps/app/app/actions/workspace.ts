@@ -73,6 +73,16 @@ export type CreateTeamInput = {
   weeklyTrainingCount?: string;
 };
 
+export type CreateAthleteInput = {
+  teamId: string;
+  firstName: string;
+  lastName?: string;
+  email?: string;
+  number?: string;
+  position?: string;
+  dominantSide?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -105,6 +115,10 @@ function parsePositiveInteger(value: string | undefined) {
 
   const parsed = Number.parseInt(cleaned, 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 async function canCurrentWorkspaceCreateOrganization() {
@@ -518,6 +532,103 @@ export async function createTeam(
 
   revalidatePath("/teams");
   revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createAthlete(
+  input: CreateAthleteInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const firstName = cleanString(input.firstName);
+
+  if (!firstName) {
+    return {
+      ok: false,
+      error: "Athlete first name is required.",
+    };
+  }
+
+  const email = cleanString(input.email);
+
+  if (email && !isValidEmail(email)) {
+    return {
+      ok: false,
+      error: "Please enter a valid athlete email address.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can create athletes.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("id", input.teamId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (teamError || !team) {
+    return {
+      ok: false,
+      error: "Please select a valid team.",
+    };
+  }
+
+  const lastName = cleanString(input.lastName);
+  const { error } = await supabase.from("athletes").insert({
+    organization_id: organization.id,
+    team_id: team.id,
+    first_name: firstName,
+    last_name: lastName,
+    display_name: [firstName, lastName].filter(Boolean).join(" "),
+    email,
+    number: parsePositiveInteger(input.number),
+    position: cleanString(input.position),
+    dominant_side: cleanString(input.dominantSide),
+    status: "active",
+    created_by: userId,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "athlete.created",
+    entity_type: "athlete",
+  });
+
+  revalidatePath("/athletes");
+  revalidatePath("/dashboard");
+  revalidatePath("/teams");
 
   return {
     ok: true,

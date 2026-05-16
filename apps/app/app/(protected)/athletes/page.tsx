@@ -1,5 +1,6 @@
 import { PageHeader } from "../../../components/layout/page-header";
 import { getAthletesData } from "../../../lib/workspace";
+import { CreateAthleteForm } from "./_components/create-athlete-form";
 
 function getAthleteName(firstName: string, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ");
@@ -15,7 +16,7 @@ function formatStatus(status: string | null) {
 }
 
 export default async function AthletesPage() {
-  const { workspace, athletes } = await getAthletesData();
+  const { workspace, athletes, teams } = await getAthletesData();
 
   return (
     <section className="px-5 py-8 md:px-8">
@@ -24,6 +25,8 @@ export default async function AthletesPage() {
         title="Athletes"
         description={`Track athlete profiles for ${workspace.organization.name}. Claim status, readiness and invite flows will be added on top of this list.`}
       />
+
+      <CreateAthleteForm teams={teams} />
 
       {athletes.length > 0 ? (
         <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card">

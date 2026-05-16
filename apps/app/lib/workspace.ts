@@ -27,6 +27,8 @@ export type AthleteWithTeamName = Athlete & {
   teamName: string | null;
 };
 
+export type AthleteTeamOption = Pick<Team, "id" | "name" | "sport_type">;
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -269,6 +271,7 @@ export async function getTeamsData(): Promise<{
 export async function getAthletesData(): Promise<{
   workspace: CurrentWorkspace;
   athletes: AthleteWithTeamName[];
+  teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
   const supabase = createSupabaseAdminClient();
@@ -283,7 +286,7 @@ export async function getAthletesData(): Promise<{
         .order("created_at", { ascending: true }),
       supabase
         .from("teams")
-        .select("id, name")
+        .select("id, name, sport_type")
         .eq("organization_id", organizationId),
     ]);
 
@@ -297,5 +300,6 @@ export async function getAthletesData(): Promise<{
       ...athlete,
       teamName: teams?.find((team) => team.id === athlete.team_id)?.name ?? null,
     })),
+    teams: teams ?? [],
   };
 }
