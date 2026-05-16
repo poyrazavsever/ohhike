@@ -1,0 +1,10 @@
+.git
+.cursor
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/.env.local
+**/.env*.local
+apps/web/.next
+terminals

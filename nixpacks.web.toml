@@ -1,0 +1,21 @@
+# Optional Nixpacks for marketing web. Prefer Dockerfile.web in Dokploy.
+
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+NIXPACKS_NODE_VERSION = "20"
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm-9_x"]
+cmds = ["corepack enable", "corepack prepare pnpm@9.0.0 --activate"]
+
+[phases.install]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm turbo build --filter=web"]
+
+[start]
+cmd = "cd apps/web && pnpm start"
+workingDir = "/app"

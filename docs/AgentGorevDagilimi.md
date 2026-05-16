@@ -58,10 +58,11 @@ M1.2 — Clerk production (senin panel)
   - CLERK_WEBHOOK_SECRET prod env
 
 M1.3 — App deploy (kod hazır ✓)
-  - apps/app/vercel.json (monorepo pnpm turbo build)
-  - apps/app/.env.example + GET /api/health
-  - lib/app-url.ts → davet linkleri NEXT_PUBLIC_APP_URL
-  - Vercel: Root Directory = apps/app; env listesi .env.example
+  - Vercel: apps/app/vercel.json
+  - Dokploy: iki uygulama — `Dockerfile` (app) + `Dockerfile.web` (web), context = repo kökü
+  - Env şablonları: `deploy/dokploy.env.app.example`, `deploy/dokploy.env.web.example`
+  - Rehber: `deploy/README.md`
+  - GET /api/health, apps/app/.env.example, lib/app-url.ts
 
 M1.4 — Deploy öncesi manuel smoke (⬜ işaretle)
   - Kayıt / giriş → users satırı

@@ -1,0 +1,23 @@
+# Optional Nixpacks config for Coach app only.
+# Prefer Dockerfile (./Dockerfile) in Dokploy — more reliable for monorepo.
+# Application root MUST be repo root (.), not apps/app.
+
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+NIXPACKS_NODE_VERSION = "20"
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm-9_x"]
+cmds = ["corepack enable", "corepack prepare pnpm@9.0.0 --activate"]
+
+[phases.install]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm turbo build --filter=app"]
+
+[start]
+cmd = "cd apps/app && pnpm start"
+workingDir = "/app"
