@@ -718,6 +718,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      drills: {
+        Row: {
+          id: string;
+          organization_id: string | null;
+          created_by: string | null;
+          sport_type: SportType;
+          title: string;
+          category: string | null;
+          description: string | null;
+          objective: string | null;
+          duration_min: number | null;
+          difficulty: string | null;
+          player_count_min: number | null;
+          player_count_max: number | null;
+          area_setup: string | null;
+          equipment: string | null;
+          instructions: string | null;
+          coaching_points: string | null;
+          tags: string[] | null;
+          is_system_drill: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string | null;
+          created_by?: string | null;
+          sport_type?: SportType;
+          title: string;
+          category?: string | null;
+          description?: string | null;
+          objective?: string | null;
+          duration_min?: number | null;
+          difficulty?: string | null;
+          player_count_min?: number | null;
+          player_count_max?: number | null;
+          area_setup?: string | null;
+          equipment?: string | null;
+          instructions?: string | null;
+          coaching_points?: string | null;
+          tags?: string[] | null;
+          is_system_drill?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string | null;
+          created_by?: string | null;
+          sport_type?: SportType;
+          title?: string;
+          category?: string | null;
+          description?: string | null;
+          objective?: string | null;
+          duration_min?: number | null;
+          difficulty?: string | null;
+          player_count_min?: number | null;
+          player_count_max?: number | null;
+          area_setup?: string | null;
+          equipment?: string | null;
+          instructions?: string | null;
+          coaching_points?: string | null;
+          tags?: string[] | null;
+          is_system_drill?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;

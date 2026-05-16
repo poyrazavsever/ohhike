@@ -197,6 +197,23 @@ export type UpsertNutritionLogInput = {
   notes?: string;
 };
 
+export type CreateDrillInput = {
+  title: string;
+  sportType: SportType;
+  category?: string;
+  description?: string;
+  objective?: string;
+  durationMin?: string;
+  difficulty?: string;
+  playerCountMin?: string;
+  playerCountMax?: string;
+  areaSetup?: string;
+  equipment?: string;
+  instructions?: string;
+  coachingPoints?: string;
+  tags?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -287,6 +304,20 @@ function calculateReadinessScore(input: UpsertReadinessCheckinInput) {
       : 5;
 
   return Math.round(((positiveAverage + (11 - negativeAverage)) / 20) * 100);
+}
+
+function parseTags(value: string | undefined) {
+  const cleaned = cleanString(value);
+
+  if (!cleaned) {
+    return [];
+  }
+
+  return cleaned
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 12);
 }
 
 function isValidEmail(value: string) {
@@ -1831,6 +1862,90 @@ export async function upsertNutritionLog(
 
   revalidatePath("/nutrition");
   revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createDrill(
+  input: CreateDrillInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const title = cleanString(input.title);
+
+  if (!title) {
+    return {
+      ok: false,
+      error: "Drill title is required.",
+    };
+  }
+
+  if (!isSportType(input.sportType)) {
+    return {
+      ok: false,
+      error: "Invalid sport type.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can create drills.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("drills").insert({
+    organization_id: organization.id,
+    created_by: userId,
+    sport_type: input.sportType,
+    title,
+    category: cleanString(input.category),
+    description: cleanString(input.description),
+    objective: cleanString(input.objective),
+    duration_min: parsePositiveInteger(input.durationMin),
+    difficulty: cleanString(input.difficulty),
+    player_count_min: parsePositiveInteger(input.playerCountMin),
+    player_count_max: parsePositiveInteger(input.playerCountMax),
+    area_setup: cleanString(input.areaSetup),
+    equipment: cleanString(input.equipment),
+    instructions: cleanString(input.instructions),
+    coaching_points: cleanString(input.coachingPoints),
+    tags: parseTags(input.tags),
+    is_system_drill: false,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "drill.created",
+    entity_type: "drill",
+  });
+
+  revalidatePath("/drills");
+  revalidatePath("/training-planner");
 
   return {
     ok: true,

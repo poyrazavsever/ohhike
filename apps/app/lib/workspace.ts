@@ -15,6 +15,7 @@ type SessionAttendance = Tables<"session_attendance">;
 type TrainingBlock = Tables<"training_blocks">;
 type WellnessCheckin = Tables<"wellness_checkins">;
 type NutritionLog = Tables<"nutrition_logs">;
+type Drill = Tables<"drills">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -90,6 +91,10 @@ export type CalendarSession = Session & {
 export type TrainingPlannerSession = Session & {
   teamName: string | null;
   trainingBlocks: TrainingBlock[];
+};
+
+export type DrillWithUsage = Drill & {
+  usageCount: number;
 };
 
 export type WorkspaceShellData = {
@@ -1058,6 +1063,54 @@ export async function getTrainingPlannerData(): Promise<{
         ) ?? 0,
       completedBlocks:
         trainingBlocks?.filter((block) => block.completed).length ?? 0,
+    },
+  };
+}
+
+export async function getDrillsData(): Promise<{
+  workspace: CurrentWorkspace;
+  drills: DrillWithUsage[];
+  totals: {
+    drills: number;
+    systemDrills: number;
+    customDrills: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [{ data: drills, error: drillsError }, { data: trainingBlocks }] =
+    await Promise.all([
+      supabase
+        .from("drills")
+        .select("*")
+        .or(`organization_id.eq.${organizationId},is_system_drill.eq.true`)
+        .order("created_at", { ascending: false }),
+      supabase.from("training_blocks").select("drill_id").not("drill_id", "is", null),
+    ]);
+
+  if (drillsError) {
+    throw new Error(drillsError.message);
+  }
+
+  const drillsWithUsage =
+    drills?.map((drill) => ({
+      ...drill,
+      usageCount:
+        trainingBlocks?.filter((block) => block.drill_id === drill.id).length ??
+        0,
+    })) ?? [];
+
+  return {
+    workspace,
+    drills: drillsWithUsage,
+    totals: {
+      drills: drillsWithUsage.length,
+      systemDrills: drillsWithUsage.filter((drill) => drill.is_system_drill)
+        .length,
+      customDrills: drillsWithUsage.filter((drill) => !drill.is_system_drill)
+        .length,
     },
   };
 }
