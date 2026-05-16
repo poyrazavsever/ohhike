@@ -19,9 +19,22 @@ export function getClerkSecretKey(): string {
   return readEnv("CLERK_SECRET_KEY") ?? "";
 }
 
+export function getClerkEncryptionKey(): string {
+  return readEnv("CLERK_ENCRYPTION_KEY") ?? "";
+}
+
+/**
+ * Clerk requires CLERK_ENCRYPTION_KEY when passing secretKey via middleware (Docker/runtime).
+ * Local dev: only publishableKey is passed; CLERK_SECRET_KEY is read from .env by @clerk/nextjs.
+ */
 export function getClerkMiddlewareKeys() {
-  return {
-    publishableKey: getClerkPublishableKey(),
-    secretKey: getClerkSecretKey(),
-  };
+  const publishableKey = getClerkPublishableKey();
+  const secretKey = getClerkSecretKey();
+  const encryptionKey = getClerkEncryptionKey();
+
+  if (secretKey && encryptionKey) {
+    return { publishableKey, secretKey };
+  }
+
+  return { publishableKey };
 }

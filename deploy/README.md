@@ -24,7 +24,8 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 - Use `deploy/dokploy.env.app.example` for the **app** service.
 - Use `deploy/dokploy.env.web.example` for the **web** service.
 - In Dokploy, enable **pass env to build** (or build-time env) so `NEXT_PUBLIC_*` are available during `docker build`.
-- **Clerk 500 / Missing publishableKey:** Runtime env must include `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or `CLERK_PUBLISHABLE_KEY` with the same `pk_` value) and `CLERK_SECRET_KEY`. No quotes around values. After changing env, **restart** the container. The app reads Clerk keys at runtime (not only from the Docker build).
+- **Clerk 500 / Missing publishableKey:** Runtime env must include `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or `CLERK_PUBLISHABLE_KEY` with the same `pk_` value) and `CLERK_SECRET_KEY`. No quotes around values. After changing env, **restart** the container.
+- **Clerk encryption_key_missing / 502 on start:** When `CLERK_SECRET_KEY` is set in Docker, also set `CLERK_ENCRYPTION_KEY` (generate once: `openssl rand -base64 32`). Use the **same** value in local `.env.local` and Dokploy. Without it, the container entrypoint exits → **502 Bad Gateway**.
 - **Web app:** set `NEXT_PUBLIC_APP_URL` to your **coach app** URL (e.g. `https://app.example.com`), not the marketing domain. If this is missing at build time, the site may build but “Get Started” links fall back to `http://localhost:3001`.
 
 `NEXT_PUBLIC_*` values are baked into the Next.js bundle at build time.
