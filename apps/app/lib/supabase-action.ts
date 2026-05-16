@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createSupabaseServerClient } from "./supabase-server";
+import { createSupabaseAdminClient } from "./supabase-admin";
 
 export const SUPABASE_RLS_SETUP_HINT =
   "Database access was denied. In Clerk, add a JWT template named \"supabase\" for Supabase, and ensure the user is signed in.";
@@ -24,7 +24,7 @@ export function formatSupabaseActionError(
   return message;
 }
 
-/** Default Supabase client for server actions (RLS enforced via Clerk JWT). */
+/** MVP: service role client (RLS migration deferred). */
 export async function createActionSupabase() {
-  return createSupabaseServerClient();
+  return createSupabaseAdminClient();
 }
