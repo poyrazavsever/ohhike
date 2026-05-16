@@ -51,6 +51,24 @@ export type NutritionLogWithAthlete = NutritionLog & {
   teamName: string | null;
 };
 
+export type LoadRecoveryTeamSummary = {
+  teamId: string;
+  teamName: string;
+  totalLoad: number;
+  attendanceCount: number;
+  averageRpe: number | null;
+};
+
+export type LoadRecoveryAthleteSummary = {
+  athleteId: string;
+  athleteName: string;
+  teamName: string | null;
+  totalLoad: number;
+  averageReadiness: number | null;
+  latestFatigue: number | null;
+  painReports: number;
+};
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -570,5 +588,182 @@ export async function getNutritionData(): Promise<{
     }),
     athletes: athletes ?? [],
     teams: teams ?? [],
+  };
+}
+
+export async function getLoadRecoveryData(): Promise<{
+  workspace: CurrentWorkspace;
+  teamSummaries: LoadRecoveryTeamSummary[];
+  athleteSummaries: LoadRecoveryAthleteSummary[];
+  totals: {
+    sessions: number;
+    attendanceEntries: number;
+    totalLoad: number;
+    averageReadiness: number | null;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+
+  const [
+    { data: sessions, error: sessionsError },
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+    { data: checkins, error: checkinsError },
+  ] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("scheduled_at", since.toISOString())
+      .order("scheduled_at", { ascending: false }),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("wellness_checkins")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("checkin_date", since.toISOString().slice(0, 10))
+      .order("checkin_date", { ascending: false }),
+  ]);
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (checkinsError) {
+    throw new Error(checkinsError.message);
+  }
+
+  const sessionIds = (sessions ?? []).map((session) => session.id);
+  const { data: attendance, error: attendanceError } =
+    sessionIds.length > 0
+      ? await supabase
+          .from("session_attendance")
+          .select("*")
+          .in("session_id", sessionIds)
+      : { data: [], error: null };
+
+  if (attendanceError) {
+    throw new Error(attendanceError.message);
+  }
+
+  const teamSummaries =
+    teams?.map((team) => {
+      const teamSessionIds =
+        sessions
+          ?.filter((session) => session.team_id === team.id)
+          .map((session) => session.id) ?? [];
+      const teamAttendance =
+        attendance?.filter((entry) => teamSessionIds.includes(entry.session_id)) ??
+        [];
+      const rpeValues = teamAttendance
+        .map((entry) => entry.rpe)
+        .filter((rpe): rpe is number => rpe !== null);
+      const totalLoad = teamAttendance.reduce(
+        (total, entry) =>
+          total + (entry.minutes_played ?? 0) * (entry.rpe ?? 0),
+        0,
+      );
+
+      return {
+        teamId: team.id,
+        teamName: team.name,
+        totalLoad,
+        attendanceCount: teamAttendance.length,
+        averageRpe:
+          rpeValues.length > 0
+            ? Math.round(
+                rpeValues.reduce((total, rpe) => total + rpe, 0) /
+                  rpeValues.length,
+              )
+            : null,
+      };
+    }) ?? [];
+
+  const athleteSummaries =
+    athletes?.map((athlete) => {
+      const athleteAttendance =
+        attendance?.filter((entry) => entry.athlete_id === athlete.id) ?? [];
+      const athleteCheckins =
+        checkins?.filter((checkin) => checkin.athlete_id === athlete.id) ?? [];
+      const readinessValues = athleteCheckins
+        .map((checkin) => checkin.readiness_score)
+        .filter((score): score is number => score !== null);
+      const totalLoad = athleteAttendance.reduce(
+        (total, entry) =>
+          total + (entry.minutes_played ?? 0) * (entry.rpe ?? 0),
+        0,
+      );
+      const team = teams?.find((currentTeam) => currentTeam.id === athlete.team_id);
+      const athleteName = [
+        athlete.number ? `#${athlete.number}` : null,
+        athlete.first_name,
+        athlete.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        athleteId: athlete.id,
+        athleteName,
+        teamName: team?.name ?? null,
+        totalLoad,
+        averageReadiness:
+          readinessValues.length > 0
+            ? Math.round(
+                readinessValues.reduce((total, score) => total + score, 0) /
+                  readinessValues.length,
+              )
+            : null,
+        latestFatigue: athleteCheckins[0]?.fatigue ?? null,
+        painReports: athleteCheckins.filter((checkin) => checkin.pain_area).length,
+      };
+    }) ?? [];
+
+  const readinessValues =
+    checkins
+      ?.map((checkin) => checkin.readiness_score)
+      .filter((score): score is number => score !== null) ?? [];
+  const totalLoad = teamSummaries.reduce(
+    (total, summary) => total + summary.totalLoad,
+    0,
+  );
+
+  return {
+    workspace,
+    teamSummaries,
+    athleteSummaries: athleteSummaries.sort(
+      (first, second) => second.totalLoad - first.totalLoad,
+    ),
+    totals: {
+      sessions: sessions?.length ?? 0,
+      attendanceEntries: attendance?.length ?? 0,
+      totalLoad,
+      averageReadiness:
+        readinessValues.length > 0
+          ? Math.round(
+              readinessValues.reduce((total, score) => total + score, 0) /
+                readinessValues.length,
+            )
+          : null,
+    },
   };
 }
