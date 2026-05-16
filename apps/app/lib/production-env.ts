@@ -1,3 +1,5 @@
+import { getClerkPublishableKey } from "./clerk-env";
+
 /** Required for production deploy (apps/app). Secrets are presence-only checks. */
 export const PRODUCTION_ENV_KEYS = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -16,5 +18,10 @@ export const PRODUCTION_ENV_OPTIONAL = [
 ] as const;
 
 export function getMissingProductionEnvKeys(): string[] {
-  return PRODUCTION_ENV_KEYS.filter((key) => !process.env[key]?.trim());
+  return PRODUCTION_ENV_KEYS.filter((key) => {
+    if (key === "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") {
+      return !getClerkPublishableKey();
+    }
+    return !process.env[key]?.trim();
+  });
 }

@@ -28,6 +28,9 @@ ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
 
+# Warn when public env vars are missing at build (runtime env still works via lib/clerk-env.ts).
+RUN node apps/app/scripts/validate-docker-build-env.mjs || true
+
 RUN pnpm turbo build --filter=app
 
 FROM base AS runner
@@ -39,8 +42,8 @@ WORKDIR /app
 COPY --from=builder /app/apps/app/public ./apps/app/public
 COPY --from=builder /app/apps/app/.next/standalone ./
 COPY --from=builder /app/apps/app/.next/static ./apps/app/.next/static
+COPY deploy/docker-entrypoint-app.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 3000
-# Docker/Dokploy sets HOSTNAME to the container id; Next binds to that and Traefik gets 502.
-# Force 0.0.0.0 at process start (do not rely on ENV HOSTNAME in the image).
-CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node apps/app/server.js"]
+ENTRYPOINT ["/entrypoint.sh"]

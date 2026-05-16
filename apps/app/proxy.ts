@@ -1,6 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { getClerkMiddlewareKeys } from "./lib/clerk-env";
+
 const isPublicRoute = createRouteMatcher([
   "/api/health",
   "/api/webhooks/clerk(.*)",
@@ -10,20 +12,23 @@ const isPublicRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  const { isAuthenticated } = await auth();
+export default clerkMiddleware(
+  async (auth, req) => {
+    const { isAuthenticated } = await auth();
 
-  if (!isAuthenticated && !isPublicRoute(req)) {
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("redirect_url", req.url);
+    if (!isAuthenticated && !isPublicRoute(req)) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect_url", req.url);
 
-    return NextResponse.redirect(loginUrl);
-  }
+      return NextResponse.redirect(loginUrl);
+    }
 
-  const response = NextResponse.next();
-  response.headers.set("x-pathname", req.nextUrl.pathname);
-  return response;
-});
+    const response = NextResponse.next();
+    response.headers.set("x-pathname", req.nextUrl.pathname);
+    return response;
+  },
+  () => getClerkMiddlewareKeys(),
+);
 
 export const config = {
   matcher: [
