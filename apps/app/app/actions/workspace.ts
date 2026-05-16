@@ -28,6 +28,7 @@ import {
 import {
   getAthleteMetadata,
   getLinkedAthleteForUser,
+  isAthleteProfileComplete,
 } from "../../lib/athlete-portal";
 import { isAthleteRole, isCoachStaffRole } from "../../lib/org-roles";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
@@ -110,6 +111,8 @@ export type WorkspaceActionResult =
       ok: true;
       /** Present when creating an athlete profile claim link. */
       claimUrl?: string;
+      /** Present after switching the active organization. */
+      redirectTo?: string;
     }
   | {
       ok: false;
@@ -509,6 +512,24 @@ async function canCurrentWorkspaceCreateOrganization() {
   );
 }
 
+async function resolvePostOrganizationSwitchPath(
+  userId: string,
+  organizationId: string,
+  role: OrganizationRole,
+): Promise<string> {
+  if (!isAthleteRole(role)) {
+    return "/dashboard";
+  }
+
+  const athlete = await getLinkedAthleteForUser(userId, organizationId);
+
+  if (!athlete || !isAthleteProfileComplete(athlete)) {
+    return "/athlete/onboarding";
+  }
+
+  return "/athlete/home";
+}
+
 export async function switchActiveOrganization(
   organizationId: string,
 ): Promise<WorkspaceActionResult> {
@@ -525,7 +546,7 @@ export async function switchActiveOrganization(
 
   const { data: membership, error } = await supabase
     .from("organization_members")
-    .select("id")
+    .select("id, role")
     .eq("user_id", userId)
     .eq("organization_id", organizationId)
     .eq("is_active", true)
@@ -545,10 +566,17 @@ export async function switchActiveOrganization(
     path: "/",
   });
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+
+  const redirectTo = await resolvePostOrganizationSwitchPath(
+    userId,
+    organizationId,
+    membership.role,
+  );
 
   return {
     ok: true,
+    redirectTo,
   };
 }
 

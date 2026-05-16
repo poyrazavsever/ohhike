@@ -5,7 +5,7 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { switchActiveOrganization } from "../../app/actions/workspace";
 import { isAthleteRole } from "../../lib/org-roles";
@@ -197,22 +197,27 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSwitching, setIsSwitching] = useState(false);
 
-  function handleOrganizationSwitch(organizationId: string) {
+  async function handleOrganizationSwitch(organizationId: string) {
     setError(null);
+    setIsSwitching(true);
 
-    startTransition(async () => {
+    try {
       const result = await switchActiveOrganization(organizationId);
 
       if (!result.ok) {
         setError(result.error);
+        setIsSwitching(false);
         return;
       }
 
       setIsOpen(false);
-      router.refresh();
-    });
+      router.replace(result.redirectTo ?? "/dashboard");
+    } catch {
+      setError("Could not switch organization. Please try again.");
+      setIsSwitching(false);
+    }
   }
 
   return (
@@ -235,7 +240,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
               <button
                 key={organization.id}
                 type="button"
-                disabled={organization.isActive || isPending}
+                disabled={organization.isActive || isSwitching}
                 onClick={() => handleOrganizationSwitch(organization.id)}
                 className={
                   organization.isActive
