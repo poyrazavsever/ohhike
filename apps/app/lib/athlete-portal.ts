@@ -12,7 +12,7 @@ import {
   pathnameMatchesPrefix,
   COACH_ATHLETE_INSIGHT_PATHS,
 } from "./portal-routes";
-import { createWorkspaceSupabase } from "./supabase-action";
+import { createSupabaseAdminClient } from "./supabase-admin";
 import {
   ACTIVE_ORGANIZATION_COOKIE,
   getCurrentWorkspace,
@@ -45,7 +45,7 @@ export async function getLinkedAthleteForUser(
   userId: string,
   organizationId: string,
 ): Promise<AthleteRow | null> {
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase
     .from("athletes")
@@ -88,7 +88,7 @@ export async function getAthletePortalContext(): Promise<AthletePortalContext> {
     redirect("/onboarding");
   }
 
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const { data: team } = await supabase
     .from("teams")
     .select("name")
@@ -110,7 +110,7 @@ export async function requireAthletePortalAccess(pathname: string) {
 
   const cookieStore = await cookies();
   const organizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
 
   const { data: memberships } = await supabase
     .from("organization_members")
@@ -191,7 +191,7 @@ export async function getAthleteOnboardingPageData(): Promise<{
 
   let teamName: string | null = null;
   if (athlete) {
-    const supabase = await createWorkspaceSupabase();
+    const supabase = createSupabaseAdminClient();
     const { data: team } = await supabase
       .from("teams")
       .select("name")
@@ -217,7 +217,7 @@ export async function getAthleteHomeData(): Promise<{
   sevenDayLoad: number;
 }> {
   const portal = await getAthletePortalContext();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
@@ -274,7 +274,7 @@ export async function getAthletePersonalTrainingsData(): Promise<{
   trainings: Tables<"personal_trainings">[];
 }> {
   const portal = await getAthletePortalContext();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
 
   const { data: trainings, error } = await supabase
     .from("personal_trainings")

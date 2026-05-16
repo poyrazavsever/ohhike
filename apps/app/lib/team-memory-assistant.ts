@@ -13,7 +13,7 @@ import type {
   TeamMemoryQueryContext,
 } from "./ai/team-memory/types";
 import { formatOrganizationRole, isAthleteRole } from "./org-roles";
-import { createWorkspaceSupabase } from "./supabase-action";
+import { createSupabaseAdminClient } from "./supabase-admin";
 
 export type TeamMemoryThreadRow = {
   id: string;
@@ -70,7 +70,7 @@ export async function runTeamMemoryQuery(input: {
     throw new Error("Athletes cannot use the Team Memory assistant.");
   }
 
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const filters = {
     teamId: input.teamId ?? null,
     athleteId: input.athleteId ?? null,

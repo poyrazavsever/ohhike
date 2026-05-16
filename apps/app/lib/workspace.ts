@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import type { OrganizationRole, Tables } from "./database.types";
 import { canManageStaffInvites } from "./org-roles";
-import { createWorkspaceSupabase } from "./supabase-action";
+import { createSupabaseAdminClient } from "./supabase-admin";
 
 type Organization = Tables<"organizations">;
 type OrganizationMember = Tables<"organization_members">;
@@ -163,7 +163,7 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
     redirect("/login");
   }
 
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const cookieStore = await cookies();
   const activeOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
 
@@ -208,7 +208,7 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
 
 export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const { userId } = await auth();
 
   const { data: team, error: teamError } = await supabase
@@ -288,7 +288,7 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
 
 export async function getDashboardData() {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [teamsResult, athletesCountResult, entitlementsResult] =
@@ -333,7 +333,7 @@ export async function getTeamsData(): Promise<{
   teams: TeamWithEntitlement[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: teams, error: teamsError }, { data: entitlements }] =
@@ -386,7 +386,7 @@ export async function getAthletesData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: athletes, error: athletesError }, { data: teams }] =
@@ -423,7 +423,7 @@ export async function getSessionsData(): Promise<{
   athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -530,7 +530,7 @@ export async function getSessionDetailData(sessionId: string): Promise<{
   > | null;
 } | null> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const { data: session, error: sessionError } = await supabase
@@ -625,7 +625,7 @@ export async function getReadinessData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -697,7 +697,7 @@ export async function getNutritionData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -769,7 +769,7 @@ export async function getPersonalTrainingsData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -842,7 +842,7 @@ export async function getStaffSettingsData(): Promise<{
   canManage: boolean;
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
   const canManage = canManageStaffInvites(workspace.membership.role);
 
@@ -933,7 +933,7 @@ export async function getLoadRecoveryData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -1109,7 +1109,7 @@ export async function getAthleteDashboardData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -1252,7 +1252,7 @@ export async function getCalendarData(): Promise<{
   sessions: CalendarSession[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1302,7 +1302,7 @@ export async function getTrainingPlannerData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1379,7 +1379,7 @@ export async function getDrillsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: drills, error: drillsError }, { data: trainingBlocks }] =
@@ -1429,7 +1429,7 @@ export async function getWearablesData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1530,7 +1530,7 @@ export async function getAiReportsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1626,7 +1626,7 @@ export async function getAiReportDetailData(
   report: AiReportWithMeta;
 } | null> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const { data: report, error: reportError } = await supabase
@@ -1707,7 +1707,7 @@ export async function getTeamMemoryData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1825,7 +1825,7 @@ export async function getTeamMemoryAssistantData(
   >;
 }> {
   const { workspace, teams, athletes } = await getTeamMemoryData();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const { data: threads, error: threadsError } = await supabase
@@ -1890,7 +1890,7 @@ export async function getReportsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
   const organizationId = workspace.organization.id;
 
   const [

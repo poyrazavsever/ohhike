@@ -1,7 +1,7 @@
-import { createWorkspaceSupabase } from "./supabase-action";
+import { createSupabaseAdminClient } from "./supabase-admin";
 
 export async function hasActiveOrganizationMembership(userId: string) {
-  const supabase = await createWorkspaceSupabase();
+  const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase
     .from("organization_members")
