@@ -1,4 +1,9 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getAiReportsData } from "../../../lib/workspace";
 import { CreateAiReportForm } from "./_components/create-ai-report-form";
 
@@ -24,117 +29,98 @@ export default async function AiReportsPage() {
   const { workspace, reports, teams, athletes, sessions, totals } =
     await getAiReportsData();
 
-  const cards = [
+  const metricCards = [
     {
       label: "Reports",
       value: totals.reports.toString(),
       helper: "Saved report records",
+      icon: "solar:document-add-bold",
     },
     {
       label: "Session",
       value: totals.sessionReports.toString(),
       helper: "Linked to sessions",
+      icon: "solar:clipboard-list-bold",
+      tone: "info" as const,
     },
     {
       label: "Athlete",
       value: totals.athleteReports.toString(),
       helper: "Linked to athletes",
+      icon: "solar:user-id-bold",
+      tone: "secondary" as const,
     },
     {
       label: "Team",
       value: totals.teamReports.toString(),
       helper: "Linked to teams",
+      icon: "solar:users-group-rounded-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="AI Intelligence"
         title="AI Reports"
-        description={`AI report registry for ${workspace.organization.name}.`}
+        subtitle={`AI report registry for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/basardin.png"
       />
 
-      <CreateAiReportForm teams={teams} athletes={athletes} sessions={sessions} />
+      <div className="mt-4">
+        <CreateAiReportForm teams={teams} athletes={athletes} sessions={sessions} />
+      </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {reports.length > 0 ? (
-        <div className="mt-6 grid gap-4">
+        <div className="mt-4 grid gap-3">
           {reports.map((report) => (
             <article
               key={report.id}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {report.title}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {formatReportType(report.report_type)} ·{" "}
                     {formatDate(report.created_at)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                   {report.model_provider ?? "manual"}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Team
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {report.teamName ?? "Not linked"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Athlete
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {report.athleteName ?? "Not linked"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Session
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {report.sessionTitle ?? "Not linked"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Confidence
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {report.confidence_score ?? "Draft"}
-                  </p>
-                </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-4">
+                <DetailStat
+                  label="Team"
+                  value={report.teamName ?? "Not linked"}
+                />
+                <DetailStat
+                  label="Athlete"
+                  value={report.athleteName ?? "Not linked"}
+                />
+                <DetailStat
+                  label="Session"
+                  value={report.sessionTitle ?? "Not linked"}
+                />
+                <DetailStat
+                  label="Confidence"
+                  value={report.confidence_score ?? "Draft"}
+                />
               </div>
 
               {report.summary ? (
-                <p className="mt-4 text-sm font-medium leading-6 text-muted-foreground">
+                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
                   {report.summary}
                 </p>
               ) : null}
@@ -142,14 +128,11 @@ export default async function AiReportsPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No AI reports yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Add a report draft to prepare the AI analysis workflow.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No AI reports yet"
+          description="Add a report draft to prepare the AI analysis workflow."
+          icon="solar:document-add-bold"
+        />
       )}
     </section>
   );
