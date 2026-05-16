@@ -14,6 +14,7 @@ type Session = Tables<"sessions">;
 type SessionAttendance = Tables<"session_attendance">;
 type TrainingBlock = Tables<"training_blocks">;
 type WellnessCheckin = Tables<"wellness_checkins">;
+type NutritionLog = Tables<"nutrition_logs">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -41,6 +42,11 @@ export type SessionWithMeta = Session & {
 };
 
 export type ReadinessCheckinWithAthlete = WellnessCheckin & {
+  athleteName: string;
+  teamName: string | null;
+};
+
+export type NutritionLogWithAthlete = NutritionLog & {
   athleteName: string;
   teamName: string | null;
 };
@@ -486,6 +492,78 @@ export async function getReadinessData(): Promise<{
 
       return {
         ...checkin,
+        athleteName: athleteName || "Unknown athlete",
+        teamName: team?.name ?? null,
+      };
+    }),
+    athletes: athletes ?? [],
+    teams: teams ?? [],
+  };
+}
+
+export async function getNutritionData(): Promise<{
+  workspace: CurrentWorkspace;
+  logs: NutritionLogWithAthlete[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  teams: AthleteTeamOption[];
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: logs, error: logsError },
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("nutrition_logs")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("log_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (logsError) {
+    throw new Error(logsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  return {
+    workspace,
+    logs: (logs ?? []).map((log) => {
+      const athlete = athletes?.find(
+        (currentAthlete) => currentAthlete.id === log.athlete_id,
+      );
+      const team = teams?.find((currentTeam) => currentTeam.id === log.team_id);
+      const athleteName = [
+        athlete?.number ? `#${athlete.number}` : null,
+        athlete?.first_name,
+        athlete?.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        ...log,
         athleteName: athleteName || "Unknown athlete",
         teamName: team?.name ?? null,
       };

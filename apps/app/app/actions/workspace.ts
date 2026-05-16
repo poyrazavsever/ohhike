@@ -186,6 +186,17 @@ export type UpsertReadinessCheckinInput = {
   notes?: string;
 };
 
+export type UpsertNutritionLogInput = {
+  athleteId: string;
+  logDate: string;
+  hydrationScore?: string;
+  mealQuality?: string;
+  proteinServings?: string;
+  carbsTiming?: string;
+  supplements?: string;
+  notes?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -1724,6 +1735,101 @@ export async function upsertReadinessCheckin(
   });
 
   revalidatePath("/readiness");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function upsertNutritionLog(
+  input: UpsertNutritionLogInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const logDate = cleanString(input.logDate);
+
+  if (!logDate) {
+    return {
+      ok: false,
+      error: "Log date is required.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    ![
+      "owner",
+      "admin",
+      "head_coach",
+      "assistant_coach",
+      "nutritionist",
+    ].includes(membership.role)
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and nutrition staff can manage nutrition logs.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id, team_id")
+    .eq("id", input.athleteId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Please select a valid athlete.",
+    };
+  }
+
+  const { error } = await supabase.from("nutrition_logs").upsert(
+    {
+      organization_id: organization.id,
+      team_id: athlete.team_id,
+      athlete_id: athlete.id,
+      log_date: logDate,
+      hydration_score: parseScore(input.hydrationScore),
+      meal_quality: parseScore(input.mealQuality),
+      protein_servings: parsePositiveInteger(input.proteinServings),
+      carbs_timing: cleanString(input.carbsTiming),
+      supplements: cleanString(input.supplements),
+      notes: cleanString(input.notes),
+      created_by: userId,
+    },
+    {
+      onConflict: "athlete_id,log_date",
+    },
+  );
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "nutrition_log.upserted",
+    entity_type: "nutrition_log",
+  });
+
+  revalidatePath("/nutrition");
   revalidatePath("/dashboard");
 
   return {
