@@ -503,6 +503,87 @@ export async function getSessionsData(): Promise<{
   };
 }
 
+export async function getSessionDetailData(sessionId: string): Promise<{
+  workspace: CurrentWorkspace;
+  session: SessionWithMeta;
+  teams: AthleteTeamOption[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+} | null> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("id", sessionId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (sessionError) {
+    throw new Error(sessionError.message);
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  const [
+    { data: teams, error: teamsError },
+    { data: athletes, error: athletesError },
+    { data: attendance, error: attendanceError },
+    { data: trainingBlocks, error: trainingBlocksError },
+  ] = await Promise.all([
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase.from("session_attendance").select("*").eq("session_id", session.id),
+    supabase
+      .from("training_blocks")
+      .select("*")
+      .eq("session_id", session.id)
+      .order("order_index", { ascending: true }),
+  ]);
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (attendanceError) {
+    throw new Error(attendanceError.message);
+  }
+
+  if (trainingBlocksError) {
+    throw new Error(trainingBlocksError.message);
+  }
+
+  const sessionWithMeta: SessionWithMeta = {
+    ...session,
+    teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
+    attendanceCount: attendance?.length ?? 0,
+    attendance: attendance ?? [],
+    trainingBlocks: trainingBlocks ?? [],
+  };
+
+  return {
+    workspace,
+    session: sessionWithMeta,
+    teams: teams ?? [],
+    athletes: athletes ?? [],
+  };
+}
+
 export async function getReadinessData(): Promise<{
   workspace: CurrentWorkspace;
   checkins: ReadinessCheckinWithAthlete[];

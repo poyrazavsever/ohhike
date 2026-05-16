@@ -1986,7 +1986,93 @@ export async function updateSession(
   });
 
   revalidatePath("/sessions");
+  revalidatePath(`/sessions/${input.sessionId}`);
   revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function completeSession(
+  sessionId: string,
+): Promise<WorkspaceActionResult> {
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can complete sessions.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .select("id, status, started_at, planned_duration_min")
+    .eq("id", sessionId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (sessionError || !session) {
+    return {
+      ok: false,
+      error: "Session could not be found.",
+    };
+  }
+
+  if (session.status === "completed") {
+    return {
+      ok: false,
+      error: "This session is already marked as completed.",
+    };
+  }
+
+  if (session.status === "cancelled") {
+    return {
+      ok: false,
+      error: "Cancelled sessions cannot be completed.",
+    };
+  }
+
+  const endedAt = new Date().toISOString();
+  const startedAt = session.started_at ?? endedAt;
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({
+      status: "completed",
+      started_at: startedAt,
+      ended_at: endedAt,
+      actual_duration_min: session.planned_duration_min,
+    })
+    .eq("id", sessionId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "session.completed",
+    entity_type: "session",
+    entity_id: sessionId,
+  });
+
+  revalidatePath("/sessions");
+  revalidatePath(`/sessions/${sessionId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/load-recovery");
 
   return {
     ok: true,
@@ -2047,6 +2133,7 @@ export async function deleteSession(
   });
 
   revalidatePath("/sessions");
+  revalidatePath(`/sessions/${sessionId}`);
   revalidatePath("/dashboard");
 
   return {
@@ -2200,7 +2287,9 @@ export async function updateSessionAttendance(
   });
 
   revalidatePath("/sessions");
+  revalidatePath(`/sessions/${input.sessionId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/load-recovery");
 
   return {
     ok: true,
@@ -2319,6 +2408,7 @@ export async function updateSessionTrainingBlocks(
   });
 
   revalidatePath("/sessions");
+  revalidatePath(`/sessions/${session.id}`);
   revalidatePath("/dashboard");
 
   return {

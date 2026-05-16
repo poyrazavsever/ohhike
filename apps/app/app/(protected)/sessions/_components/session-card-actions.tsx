@@ -131,10 +131,12 @@ export function SessionCardActions({
   session,
   teams,
   athletes,
+  redirectAfterDelete,
 }: {
   session: SessionWithMeta;
   teams: AthleteTeamOption[];
   athletes: AthleteOption[];
+  redirectAfterDelete?: string;
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -218,6 +220,12 @@ export function SessionCardActions({
       }
 
       closeModals();
+
+      if (redirectAfterDelete) {
+        router.push(redirectAfterDelete);
+        return;
+      }
+
       router.refresh();
     });
   }

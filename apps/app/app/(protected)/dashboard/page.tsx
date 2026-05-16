@@ -7,6 +7,7 @@ import {
 } from "../../../components/dashboard/dashboard-cards";
 import { getDashboardData } from "../../../lib/workspace";
 import Image from "next/image";
+import Link from "next/link";
 
 function formatPlan(plan: string | undefined) {
   if (!plan) {
@@ -120,18 +121,18 @@ export default async function DashboardPage() {
             fresh from one focused workspace.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <a
+            <Link
               href="/sessions"
               className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               Plan Session
-            </a>
-            <a
+            </Link>
+            <Link
               href="/readiness"
               className="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-black text-foreground transition-colors hover:border-primary hover:text-primary-700"
             >
               Log Wellness
-            </a>
+            </Link>
           </div>
         </div>
 

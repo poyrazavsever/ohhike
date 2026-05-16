@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   DashboardHero,
   DetailStat,
@@ -96,7 +98,12 @@ export default async function SessionsPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-base font-black text-foreground">
-                    {session.title}
+                    <Link
+                      href={`/sessions/${session.id}`}
+                      className="transition-colors hover:text-primary"
+                    >
+                      {session.title}
+                    </Link>
                   </h2>
                   <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {session.teamName ?? "No team"} · {formatSessionType(session.type)}
@@ -106,6 +113,12 @@ export default async function SessionsPage() {
                   <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                     {session.status ?? "planned"}
                   </div>
+                  <Link
+                    href={`/sessions/${session.id}`}
+                    className="text-xs font-bold text-primary transition-colors hover:text-primary-hover"
+                  >
+                    Open detail →
+                  </Link>
                   <SessionCardActions
                     session={session}
                     teams={teams}
