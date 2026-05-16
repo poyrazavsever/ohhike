@@ -1,6 +1,11 @@
 import Link from "next/link";
 
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import {
   getTrainingPlannerData,
   type TrainingPlannerSession,
@@ -48,124 +53,98 @@ export default async function TrainingPlannerPage() {
       label: "Plans",
       value: totals.sessions.toString(),
       helper: "Loaded sessions",
+      icon: "solar:map-arrow-right-bold",
     },
     {
       label: "Blocks",
       value: totals.blocks.toString(),
       helper: "Training blocks",
+      icon: "solar:widget-5-bold",
+      tone: "info" as const,
     },
     {
       label: "Planned Min",
       value: totals.plannedMinutes.toString(),
       helper: "Total duration",
+      icon: "solar:clock-circle-bold",
+      tone: "secondary" as const,
     },
     {
       label: "Completed",
       value: totals.completedBlocks.toString(),
       helper: "Finished blocks",
+      icon: "solar:check-circle-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Team Operations"
         title="Training Planner"
-        description={`Training plan blocks for ${workspace.organization.name}.`}
+        subtitle={`Training plan blocks for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/harita.png"
       />
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-4 flex justify-end">
         <Link
           href="/sessions"
-          className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover"
+          className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
         >
           Manage sessions
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {sessions.length > 0 ? (
-        <div className="mt-6 grid gap-4">
+        <div className="mt-4 grid gap-3">
           {sessions.map((session) => (
             <article
               key={session.id}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {session.title}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {session.teamName ?? "No team"} · {formatSessionType(session.type)}
                   </p>
-                  <p className="mt-1 text-xs font-medium text-muted-foreground">
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
                     {formatDate(session.scheduled_at)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                   {completionLabel(session)}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Blocks
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {session.trainingBlocks.length}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Planned Min
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {plannedMinutes(session)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Focus
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {session.focus_area ?? "Not set"}
-                  </p>
-                </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                <DetailStat label="Blocks" value={session.trainingBlocks.length} />
+                <DetailStat label="Planned Min" value={plannedMinutes(session)} />
+                <DetailStat label="Focus" value={session.focus_area ?? "Not set"} />
               </div>
 
-              <div className="mt-5 grid gap-3">
+              <div className="mt-4 grid gap-2">
                 {session.trainingBlocks.length > 0 ? (
                   session.trainingBlocks.map((block) => (
                     <div
                       key={block.id}
-                      className="rounded-2xl border border-border bg-background p-4"
+                      className="rounded-xl border border-border bg-background p-3"
                     >
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
-                          <p className="text-sm font-extrabold text-foreground">
+                          <p className="text-sm font-black text-foreground">
                             {block.order_index + 1}. {block.title}
                           </p>
-                          <p className="mt-1 text-xs font-medium text-muted-foreground">
+                          <p className="mt-1 text-xs font-semibold text-muted-foreground">
                             {block.description ?? "No description"}
                           </p>
                         </div>
@@ -177,7 +156,7 @@ export default async function TrainingPlannerPage() {
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-border bg-background p-5 text-center text-sm font-medium text-muted-foreground">
+                  <p className="rounded-xl border border-dashed border-border bg-background p-4 text-center text-sm font-semibold text-muted-foreground">
                     No blocks yet. Add blocks from the Sessions page.
                   </p>
                 )}
@@ -186,14 +165,11 @@ export default async function TrainingPlannerPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No training plans yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Create sessions and add training blocks to build the planner.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No training plans yet"
+          description="Create sessions and add training blocks to build the planner."
+          icon="solar:map-arrow-right-bold"
+        />
       )}
     </section>
   );

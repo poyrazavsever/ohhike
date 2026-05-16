@@ -1,4 +1,9 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getDrillsData } from "../../../lib/workspace";
 import { CreateDrillForm } from "./_components/create-drill-form";
 
@@ -17,16 +22,21 @@ export default async function DrillsPage() {
       label: "Drills",
       value: totals.drills.toString(),
       helper: "Available in library",
+      icon: "solar:notebook-bookmark-bold",
     },
     {
       label: "Custom",
       value: totals.customDrills.toString(),
       helper: "Organization drills",
+      icon: "solar:pen-new-square-bold",
+      tone: "secondary" as const,
     },
     {
       label: "System",
       value: totals.systemDrills.toString(),
       helper: "Shared drills",
+      icon: "solar:stars-bold",
+      tone: "info" as const,
     },
     {
       label: "Used",
@@ -34,100 +44,75 @@ export default async function DrillsPage() {
         .filter((drill) => drill.usageCount > 0)
         .length.toString(),
       helper: "Linked to plans",
+      icon: "solar:link-round-bold",
+      tone: "warning" as const,
     },
   ];
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Team Operations"
         title="Drill Library"
-        description={`Reusable training drills for ${workspace.organization.name}.`}
+        subtitle={`Reusable training drills for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/esnemee.png"
       />
 
-      <CreateDrillForm />
+      <div className="mt-4">
+        <CreateDrillForm />
+      </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-3xl border border-border bg-card p-5"
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="mt-3 truncate text-2xl font-extrabold text-foreground">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">
-              {card.helper}
-            </p>
-          </div>
+          <MetricCard key={card.label} {...card} />
         ))}
       </div>
 
       {drills.length > 0 ? (
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
           {drills.map((drill) => (
             <article
               key={drill.id}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {drill.title}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {formatSportType(drill.sport_type)} ·{" "}
                     {drill.category ?? "No category"} ·{" "}
                     {drill.difficulty ?? "No difficulty"}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                   {drill.is_system_drill ? "System" : "Custom"}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Duration
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {drill.duration_min ? `${drill.duration_min} min` : "Not set"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Players
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {drill.player_count_min || drill.player_count_max
+              <div className="mt-4 grid gap-2 md:grid-cols-4">
+                <DetailStat
+                  label="Duration"
+                  value={drill.duration_min ? `${drill.duration_min} min` : "Not set"}
+                />
+                <DetailStat
+                  label="Players"
+                  value={
+                    drill.player_count_min || drill.player_count_max
                       ? `${drill.player_count_min ?? "-"}-${drill.player_count_max ?? "-"}`
-                      : "Not set"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Usage
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-foreground">
-                    {drill.usageCount}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Tags
-                  </p>
-                  <p className="mt-2 truncate text-sm font-extrabold text-foreground">
-                    {drill.tags?.length ? drill.tags.join(", ") : "Not set"}
-                  </p>
-                </div>
+                      : "Not set"
+                  }
+                />
+                <DetailStat label="Usage" value={drill.usageCount} />
+                <DetailStat
+                  label="Tags"
+                  value={drill.tags?.length ? drill.tags.join(", ") : "Not set"}
+                />
               </div>
 
               {drill.objective || drill.description ? (
-                <p className="mt-4 text-sm font-medium leading-6 text-muted-foreground">
+                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
                   {drill.objective ? `Objective: ${drill.objective}. ` : ""}
                   {drill.description ?? ""}
                 </p>
@@ -136,12 +121,11 @@ export default async function DrillsPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">No drills yet</p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Add your first drill to start building the training library.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No drills yet"
+          description="Add your first drill to start building the training library."
+          icon="solar:notebook-bookmark-bold"
+        />
       )}
     </section>
   );
