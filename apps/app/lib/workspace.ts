@@ -83,6 +83,10 @@ export type AthleteDashboardSummary = {
   attendanceCount: number;
 };
 
+export type CalendarSession = Session & {
+  teamName: string | null;
+};
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -928,5 +932,49 @@ export async function getAthleteDashboardData(): Promise<{
         0,
       ),
     },
+  };
+}
+
+export async function getCalendarData(): Promise<{
+  workspace: CurrentWorkspace;
+  sessions: CalendarSession[];
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: sessions, error: sessionsError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("scheduled_at", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+  ]);
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  return {
+    workspace,
+    sessions:
+      sessions?.map((session) => ({
+        ...session,
+        teamName:
+          teams?.find((team) => team.id === session.team_id)?.name ?? null,
+      })) ?? [],
   };
 }
