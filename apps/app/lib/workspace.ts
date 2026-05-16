@@ -1725,6 +1725,85 @@ export async function getTeamMemoryData(): Promise<{
   };
 }
 
+export async function getTeamMemoryAssistantData(
+  activeThreadId?: string | null,
+): Promise<{
+  workspace: CurrentWorkspace;
+  threads: Array<{
+    id: string;
+    title: string | null;
+    team_id: string | null;
+    athlete_id: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+  }>;
+  messages: Array<{
+    id: string;
+    thread_id: string;
+    role: string;
+    content: string;
+    metadata: Record<string, unknown> | null;
+    created_at: string | null;
+  }>;
+  teams: AthleteTeamOption[];
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
+}> {
+  const { workspace, teams, athletes } = await getTeamMemoryData();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const { data: threads, error: threadsError } = await supabase
+    .from("assistant_threads")
+    .select("id, title, team_id, athlete_id, created_at, updated_at")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false })
+    .limit(20);
+
+  if (threadsError) {
+    if (threadsError.message.includes("assistant_threads")) {
+      return {
+        workspace,
+        threads: [],
+        messages: [],
+        teams,
+        athletes,
+      };
+    }
+
+    throw new Error(threadsError.message);
+  }
+
+  const threadId = activeThreadId ?? threads?.[0]?.id ?? null;
+
+  const { data: messages, error: messagesError } = threadId
+    ? await supabase
+        .from("assistant_messages")
+        .select("id, thread_id, role, content, metadata, created_at")
+        .eq("thread_id", threadId)
+        .order("created_at", { ascending: true })
+    : { data: [], error: null };
+
+  if (messagesError) {
+    throw new Error(messagesError.message);
+  }
+
+  return {
+    workspace,
+    threads: threads ?? [],
+    messages: (messages ?? []).map((message) => ({
+      ...message,
+      metadata:
+        message.metadata && typeof message.metadata === "object"
+          ? (message.metadata as Record<string, unknown>)
+          : null,
+    })),
+    teams,
+    athletes,
+  };
+}
+
 export async function getReportsData(): Promise<{
   workspace: CurrentWorkspace;
   aiReports: ReportsCenterAiReport[];

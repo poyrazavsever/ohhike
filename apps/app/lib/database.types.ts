@@ -81,6 +81,21 @@ export type WearableProvider =
   | "csv_import"
   | "other";
 
+export type DocumentType =
+  | "session_report"
+  | "coach_note"
+  | "athlete_note"
+  | "player_observation"
+  | "team_pattern"
+  | "training_plan"
+  | "drill"
+  | "nutrition_note"
+  | "recovery_note"
+  | "wearable_summary"
+  | "csv_summary"
+  | "ai_report"
+  | "other";
+
 export type AiReportType =
   | "session_analysis"
   | "match_analysis"
@@ -1288,6 +1303,150 @@ export type Database = {
         };
         Relationships: [];
       };
+      documents: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string | null;
+          session_id: string | null;
+          ai_report_id: string | null;
+          type: DocumentType;
+          title: string;
+          content: string;
+          metadata: Json | null;
+          created_by: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          session_id?: string | null;
+          ai_report_id?: string | null;
+          type: DocumentType;
+          title: string;
+          content: string;
+          metadata?: Json | null;
+          created_by?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          session_id?: string | null;
+          ai_report_id?: string | null;
+          type?: DocumentType;
+          title?: string;
+          content?: string;
+          metadata?: Json | null;
+          created_by?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      document_embeddings: {
+        Row: {
+          id: string;
+          document_id: string;
+          organization_id: string;
+          team_id: string | null;
+          chunk_index: number;
+          content_chunk: string;
+          embedding: number[] | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          organization_id: string;
+          team_id?: string | null;
+          chunk_index: number;
+          content_chunk: string;
+          embedding?: number[] | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          chunk_index?: number;
+          content_chunk?: string;
+          embedding?: number[] | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      assistant_threads: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string | null;
+          title: string | null;
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          title?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          title?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      assistant_messages: {
+        Row: {
+          id: string;
+          thread_id: string;
+          organization_id: string;
+          role: string;
+          content: string;
+          retrieved_document_ids: string[] | null;
+          metadata: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          thread_id: string;
+          organization_id: string;
+          role: string;
+          content: string;
+          retrieved_document_ids?: string[] | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          thread_id?: string;
+          organization_id?: string;
+          role?: string;
+          content?: string;
+          retrieved_document_ids?: string[] | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -1363,8 +1522,23 @@ export type Database = {
         Args: Record<string, never>;
         Returns: unknown;
       };
+      match_document_embeddings: {
+        Args: {
+          query_embedding: number[];
+          match_organization_id: string;
+          match_team_id?: string | null;
+          match_count?: number;
+        };
+        Returns: {
+          id: string;
+          document_id: string;
+          content_chunk: string;
+          similarity: number;
+        }[];
+      };
     };
     Enums: {
+      document_type: DocumentType;
       athlete_status: AthleteStatus;
       organization_role: OrganizationRole;
       organization_type: OrganizationType;

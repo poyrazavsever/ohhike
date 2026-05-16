@@ -44,6 +44,10 @@ import {
   isInvitableOrganizationRole,
 } from "../../lib/org-roles";
 import { writeWorkspaceAuditLog } from "../../lib/audit-log";
+import {
+  formatAssistantAnswerForChat,
+  runTeamMemoryQuery,
+} from "../../lib/team-memory-assistant";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import {
   createActionSupabase,
@@ -4126,5 +4130,234 @@ export async function createTeamPattern(
 
   return {
     ok: true,
+  };
+}
+
+export type SendTeamMemoryMessageInput = {
+  threadId?: string;
+  message: string;
+  teamId?: string;
+  athleteId?: string;
+};
+
+export async function sendTeamMemoryMessage(
+  input: SendTeamMemoryMessageInput,
+): Promise<
+  WorkspaceActionResult & {
+    threadId?: string;
+  }
+> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const question = cleanString(input.message);
+
+  if (!question) {
+    return {
+      ok: false,
+      error: "Enter a question for Team Memory.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (isAthleteRole(membership.role)) {
+    return {
+      ok: false,
+      error: "Team Memory assistant is available to coaching staff only.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const teamId = cleanString(input.teamId);
+  const athleteId = cleanString(input.athleteId);
+
+  let teamName: string | null = null;
+  let athleteName: string | null = null;
+
+  if (teamId) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("id, name")
+      .eq("id", teamId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!team) {
+      return {
+        ok: false,
+        error: "Please select a valid team filter.",
+      };
+    }
+
+    teamName = team.name;
+  }
+
+  if (athleteId) {
+    const { data: athlete } = await supabase
+      .from("athletes")
+      .select("id, first_name, last_name, number, team_id")
+      .eq("id", athleteId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!athlete) {
+      return {
+        ok: false,
+        error: "Please select a valid athlete filter.",
+      };
+    }
+
+    athleteName = [
+      athlete.number ? `#${athlete.number}` : null,
+      athlete.first_name,
+      athlete.last_name,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  let queryResult: Awaited<ReturnType<typeof runTeamMemoryQuery>>;
+
+  try {
+    queryResult = await runTeamMemoryQuery({
+      organizationId: organization.id,
+      organizationName: organization.name,
+      userId,
+      userRole: membership.role,
+      question,
+      teamId: teamId || null,
+      teamName,
+      athleteId: athleteId || null,
+      athleteName,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Team Memory could not answer this question.",
+    };
+  }
+
+  const { answer, retrieved } = queryResult;
+  const assistantContent = formatAssistantAnswerForChat(answer);
+
+  let threadId = cleanString(input.threadId);
+
+  if (threadId) {
+    const { data: existingThread } = await supabase
+      .from("assistant_threads")
+      .select("id")
+      .eq("id", threadId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!existingThread) {
+      threadId = "";
+    }
+  }
+
+  if (!threadId) {
+    const { data: createdThread, error: threadError } = await supabase
+      .from("assistant_threads")
+      .insert({
+        organization_id: organization.id,
+        team_id: teamId || null,
+        athlete_id: athleteId || null,
+        title: question.slice(0, 120),
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+
+    if (threadError || !createdThread) {
+      const missingTable = threadError?.message.includes("assistant_threads");
+
+      return {
+        ok: false,
+        error: missingTable
+          ? "Team Memory assistant tables are missing. Run docs/supabase/011_team_memory_rag.sql in Supabase, then retry."
+          : threadError?.message ?? "Could not start a conversation thread.",
+      };
+    }
+
+    threadId = createdThread.id;
+  } else {
+    await supabase
+      .from("assistant_threads")
+      .update({
+        team_id: teamId || null,
+        athlete_id: athleteId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", threadId);
+  }
+
+  const { error: userMessageError } = await supabase
+    .from("assistant_messages")
+    .insert({
+      thread_id: threadId,
+      organization_id: organization.id,
+      role: "user",
+      content: question,
+      metadata: {
+        team_id: teamId || null,
+        athlete_id: athleteId || null,
+      },
+    });
+
+  if (userMessageError) {
+    return {
+      ok: false,
+      error: userMessageError.message,
+    };
+  }
+
+  const { error: assistantMessageError } = await supabase
+    .from("assistant_messages")
+    .insert({
+      thread_id: threadId,
+      organization_id: organization.id,
+      role: "assistant",
+      content: assistantContent,
+      metadata: {
+        answer,
+        sources: retrieved.map((document) => ({
+          id: document.id,
+          title: document.title,
+          type: document.documentType,
+        })),
+      },
+    });
+
+  if (assistantMessageError) {
+    return {
+      ok: false,
+      error: assistantMessageError.message,
+    };
+  }
+
+  await writeWorkspaceAuditLog({
+    organizationId: organization.id,
+    userId,
+    role: membership.role,
+    action: "team_memory.assistant_message",
+    entityType: "assistant_thread",
+    entityId: threadId,
+  });
+
+  revalidatePath("/team-memory");
+
+  return {
+    ok: true,
+    threadId,
   };
 }
