@@ -21,6 +21,10 @@ if [ -z "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" ]; then
   missing="$missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
 fi
 
+if [ -z "$CLERK_WEBHOOK_SIGNING_SECRET" ] && [ -z "$CLERK_WEBHOOK_SECRET" ]; then
+  missing="$missing CLERK_WEBHOOK_SIGNING_SECRET"
+fi
+
 if [ -n "$CLERK_SECRET_KEY" ] && [ -z "$CLERK_ENCRYPTION_KEY" ]; then
   echo "ohhike-app: CLERK_ENCRYPTION_KEY is required when CLERK_SECRET_KEY is set (Docker/runtime)."
   echo "Generate one: openssl rand -base64 32"

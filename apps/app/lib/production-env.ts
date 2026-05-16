@@ -1,4 +1,7 @@
-import { getClerkPublishableKey } from "./clerk-env";
+import {
+  getClerkPublishableKey,
+  getClerkWebhookSigningSecret,
+} from "./clerk-env";
 
 /** Required for production deploy (apps/app). Secrets are presence-only checks. */
 export const PRODUCTION_ENV_KEYS = [
@@ -7,7 +10,7 @@ export const PRODUCTION_ENV_KEYS = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "CLERK_SECRET_KEY",
-  "CLERK_WEBHOOK_SECRET",
+  "CLERK_WEBHOOK_SIGNING_SECRET",
   "NEXT_PUBLIC_APP_URL",
 ] as const;
 
@@ -21,6 +24,9 @@ export function getMissingProductionEnvKeys(): string[] {
   return PRODUCTION_ENV_KEYS.filter((key) => {
     if (key === "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY") {
       return !getClerkPublishableKey();
+    }
+    if (key === "CLERK_WEBHOOK_SIGNING_SECRET") {
+      return !getClerkWebhookSigningSecret();
     }
     return !process.env[key]?.trim();
   });

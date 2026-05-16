@@ -23,6 +23,14 @@ export function getClerkEncryptionKey(): string {
   return readEnv("CLERK_ENCRYPTION_KEY") ?? "";
 }
 
+export function getClerkWebhookSigningSecret(): string {
+  return (
+    readEnv("CLERK_WEBHOOK_SIGNING_SECRET") ??
+    readEnv("CLERK_WEBHOOK_SECRET") ??
+    ""
+  );
+}
+
 /**
  * Clerk requires CLERK_ENCRYPTION_KEY when passing secretKey via middleware (Docker/runtime).
  * Local dev: only publishableKey is passed; CLERK_SECRET_KEY is read from .env by @clerk/nextjs.

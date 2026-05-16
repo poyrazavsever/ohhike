@@ -1,6 +1,7 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import type { NextRequest } from "next/server";
 
+import { getClerkWebhookSigningSecret } from "../../../../lib/clerk-env";
 import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 
 type ClerkEmailAddress = {
@@ -33,7 +34,9 @@ function getDisplayName(user: ClerkUserData) {
 }
 
 export async function POST(req: NextRequest) {
-  const event = await verifyWebhook(req);
+  const event = await verifyWebhook(req, {
+    signingSecret: getClerkWebhookSigningSecret(),
+  });
   const supabase = createSupabaseAdminClient();
 
   if (event.type === "user.deleted") {

@@ -7,12 +7,21 @@ const required = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "CLERK_SECRET_KEY",
-  "CLERK_WEBHOOK_SECRET",
+  "CLERK_WEBHOOK_SIGNING_SECRET",
 ];
 
 const optional = ["GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_EMBEDDING_MODEL"];
 
-const missing = required.filter((key) => !process.env[key]?.trim());
+const missing = required.filter((key) => {
+  if (key === "CLERK_WEBHOOK_SIGNING_SECRET") {
+    return !(
+      process.env.CLERK_WEBHOOK_SIGNING_SECRET?.trim() ||
+      process.env.CLERK_WEBHOOK_SECRET?.trim()
+    );
+  }
+
+  return !process.env[key]?.trim();
+});
 const optionalMissing = optional.filter((key) => !process.env[key]?.trim());
 
 if (missing.length > 0) {
