@@ -8,6 +8,7 @@ import {
   updateSessionTrainingBlocks,
   type TrainingBlockInput,
 } from "../../../actions/workspace";
+import { sessionPlannedIntensitySelectOptions } from "../../../../lib/coach-vocabulary";
 import type { SessionWithMeta } from "../../../../lib/workspace";
 
 function inputClassName() {
@@ -240,17 +241,24 @@ export function SessionTrainingBlocksButton({
                       }
                       placeholder="Actual min"
                     />
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
+                    <select
                       className={inputClassName()}
                       value={block.intensity}
                       onChange={(event) =>
                         updateBlock(index, { intensity: event.target.value })
                       }
-                      placeholder="Intensity"
-                    />
+                    >
+                      {sessionPlannedIntensitySelectOptions(block.intensity).map(
+                        (opt) => (
+                          <option
+                            key={`${block.id ?? "new"}-int-${opt.value || "x"}`}
+                            value={opt.value}
+                          >
+                            {opt.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
                     <input
                       className={`${inputClassName()} md:col-span-2`}
                       value={block.description}

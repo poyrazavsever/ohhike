@@ -9,25 +9,14 @@ const footerGroups = [
       { label: "Features", href: "/features" },
       { label: "Pricing", href: "/pricing" },
       { label: "Self-host", href: "/self-host" },
-      { label: "Roadmap", href: "/roadmap" },
     ],
   },
   {
-    title: "Platform",
+    title: "Docs",
     links: [
-      { label: "Coach Dashboard", href: "/features/coach-dashboard" },
-      { label: "Athlete Check-ins", href: "/features/check-ins" },
-      { label: "Team Memory", href: "/features/team-memory" },
-      { label: "AI Reports", href: "/features/ai-reports" },
-    ],
-  },
-  {
-    title: "Community",
-    links: [
-      { label: "Community", href: "/community" },
-      { label: "Blog", href: "/blog" },
       { label: "Docs", href: "/docs" },
-      { label: "GitHub", href: "https://github.com" },
+      { label: "Self-host Docs", href: "/docs/self-host" },
+      { label: "Security", href: "/security" },
     ],
   },
   {
@@ -37,6 +26,14 @@ const footerGroups = [
       { label: "Contact", href: "/contact" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
+    ],
+  },
+  {
+    title: "Community",
+    links: [
+      { label: "Blog", href: "/blog" },
+      { label: "Community", href: "/community" },
+      { label: "GitHub", href: "https://github.com" },
     ],
   },
 ];

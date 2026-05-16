@@ -78,6 +78,48 @@ export const TEAM_PATTERN_TYPE_OPTIONS = [
   { value: "other", label: "Other" },
 ] as const;
 
+/** Planned session / block intensity on a 1–10 RPE-style scale (stored as integer). */
+export const SESSION_PLANNED_INTENSITY_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "1", label: "1 — Very light" },
+  { value: "2", label: "2 — Light" },
+  { value: "3", label: "3 — Light–moderate" },
+  { value: "4", label: "4 — Moderate-" },
+  { value: "5", label: "5 — Moderate" },
+  { value: "6", label: "6 — Moderate+" },
+  { value: "7", label: "7 — Hard" },
+  { value: "8", label: "8 — Very hard" },
+  { value: "9", label: "9 — Extremely hard" },
+  { value: "10", label: "10 — Max effort" },
+] as const;
+
+export const SESSION_FOCUS_AREA_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "warm_up_structure", label: "Warm-up structure" },
+  { value: "possession", label: "Possession / control" },
+  { value: "pressing_defending", label: "Pressing & defending" },
+  { value: "low_block", label: "Low block / compactness" },
+  { value: "transition_attack", label: "Transition to attack" },
+  { value: "transition_defense", label: "Transition to defense" },
+  { value: "set_pieces_attack", label: "Set pieces (attacking)" },
+  { value: "set_pieces_defense", label: "Set pieces (defending)" },
+  { value: "counter_attack", label: "Counterattack" },
+  { value: "build_up", label: "Build-up / progression" },
+  { value: "finishing", label: "Finishing / final third" },
+  { value: "width_depth", label: "Width & depth" },
+  { value: "conditioning", label: "Physical conditioning" },
+  { value: "speed_agility", label: "Speed & agility" },
+  { value: "strength_power", label: "Strength & power" },
+  { value: "technical_emphasis", label: "Technical emphasis" },
+  { value: "recovery_regeneration", label: "Recovery / regeneration" },
+  { value: "match_preparation", label: "Match preparation" },
+  { value: "video_review", label: "Video / analysis" },
+  { value: "team_cohesion", label: "Team cohesion / culture" },
+  { value: "gk_specific", label: "Goalkeeper-specific" },
+  { value: "individual_development", label: "Individual development" },
+  { value: "other", label: "Other" },
+] as const;
+
 const drillCategorySlugs = new Set<string>(
   DRILL_CATEGORY_OPTIONS.map((o) => o.value).filter((v) => v !== ""),
 );
@@ -97,6 +139,9 @@ const memorySeveritySlugs = new Set<string>(
 );
 const teamPatternTypeSlugs = new Set<string>(
   TEAM_PATTERN_TYPE_OPTIONS.map((o) => o.value),
+);
+const sessionFocusAreaSlugs = new Set<string>(
+  SESSION_FOCUS_AREA_OPTIONS.map((o) => o.value).filter((v) => v !== ""),
 );
 
 export function isOptionalDrillCategory(value: string | null | undefined): boolean {
@@ -150,6 +195,45 @@ export function isTeamPatternType(value: string | null | undefined): boolean {
   return teamPatternTypeSlugs.has(v);
 }
 
+export function isOptionalSessionFocusArea(
+  value: string | null | undefined,
+): boolean {
+  const v = (value ?? "").trim();
+  if (!v) {
+    return true;
+  }
+  return sessionFocusAreaSlugs.has(v);
+}
+
+/**
+ * Select options including the current value when it is legacy / not in the vocabulary.
+ */
+export function sessionFocusAreaSelectOptions(
+  currentValue: string | null | undefined,
+): Array<{ value: string; label: string }> {
+  const base: Array<{ value: string; label: string }> = [
+    ...SESSION_FOCUS_AREA_OPTIONS,
+  ];
+  const v = (currentValue ?? "").trim();
+  if (v && !base.some((o) => o.value === v)) {
+    base.push({ value: v, label: v });
+  }
+  return base;
+}
+
+export function sessionPlannedIntensitySelectOptions(
+  currentValue: string | null | undefined,
+): Array<{ value: string; label: string }> {
+  const base: Array<{ value: string; label: string }> = [
+    ...SESSION_PLANNED_INTENSITY_OPTIONS,
+  ];
+  const v = (currentValue ?? "").trim();
+  if (v && !base.some((o) => o.value === v)) {
+    base.push({ value: v, label: `Legacy (${v})` });
+  }
+  return base;
+}
+
 export function drillCategoryLabel(value: string | null | undefined): string {
   if (!value) {
     return "No category";
@@ -190,4 +274,23 @@ export function observationCategoryLabel(
   }
   const found = OBSERVATION_CATEGORY_OPTIONS.find((o) => o.value === value);
   return found?.label ?? value;
+}
+
+export function sessionFocusAreaLabel(value: string | null | undefined): string {
+  if (!value) {
+    return "Not set";
+  }
+  const found = SESSION_FOCUS_AREA_OPTIONS.find((o) => o.value === value);
+  return found?.label ?? value;
+}
+
+export function sessionPlannedIntensityLabel(
+  value: number | null | undefined,
+): string {
+  if (value == null) {
+    return "Not set";
+  }
+  const key = String(value);
+  const found = SESSION_PLANNED_INTENSITY_OPTIONS.find((o) => o.value === key);
+  return found?.label ?? `${key} (legacy)`;
 }

@@ -11,6 +11,10 @@ import {
   type SessionAttendanceInput,
   type UpdateSessionInput,
 } from "../../../actions/workspace";
+import {
+  sessionFocusAreaSelectOptions,
+  sessionPlannedIntensitySelectOptions,
+} from "../../../../lib/coach-vocabulary";
 import type {
   SessionStatus,
   SessionType,
@@ -146,6 +150,16 @@ export function SessionCardActions({
   const selectedTeamAthletes = useMemo(
     () => athletes.filter((athlete) => athlete.team_id === session.team_id),
     [athletes, session.team_id],
+  );
+
+  const focusSelectOptions = useMemo(
+    () => sessionFocusAreaSelectOptions(editForm.focusArea),
+    [editForm.focusArea],
+  );
+
+  const intensitySelectOptions = useMemo(
+    () => sessionPlannedIntensitySelectOptions(editForm.plannedIntensity),
+    [editForm.plannedIntensity],
   );
 
   function closeModals() {
@@ -393,10 +407,7 @@ export function SessionCardActions({
                 }
                 placeholder="Duration minutes"
               />
-              <input
-                type="number"
-                min="1"
-                max="10"
+              <select
                 className={inputClassName()}
                 value={editForm.plannedIntensity}
                 onChange={(event) =>
@@ -405,9 +416,14 @@ export function SessionCardActions({
                     plannedIntensity: event.target.value,
                   }))
                 }
-                placeholder="Intensity 1-10"
-              />
-              <input
+              >
+                {intensitySelectOptions.map((opt) => (
+                  <option key={opt.value || "intensity-none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <select
                 className={inputClassName()}
                 value={editForm.focusArea}
                 onChange={(event) =>
@@ -416,8 +432,13 @@ export function SessionCardActions({
                     focusArea: event.target.value,
                   }))
                 }
-                placeholder="Focus area"
-              />
+              >
+                {focusSelectOptions.map((opt) => (
+                  <option key={opt.value || "focus-none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <textarea
                 className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
                 value={editForm.coachNotes}

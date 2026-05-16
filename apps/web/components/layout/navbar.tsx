@@ -13,52 +13,29 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/self-host", label: "Self-host" },
+  { href: "/docs", label: "Docs" },
 ];
 
 const productItems = [
   {
-    href: "/features/coach-dashboard",
-    label: "Coach Dashboard",
-    description: "Readiness, load, sessions, and AI insights.",
+    href: "/features",
+    label: "Features",
+    description: "Explore the full CoachOS workflow.",
   },
   {
-    href: "/features/check-ins",
-    label: "Athlete Check-ins",
-    description: "Daily wellness, nutrition, RPE, and recovery signals.",
-  },
-  {
-    href: "/features/team-memory",
-    label: "Team Memory",
-    description: "Ask your historical team data practical questions.",
-  },
-  {
-    href: "/features/ai-reports",
-    label: "AI Reports",
-    description: "Turn sessions and notes into structured coaching reports.",
+    href: "/pricing",
+    label: "Pricing",
+    description: "Compare Basic, Pro, and Pro Plus teams.",
   },
   {
     href: "/self-host",
     label: "Self-host",
-    description: "Run CoachOS with your own database, storage, and AI keys.",
-  },
-  {
-    href: "/roadmap",
-    label: "Roadmap",
-    description: "See what is planned for the open-source core.",
+    description: "Run CoachOS with your own infrastructure.",
   },
 ];
 
 const resourceItems = [
-  {
-    href: "/community",
-    label: "Community",
-    description: "Meet coaches, builders, and teams.",
-  },
-  {
-    href: "/blog",
-    label: "Blog",
-    description: "Product updates and intelligence notes.",
-  },
   {
     href: "/docs",
     label: "Docs",
@@ -70,14 +47,14 @@ const resourceItems = [
     description: "Deployment and setup notes for technical teams.",
   },
   {
-    href: "/docs/integrations",
-    label: "Integrations",
-    description: "Wearables, CSV, AI providers, and storage options.",
-  },
-  {
     href: "/security",
     label: "Security",
     description: "RLS, role access, sensitive data, and AI boundaries.",
+  },
+  {
+    href: "/blog",
+    label: "Blog",
+    description: "Product updates and intelligence notes.",
   },
 ];
 

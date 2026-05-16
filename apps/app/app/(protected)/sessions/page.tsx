@@ -4,6 +4,10 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import {
+  sessionFocusAreaLabel,
+  sessionPlannedIntensityLabel,
+} from "../../../lib/coach-vocabulary";
 import { getSessionsData } from "../../../lib/workspace";
 import { CreateSessionForm } from "./_components/create-session-form";
 import { SessionCardActions } from "./_components/session-card-actions";
@@ -123,7 +127,7 @@ export default async function SessionsPage() {
                 />
                 <DetailStat
                   label="Intensity"
-                  value={session.planned_intensity ?? "Not set"}
+                  value={sessionPlannedIntensityLabel(session.planned_intensity)}
                 />
                 <DetailStat label="Attendance" value={session.attendanceCount} />
                 <DetailStat label="Blocks" value={session.trainingBlocks.length} />
@@ -131,7 +135,9 @@ export default async function SessionsPage() {
 
               {session.focus_area || session.coach_notes ? (
                 <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
-                  {session.focus_area ? `Focus: ${session.focus_area}. ` : ""}
+                  {session.focus_area
+                    ? `Focus: ${sessionFocusAreaLabel(session.focus_area)}. `
+                    : ""}
                   {session.coach_notes ?? ""}
                 </p>
               ) : null}

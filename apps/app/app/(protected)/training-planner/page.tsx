@@ -7,6 +7,10 @@ import {
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
 import {
+  sessionFocusAreaLabel,
+  sessionPlannedIntensityLabel,
+} from "../../../lib/coach-vocabulary";
+import {
   getTrainingPlannerData,
   type TrainingPlannerSession,
 } from "../../../lib/workspace";
@@ -129,7 +133,10 @@ export default async function TrainingPlannerPage() {
               <div className="mt-4 grid gap-2 md:grid-cols-3">
                 <DetailStat label="Blocks" value={session.trainingBlocks.length} />
                 <DetailStat label="Planned Min" value={plannedMinutes(session)} />
-                <DetailStat label="Focus" value={session.focus_area ?? "Not set"} />
+                <DetailStat
+                  label="Focus"
+                  value={sessionFocusAreaLabel(session.focus_area)}
+                />
               </div>
 
               <div className="mt-4 grid gap-2">
@@ -150,7 +157,10 @@ export default async function TrainingPlannerPage() {
                         </div>
                         <div className="text-left text-xs font-bold text-muted-foreground md:text-right">
                           <p>{block.planned_duration_min ?? 0} min</p>
-                          <p>Intensity {block.intensity ?? "-"}</p>
+                          <p>
+                            Intensity{" "}
+                            {sessionPlannedIntensityLabel(block.intensity)}
+                          </p>
                         </div>
                       </div>
                     </div>

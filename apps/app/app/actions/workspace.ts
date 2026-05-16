@@ -18,6 +18,7 @@ import {
   isOptionalDrillDifficulty,
   isOptionalMemorySeverity,
   isOptionalObservationCategory,
+  isOptionalSessionFocusArea,
   isTeamPatternType,
 } from "../../lib/coach-vocabulary";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
@@ -332,9 +333,23 @@ function parsePositiveInteger(value: string | undefined) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-function parseIntensity(value: string | undefined) {
+function parseOptionalSessionIntensity(
+  value: string | undefined,
+):
+  | { ok: true; value: number | null }
+  | { ok: false; error: string } {
+  const cleaned = value?.trim();
+  if (!cleaned) {
+    return { ok: true, value: null };
+  }
   const parsed = parsePositiveInteger(value);
-  return parsed !== null && parsed >= 1 && parsed <= 10 ? parsed : null;
+  if (parsed === null || parsed < 1 || parsed > 99) {
+    return {
+      ok: false,
+      error: "Planned intensity must be a whole number from 1 to 99.",
+    };
+  }
+  return { ok: true, value: parsed };
 }
 
 function parsePositiveNumber(value: string | undefined) {
@@ -1238,6 +1253,21 @@ export async function createSession(
     };
   }
 
+  const intensityResult = parseOptionalSessionIntensity(input.plannedIntensity);
+  if (!intensityResult.ok) {
+    return {
+      ok: false,
+      error: intensityResult.error,
+    };
+  }
+
+  if (!isOptionalSessionFocusArea(input.focusArea)) {
+    return {
+      ok: false,
+      error: "Invalid focus area.",
+    };
+  }
+
   const { organization, membership } = await getCurrentWorkspace();
 
   if (
@@ -1304,7 +1334,7 @@ export async function createSession(
       location: cleanString(input.location),
       opponent: cleanString(input.opponent),
       planned_duration_min: parsePositiveInteger(input.plannedDurationMin),
-      planned_intensity: parsePositiveInteger(input.plannedIntensity),
+      planned_intensity: intensityResult.value,
       focus_area: cleanString(input.focusArea),
       coach_notes: cleanString(input.coachNotes),
       created_by: userId,
@@ -1380,6 +1410,21 @@ export async function updateSession(
     };
   }
 
+  const intensityResult = parseOptionalSessionIntensity(input.plannedIntensity);
+  if (!intensityResult.ok) {
+    return {
+      ok: false,
+      error: intensityResult.error,
+    };
+  }
+
+  if (!isOptionalSessionFocusArea(input.focusArea)) {
+    return {
+      ok: false,
+      error: "Invalid focus area.",
+    };
+  }
+
   const { organization, membership } = await getCurrentWorkspace();
 
   if (
@@ -1436,7 +1481,7 @@ export async function updateSession(
       location: cleanString(input.location),
       opponent: cleanString(input.opponent),
       planned_duration_min: parsePositiveInteger(input.plannedDurationMin),
-      planned_intensity: parsePositiveInteger(input.plannedIntensity),
+      planned_intensity: intensityResult.value,
       focus_area: cleanString(input.focusArea),
       coach_notes: cleanString(input.coachNotes),
     })
@@ -1668,6 +1713,20 @@ export async function updateSessionTrainingBlocks(
     };
   }
 
+  for (const block of input.blocks) {
+    const cleaned = block.intensity?.trim();
+    if (cleaned) {
+      const parsed = parsePositiveInteger(block.intensity);
+      if (parsed === null || parsed < 1 || parsed > 99) {
+        return {
+          ok: false,
+          error:
+            "Each block intensity must be a whole number from 1 to 99, or left empty.",
+        };
+      }
+    }
+  }
+
   const blocks = input.blocks
     .map((block, index) => ({
       ...block,
@@ -1675,7 +1734,9 @@ export async function updateSessionTrainingBlocks(
       orderIndex: parsePositiveInteger(block.orderIndex) ?? index,
       plannedDurationMin: parsePositiveInteger(block.plannedDurationMin),
       actualDurationMin: parsePositiveInteger(block.actualDurationMin),
-      intensity: parseIntensity(block.intensity),
+      intensity: block.intensity?.trim()
+        ? parsePositiveInteger(block.intensity)
+        : null,
       description: cleanString(block.description),
       notes: cleanString(block.notes),
     }))

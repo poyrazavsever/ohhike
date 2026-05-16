@@ -8,6 +8,10 @@ import {
   createSession,
   type CreateSessionInput,
 } from "../../../actions/workspace";
+import {
+  SESSION_FOCUS_AREA_OPTIONS,
+  SESSION_PLANNED_INTENSITY_OPTIONS,
+} from "../../../../lib/coach-vocabulary";
 import type { SessionType } from "../../../../lib/database.types";
 import type { AthleteTeamOption } from "../../../../lib/workspace";
 
@@ -255,10 +259,7 @@ export function CreateSessionForm({
                 }
                 placeholder="Duration minutes"
               />
-              <input
-                type="number"
-                min="1"
-                max="10"
+              <select
                 className={inputClassName()}
                 value={form.plannedIntensity}
                 onChange={(event) =>
@@ -267,16 +268,29 @@ export function CreateSessionForm({
                     plannedIntensity: event.target.value,
                   }))
                 }
-                placeholder="Intensity 1-10"
-              />
-              <input
+              >
+                {SESSION_PLANNED_INTENSITY_OPTIONS.map((opt) => (
+                  <option key={opt.value || "none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <select
                 className={inputClassName()}
                 value={form.focusArea}
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, focusArea: event.target.value }))
+                  setForm((current) => ({
+                    ...current,
+                    focusArea: event.target.value,
+                  }))
                 }
-                placeholder="Focus area"
-              />
+              >
+                {SESSION_FOCUS_AREA_OPTIONS.map((opt) => (
+                  <option key={opt.value || "none-focus"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <textarea
                 className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
                 value={form.coachNotes}

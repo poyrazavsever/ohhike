@@ -90,6 +90,194 @@ Public sayfalar SEO’ya açık, auth gerektirmeyen ve ürünün SaaS + self-hos
 
 ---
 
+## 3.0 Public Web Durumu ve Hedef Harita
+
+Bu bölüm `apps/web` için mevcut kod durumunu, hedef public site yapısını ve navigasyon sözleşmesini ayrı ayrı tanımlar.
+
+### 3.0.1 Mevcut Kod Durumu
+
+`apps/web` içinde bugün gerçekten bulunan public route’lar:
+
+| Route | Durum | Not |
+|---|---|---|
+| `/` | Var | Landing page |
+| `/features` | Var | Genel ürün yetenekleri |
+| `/pricing` | Var | Takım bazlı güncel pricing |
+| `/docs` | Var ama eksik | Şimdilik placeholder |
+| `/about` | Var | Marka ve kurucu hikayesi |
+| `/community` | Var | Mock community etkinliği |
+| `/blog` | Var | Mock blog liste sayfası |
+| `/blog/[slug]` | Var | Mock blog detay sayfası |
+
+Kodda link verilen fakat henüz route’u bulunmayan public sayfalar:
+
+| Route | Bugünkü durum |
+|---|---|
+| `/self-host` | Eksik |
+| `/roadmap` | Eksik |
+| `/features/coach-dashboard` | Eksik |
+| `/features/check-ins` | Eksik |
+| `/features/team-memory` | Eksik |
+| `/features/ai-reports` | Eksik |
+| `/docs/self-host` | Eksik |
+| `/docs/integrations` | Eksik |
+| `/security` | Eksik |
+| `/contact` | Eksik |
+| `/privacy` | Eksik |
+| `/terms` | Eksik |
+
+### 3.0.2 Hedef Public Web Haritası
+
+`apps/web` için önerilen nihai public route ağacı:
+
+```text
+/
+├── /features
+│   ├── /features/coach-dashboard
+│   ├── /features/check-ins
+│   ├── /features/team-memory
+│   ├── /features/ai-reports
+│   ├── /features/training-planner
+│   └── /features/wearables
+│
+├── /pricing
+├── /self-host
+├── /open-source
+├── /roadmap
+│
+├── /docs
+│   ├── /docs/self-host
+│   ├── /docs/integrations
+│   ├── /docs/api-keys
+│   ├── /docs/deployment
+│   └── /docs/troubleshooting
+│
+├── /security
+├── /privacy
+├── /terms
+├── /contact
+│
+├── /about
+├── /blog
+│   └── /blog/[slug]
+└── /community
+```
+
+### 3.0.3 Öncelik Sırası
+
+#### Faz 1 - Güvenilir Public Site
+
+İlk teslim edilecek çekirdek sayfalar:
+
+1. `/self-host`
+2. `/docs`
+3. `/docs/self-host`
+4. `/security`
+5. `/privacy`
+6. `/terms`
+7. `/contact`
+
+Bu faz sonunda public site temel ürün anlatımı, self-host açıklaması ve güven/yasal katmanlarıyla eksiksiz çalışır hale gelir.
+
+#### Faz 2 - Ürün Anlatımını Derinleştirme
+
+1. `/open-source`
+2. `/docs/integrations`
+3. `/roadmap`
+4. `/features/coach-dashboard`
+5. `/features/check-ins`
+6. `/features/team-memory`
+7. `/features/ai-reports`
+
+#### Faz 3 - İçerik ve SEO Genişlemesi
+
+1. `/features/training-planner`
+2. `/features/wearables`
+3. `/docs/api-keys`
+4. `/docs/deployment`
+5. `/docs/troubleshooting`
+6. Blog ve community içeriklerinin gerçek içerik sistemine taşınması
+
+### 3.0.4 Navigasyon Sözleşmesi
+
+Navbar ve footer yalnızca şu route tiplerine link vermelidir:
+
+1. Kod tabanında bugün gerçekten var olan route’lar
+2. Aynı geliştirme fazı içinde tamamlanacak route’lar
+3. Harici olarak gerçekten yayında olan bağlantılar
+
+Henüz oluşturulmamış sayfalara navigasyondan link verilmez. Böylece kullanıcıya 404 üreten boş yollar gösterilmez.
+
+### 3.0.5 Önerilen Navbar Yapısı
+
+Faz 1 tamamlandıktan sonra önerilen ana navbar:
+
+```text
+Home
+Features
+Pricing
+Self-host
+Docs
+About
+Get Started
+```
+
+Faz 2 tamamlandıktan sonra açılabilecek `Product` dropdown:
+
+```text
+Product
+- Features
+- Coach Dashboard
+- Team Memory
+- AI Reports
+- Self-host
+- Open Source
+```
+
+Faz 1 için önerilen `Resources` dropdown:
+
+```text
+Resources
+- Docs
+- Self-host Docs
+- Security
+- Blog
+```
+
+`/docs/integrations` tamamlandığında `Integrations` bu gruba eklenir.
+
+### 3.0.6 Önerilen Footer Yapısı
+
+```text
+Product
+- Features
+- Pricing
+- Self-host
+- Open Source
+- Roadmap
+
+Docs
+- Docs
+- Self-host Docs
+- Integrations
+- Security
+
+Company
+- About
+- Contact
+- Privacy
+- Terms
+
+Community
+- Blog
+- Community
+- GitHub
+```
+
+Eksik route’lar tamamlanana kadar footer yalnızca mevcut veya aynı faz içinde tamamlanan sayfalara link vermelidir.
+
+---
+
 # 3.1 `GET /`
 
 ## Sayfa adı
@@ -204,10 +392,9 @@ Anlatılacak problemler:
 
 Planlar:
 
-- Free
-- Coach Pro
-- Club
-- Self-hosted
+- Basic Team
+- Pro Team
+- Pro Plus Team
 
 ### Open Source / Self-host Section
 
@@ -252,68 +439,91 @@ Linkler:
 
 ## Amaç
 
-Free, Coach Pro, Club ve Self-host paketlerini karşılaştırmak.
+Takım bazlı Basic Team, Pro Team ve Pro Plus Team planlarını karşılaştırmak.
 
 ## İçerik
 
 Pricing kartları:
 
-### Free
+### Basic Team
 
-- 1 takım
-- 10 sporcu
-- 3 session / ay
-- Temel coach dashboard
-- Temel athlete dashboard
+- Fiyat: `Free`
+- 3 takım üyesi
+- Temel takım yönetimi
+- Temel sporcu yönetimi
+- Temel session ve takvim yönetimi
 - Günlük check-in
-- Sınırlı AI analiz
+- Beslenme / su alışkanlığı takibi
+- Manuel veri girişi
+- AI özellikleri yok
 
-### Coach Pro
+### Pro Team
 
-- 3 takım
-- 50 sporcu
-- 30 session / ay
+- Fiyat: `$29 / month`
+- 20+ takım üyesi
+- Basic özelliklerinin tamamı
 - AI Coach Reports
-- AI Coach Reports
-- Team Memory Assistant
-- Personal training tracking
-- Nutrition tracking
-- Strava bağlantısı
+- Team Memory / RAG Assistant
+- Data & Report Analysis
+- Readiness ve load insight üretimi
+- Training Planner
 - PDF export
+- Wearable veri özetleri
 
-### Club
+### Pro Plus Team
 
-- Sınırsız takım
-- Sınırsız sporcu
-- Sınırsız staff
-- Advanced roles
-- Multi-team dashboard
-- Batch report analysis
-- Wearable integrations
+- Fiyat: `$79 / month`
+- 50+ takım üyesi
+- Pro özelliklerinin tamamı
+- Gelişmiş Team Memory
+- Gelişmiş AI rapor limitleri
+- Multi-staff collaboration
+- Gelişmiş roller ve görünürlük kontrolleri
 - Branded reports
-- Audit logs
-- Priority support
-
-### Self-hosted
-
-- Kendi sunucunda çalıştır
-- Kendi database
-- Kendi storage
-- Kendi AI key
-- Kendi wearable key’leri
-- Sınırsız local kullanım
-- Managed hosting opsiyonu
+- Öncelikli destek
+- Gelişmiş audit ve veri yönetimi
 
 ## CTA’lar
 
-- Start Free
-- Upgrade to Coach Pro
-- Contact for Club
+- Start Basic
+- Upgrade Team
+- Choose Pro Plus
 - Read Self-host Docs
 
 ---
 
-# 3.3 `GET /open-source`
+# 3.3 `GET /self-host`
+
+## Amaç
+
+Self-host modelinin kimler için uygun olduğunu, hosted SaaS ile farkını ve teknik sorumluluk sınırlarını anlatmak.
+
+## İçerik Blokları
+
+- Self-host neden var?
+- Hangi ekipler self-host seçmeli?
+- Hosted SaaS vs self-host karşılaştırması
+- Kendi database, storage, AI key ve wearable provider key yönetimi
+- Docker Compose / VPS / Coolify / Dokploy seçenekleri
+- Veri sahipliği ve gizlilik avantajları
+- Kurulum rehberi CTA’sı
+- Open-source CTA’sı
+
+## Ana mesaj
+
+```text
+Your team data stays yours.
+```
+
+## CTA’lar
+
+- Read Self-host Docs
+- Explore Open Source
+- Start with Hosted Cloud
+
+---
+
+# 3.4 `GET /open-source`
 
 ## Amaç
 
@@ -344,7 +554,7 @@ Açık kaynak çekirdek. İhtiyacın olduğunda yönetilen bulut.
 
 ---
 
-# 3.4 `GET /docs`
+# 3.5 `GET /docs`
 
 ## Amaç
 
@@ -368,7 +578,7 @@ Açık kaynak çekirdek. İhtiyacın olduğunda yönetilen bulut.
 
 ---
 
-# 3.5 `GET /docs/self-host`
+# 3.6 `GET /docs/self-host`
 
 ## Amaç
 
@@ -389,7 +599,7 @@ Self-host kurulum rehberi.
 
 ---
 
-# 3.6 `GET /docs/integrations`
+# 3.7 `GET /docs/integrations`
 
 ## Amaç
 
@@ -407,7 +617,7 @@ Wearable ve üçüncü parti entegrasyonların açıklanması.
 
 ---
 
-# 3.7 `GET /security`
+# 3.8 `GET /security`
 
 ## Amaç
 
@@ -426,7 +636,7 @@ Veri gizliliği ve güvenlik yaklaşımını anlatmak.
 
 ---
 
-# 3.8 `GET /privacy`
+# 3.9 `GET /privacy`
 
 ## Amaç
 
@@ -443,7 +653,7 @@ Gizlilik politikası.
 
 ---
 
-# 3.9 `GET /terms`
+# 3.10 `GET /terms`
 
 ## Amaç
 
@@ -456,6 +666,28 @@ Kullanım şartları.
 - Nihai karar antrenör ve uzmanlara aittir
 - Wearable bağlantısı kullanıcı iznine bağlıdır
 - Self-host kurulumlarda veri sorumluluğu kullanıcıya aittir
+
+---
+
+# 3.11 `GET /contact`
+
+## Amaç
+
+Demo, destek, iş ortaklığı ve self-host / enterprise sorularını tek bir iletişim yüzeyinde toplamak.
+
+## İçerik
+
+- Genel iletişim formu
+- Demo talebi
+- Self-host / enterprise görüşme talebi
+- Güvenlik bildirimi veya support yönlendirmesi
+- GitHub ve community kanallarına yönlendirme
+
+## CTA’lar
+
+- Request Demo
+- Contact Support
+- View Docs
 
 ---
 
