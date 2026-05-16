@@ -294,3 +294,113 @@ export function sessionPlannedIntensityLabel(
   const found = SESSION_PLANNED_INTENSITY_OPTIONS.find((o) => o.value === key);
   return found?.label ?? `${key} (legacy)`;
 }
+
+/** Session RPE uses the same 1–10 scale as planned intensity. */
+export const SESSION_RPE_OPTIONS = SESSION_PLANNED_INTENSITY_OPTIONS;
+
+export const ABSENCE_REASON_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "illness", label: "Illness / sick" },
+  { value: "injury", label: "Injury" },
+  { value: "recovery", label: "Recovery / load management" },
+  { value: "school", label: "School / exams" },
+  { value: "work", label: "Work / commitments" },
+  { value: "travel", label: "Travel" },
+  { value: "personal", label: "Personal / family" },
+  { value: "unexcused", label: "Unexcused" },
+  { value: "suspension", label: "Suspension / discipline" },
+  { value: "national_team", label: "National / representative duty" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const BODY_PAIN_AREA_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "head", label: "Head" },
+  { value: "neck", label: "Neck" },
+  { value: "shoulder", label: "Shoulder" },
+  { value: "upper_back", label: "Upper back" },
+  { value: "lower_back", label: "Lower back" },
+  { value: "chest", label: "Chest" },
+  { value: "abdomen", label: "Abdomen / core" },
+  { value: "hip", label: "Hip" },
+  { value: "groin", label: "Groin" },
+  { value: "quad", label: "Quadriceps" },
+  { value: "hamstring", label: "Hamstring" },
+  { value: "knee", label: "Knee" },
+  { value: "calf", label: "Calf" },
+  { value: "ankle", label: "Ankle" },
+  { value: "foot", label: "Foot" },
+  { value: "arm", label: "Arm / elbow" },
+  { value: "wrist", label: "Wrist / hand" },
+  { value: "general", label: "General / multiple areas" },
+  { value: "other", label: "Other" },
+] as const;
+
+const absenceReasonSlugs = new Set<string>(
+  ABSENCE_REASON_OPTIONS.map((o) => o.value).filter((v) => v !== ""),
+);
+const bodyPainAreaSlugs = new Set<string>(
+  BODY_PAIN_AREA_OPTIONS.map((o) => o.value).filter((v) => v !== ""),
+);
+
+export function isOptionalAbsenceReason(
+  value: string | null | undefined,
+): boolean {
+  const v = (value ?? "").trim();
+  if (!v) {
+    return true;
+  }
+  return absenceReasonSlugs.has(v);
+}
+
+export function isOptionalBodyPainArea(
+  value: string | null | undefined,
+): boolean {
+  const v = (value ?? "").trim();
+  if (!v) {
+    return true;
+  }
+  return bodyPainAreaSlugs.has(v);
+}
+
+export function absenceReasonSelectOptions(
+  currentValue: string | null | undefined,
+): Array<{ value: string; label: string }> {
+  const base: Array<{ value: string; label: string }> = [...ABSENCE_REASON_OPTIONS];
+  const v = (currentValue ?? "").trim();
+  if (v && !base.some((o) => o.value === v)) {
+    base.push({ value: v, label: v });
+  }
+  return base;
+}
+
+export function bodyPainAreaSelectOptions(
+  currentValue: string | null | undefined,
+): Array<{ value: string; label: string }> {
+  const base: Array<{ value: string; label: string }> = [...BODY_PAIN_AREA_OPTIONS];
+  const v = (currentValue ?? "").trim();
+  if (v && !base.some((o) => o.value === v)) {
+    base.push({ value: v, label: v });
+  }
+  return base;
+}
+
+export function absenceReasonLabel(value: string | null | undefined): string {
+  if (!value) {
+    return "Not set";
+  }
+  const found = ABSENCE_REASON_OPTIONS.find((o) => o.value === value);
+  return found?.label ?? value;
+}
+
+export function bodyPainAreaLabel(value: string | null | undefined): string {
+  if (!value) {
+    return "Not set";
+  }
+  const found = BODY_PAIN_AREA_OPTIONS.find((o) => o.value === value);
+  return found?.label ?? value;
+}
+
+export function sessionRpeLabel(value: number | null | undefined): string {
+  return sessionPlannedIntensityLabel(value);
+}

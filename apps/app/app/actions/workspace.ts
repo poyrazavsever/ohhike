@@ -20,6 +20,8 @@ import {
   isOptionalDrillDifficulty,
   isOptionalMemorySeverity,
   isOptionalObservationCategory,
+  isOptionalAbsenceReason,
+  isOptionalBodyPainArea,
   isOptionalSessionFocusArea,
   isTeamPatternType,
 } from "../../lib/coach-vocabulary";
@@ -380,6 +382,25 @@ function parsePositiveNumber(value: string | undefined) {
 function parseScore(value: string | undefined) {
   const parsed = parsePositiveInteger(value);
   return parsed !== null && parsed >= 1 && parsed <= 10 ? parsed : null;
+}
+
+function parseOptionalRpe(
+  value: string | undefined,
+):
+  | { ok: true; value: number | null }
+  | { ok: false; error: string } {
+  const cleaned = value?.trim();
+  if (!cleaned) {
+    return { ok: true, value: null };
+  }
+  const parsed = parseScore(value);
+  if (parsed === null) {
+    return {
+      ok: false,
+      error: "RPE must be a whole number from 1 to 10.",
+    };
+  }
+  return { ok: true, value: parsed };
 }
 
 function calculateReadinessScore(input: UpsertReadinessCheckinInput) {
@@ -1976,21 +1997,63 @@ export async function updateSessionAttendance(
   }
 
   if (includedEntries.length > 0) {
+    const normalizedEntries: Array<{
+      session_id: string;
+      athlete_id: string;
+      attended: boolean;
+      absence_reason: string | null;
+      minutes_played: number | null;
+      rpe: number | null;
+      coach_note: string | null;
+      pain_reported: boolean;
+      pain_area: string | null;
+    }> = [];
+
+    for (const entry of includedEntries) {
+      const absenceReason = entry.attended
+        ? null
+        : cleanString(entry.absenceReason);
+
+      if (absenceReason && !isOptionalAbsenceReason(absenceReason)) {
+        return {
+          ok: false,
+          error: "Invalid absence reason.",
+        };
+      }
+
+      const painArea = entry.painReported ? cleanString(entry.painArea) : null;
+
+      if (painArea && !isOptionalBodyPainArea(painArea)) {
+        return {
+          ok: false,
+          error: "Invalid pain area.",
+        };
+      }
+
+      const rpeResult = parseOptionalRpe(entry.rpe);
+      if (!rpeResult.ok) {
+        return {
+          ok: false,
+          error: rpeResult.error,
+        };
+      }
+
+      normalizedEntries.push({
+        session_id: session.id,
+        athlete_id: entry.athleteId,
+        attended: entry.attended,
+        absence_reason: absenceReason,
+        minutes_played: parsePositiveInteger(entry.minutesPlayed),
+        rpe: rpeResult.value,
+        coach_note: cleanString(entry.coachNote),
+        pain_reported: entry.painReported,
+        pain_area: painArea,
+      });
+    }
+
     const { error: insertError } = await supabase
       .from("session_attendance")
-      .insert(
-        includedEntries.map((entry) => ({
-          session_id: session.id,
-          athlete_id: entry.athleteId,
-          attended: entry.attended,
-          absence_reason: cleanString(entry.absenceReason),
-          minutes_played: parsePositiveInteger(entry.minutesPlayed),
-          rpe: parsePositiveInteger(entry.rpe),
-          coach_note: cleanString(entry.coachNote),
-          pain_reported: entry.painReported,
-          pain_area: cleanString(entry.painArea),
-        })),
-      );
+      .insert(normalizedEntries);
 
     if (insertError) {
       return {
@@ -2185,6 +2248,14 @@ export async function upsertReadinessCheckin(
     };
   }
 
+  const painArea = cleanString(input.painArea);
+  if (painArea && !isOptionalBodyPainArea(painArea)) {
+    return {
+      ok: false,
+      error: "Invalid pain area.",
+    };
+  }
+
   const { error } = await supabase.from("wellness_checkins").upsert(
     {
       organization_id: organization.id,
@@ -2198,7 +2269,7 @@ export async function upsertReadinessCheckin(
       stress: parseScore(input.stress),
       mood: parseScore(input.mood),
       readiness_score: calculateReadinessScore(input),
-      pain_area: cleanString(input.painArea),
+      pain_area: painArea,
       notes: cleanString(input.notes),
       created_by: userId,
     },

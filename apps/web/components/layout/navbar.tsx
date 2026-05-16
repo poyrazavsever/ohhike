@@ -17,30 +17,7 @@ const navItems = [
   { href: "/docs", label: "Docs" },
 ];
 
-const productItems = [
-  {
-    href: "/features",
-    label: "Features",
-    description: "Explore the full CoachOS workflow.",
-  },
-  {
-    href: "/pricing",
-    label: "Pricing",
-    description: "Compare Basic, Pro, and Pro Plus teams.",
-  },
-  {
-    href: "/self-host",
-    label: "Self-host",
-    description: "Run CoachOS with your own infrastructure.",
-  },
-];
-
 const resourceItems = [
-  {
-    href: "/docs",
-    label: "Docs",
-    description: "Product notes and implementation guides.",
-  },
   {
     href: "/docs/self-host",
     label: "Self-host Docs",
@@ -178,7 +155,6 @@ export function Navbar() {
             </Link>
           ))}
 
-          <NavDropdown label="Product" items={productItems} />
           <NavDropdown label="Resources" items={resourceItems} />
           <Link
             href="/about"
@@ -287,10 +263,10 @@ export function Navbar() {
 
             <div className="mt-8">
               <div className="px-4 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Product & Resources
+                Resources
               </div>
               <div className="mt-3 flex flex-col gap-2">
-                {[...productItems, ...resourceItems].map((item) => (
+                {resourceItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

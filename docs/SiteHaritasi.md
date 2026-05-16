@@ -222,29 +222,18 @@ About
 Get Started
 ```
 
-Faz 2 tamamlandıktan sonra açılabilecek `Product` dropdown:
-
-```text
-Product
-- Features
-- Coach Dashboard
-- Team Memory
-- AI Reports
-- Self-host
-- Open Source
-```
-
 Faz 1 için önerilen `Resources` dropdown:
 
 ```text
 Resources
-- Docs
 - Self-host Docs
 - Security
 - Blog
 ```
 
 `/docs/integrations` tamamlandığında `Integrations` bu gruba eklenir.
+
+`Features`, `Pricing`, `Self-host` ve `Docs` ana navbar’da doğrudan yer aldığı için ayrıca `Product` dropdown açılmaz ve `Docs`, `Resources` içinde tekrar edilmez. Aynı hedeflere iki ayrı menü yolu vermek navigasyonu gereksiz tekrarlar.
 
 ### 3.0.6 Önerilen Footer Yapısı
 

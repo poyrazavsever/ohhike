@@ -8,6 +8,7 @@ import {
   upsertReadinessCheckin,
   type UpsertReadinessCheckinInput,
 } from "../../../actions/workspace";
+import { bodyPainAreaSelectOptions } from "../../../../lib/coach-vocabulary";
 
 type AthleteOption = {
   id: string;
@@ -255,7 +256,7 @@ export function ReadinessCheckinForm({
                 }
                 placeholder="Mood 1-10"
               />
-              <input
+              <select
                 className={inputClassName()}
                 value={form.painArea}
                 onChange={(event) =>
@@ -264,8 +265,13 @@ export function ReadinessCheckinForm({
                     painArea: event.target.value,
                   }))
                 }
-                placeholder="Pain area"
-              />
+              >
+                {bodyPainAreaSelectOptions(form.painArea).map((opt) => (
+                  <option key={opt.value || "pain-none"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <textarea
                 className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
                 value={form.notes}

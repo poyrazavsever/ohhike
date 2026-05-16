@@ -12,6 +12,8 @@ import {
   type UpdateSessionInput,
 } from "../../../actions/workspace";
 import {
+  absenceReasonSelectOptions,
+  bodyPainAreaSelectOptions,
   sessionFocusAreaSelectOptions,
   sessionPlannedIntensitySelectOptions,
 } from "../../../../lib/coach-vocabulary";
@@ -225,9 +227,19 @@ export function SessionCardActions({
     update: Partial<SessionAttendanceInput>,
   ) {
     setAttendanceEntries((current) =>
-      current.map((entry) =>
-        entry.athleteId === athleteId ? { ...entry, ...update } : entry,
-      ),
+      current.map((entry) => {
+        if (entry.athleteId !== athleteId) {
+          return entry;
+        }
+        const next = { ...entry, ...update };
+        if (update.attended === true) {
+          next.absenceReason = "";
+        }
+        if (update.painReported === false) {
+          next.painArea = "";
+        }
+        return next;
+      }),
     );
   }
 
@@ -578,10 +590,7 @@ export function SessionCardActions({
                           }
                           placeholder="Minutes"
                         />
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
+                        <select
                           disabled={!entry.included}
                           className={inputClassName()}
                           value={entry.rpe}
@@ -590,9 +599,19 @@ export function SessionCardActions({
                               rpe: event.target.value,
                             })
                           }
-                          placeholder="RPE"
-                        />
-                        <input
+                        >
+                          {sessionPlannedIntensitySelectOptions(entry.rpe).map(
+                            (opt) => (
+                              <option
+                                key={`rpe-${athlete.id}-${opt.value || "none"}`}
+                                value={opt.value}
+                              >
+                                {opt.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                        <select
                           disabled={!entry.included || entry.attended}
                           className={inputClassName()}
                           value={entry.absenceReason}
@@ -601,8 +620,18 @@ export function SessionCardActions({
                               absenceReason: event.target.value,
                             })
                           }
-                          placeholder="Absence reason"
-                        />
+                        >
+                          {absenceReasonSelectOptions(entry.absenceReason).map(
+                            (opt) => (
+                              <option
+                                key={`absence-${athlete.id}-${opt.value || "none"}`}
+                                value={opt.value}
+                              >
+                                {opt.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
                         <label className="flex items-center gap-2 rounded-xl border border-input bg-card px-3.5 py-2.5 text-sm font-bold text-muted-foreground">
                           <input
                             type="checkbox"
@@ -616,7 +645,7 @@ export function SessionCardActions({
                           />
                           Pain
                         </label>
-                        <input
+                        <select
                           disabled={!entry.included || !entry.painReported}
                           className={inputClassName()}
                           value={entry.painArea}
@@ -625,8 +654,18 @@ export function SessionCardActions({
                               painArea: event.target.value,
                             })
                           }
-                          placeholder="Pain area"
-                        />
+                        >
+                          {bodyPainAreaSelectOptions(entry.painArea).map(
+                            (opt) => (
+                              <option
+                                key={`pain-${athlete.id}-${opt.value || "none"}`}
+                                value={opt.value}
+                              >
+                                {opt.label}
+                              </option>
+                            ),
+                          )}
+                        </select>
                       </div>
                       <textarea
                         disabled={!entry.included}

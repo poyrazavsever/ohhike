@@ -36,15 +36,20 @@ Organization
             -> Team Memory Assistant
 ```
 
-Mevcut kod durumu (Faz 1 baslangici):
+Mevcut kod durumu (2026-05-16 guncellemesi):
 
 - `apps/web`: Marketing site tamamlandi. Dokunulmayacak.
 - `apps/app`:
-  - Clerk korumalı shell, auth sayfalari (login/register), AppSidebar, AppShell mevcut.
-  - Clerk user webhook → Supabase `users` sync calisiyor.
-  - `lib/supabase.ts` yalnizca anon client. Server/admin ayrimi yok.
-  - Supabase migration, RLS, onboarding, organization/team/athlete CRUD, billing, AI/RAG modulleri henuz yok.
-  - Sidebar'da tum nav linkleri tanimli ama hicbir route sayfasi mevcut degil.
+  - ✓ Clerk korumali shell, auth, AppSidebar, AppShell, onboarding (`app/onboarding/`).
+  - ✓ Clerk webhook → `users` sync (`createSupabaseAdminClient`).
+  - ✓ `lib/supabase.ts` (anon), `lib/supabase-server.ts` (`createSupabaseServerClient`), `lib/supabase-admin.ts`.
+  - ✓ Migration SQL `002`–`008` (`docs/supabase/README.md` ile uyumlu).
+  - ✓ Team Operations: org switch, team/athlete/session CRUD, readiness, nutrition, drills, wearables (kayit), ai-reports (manuel), team-memory, settings iskeleti.
+  - ✓ Athlete invite/claim (`/invite/athlete/[token]`), kontrollu sozluk (`lib/coach-vocabulary.ts`).
+  - ◐ Server Action'lar cogunlukla **admin client** kullaniyor; RLS'li server client dosyada var ama bagli degil.
+  - ◐ Sporcu dashboard koç aggregate; claim sonrasi profil tamamlama yok.
+  - ✗ Staff davet, gercek AI/RAG, wearable OAuth, personal_trainings, Clerk Billing sync, self-host.
+  - Detayli uyum/eksik analizi: `docs/UrunUyumVeEksikler.md`.
 
 ---
 
@@ -97,9 +102,9 @@ Kural:
 
 ---
 
-#### Blok 1 — Supabase Foundation (DB Katmani)
+#### Blok 1 — Supabase Foundation (DB Katmani) ✓
 
-##### 1.1 — Foundation Migration SQL
+##### 1.1 — Foundation Migration SQL ✓
 
 Dosya: `docs/supabase/002_phase1_foundation.sql`
 
@@ -174,9 +179,9 @@ Storage Buckets:
 
 ---
 
-##### 1.2 — TypeScript Tip Tanimlari
+##### 1.2 — TypeScript Tip Tanimlari ✓
 
-Dosya: `apps/app/lib/database.types.ts`
+Dosya: `apps/app/lib/database.types.ts` (Faz 3–5 tablolari icin genisletildi; 001'deki tum tablolar henuz tiplerde degil)
 
 - Schema'daki tum tablo satirlarini karsilayan TypeScript interface/type tanimlari.
 - `Row`, `Insert`, `Update` varyantlari her tablo icin tanimlanir.
@@ -184,18 +189,18 @@ Dosya: `apps/app/lib/database.types.ts`
 
 ---
 
-#### Blok 2 — Supabase Client Mimarisi
+#### Blok 2 — Supabase Client Mimarisi ◐
 
-##### 2.1 — Server Component Client
+##### 2.1 — Server Component Client ◐
 
-Dosya: `apps/app/lib/supabase-server.ts`
+Dosya: `apps/app/lib/supabase-server.ts` (`createSupabaseServerClient` — dosya var, action'larda kullanilmiyor)
 
 - `createServerClient()` fonksiyonu: Next.js Server Component ve Server Action'lardan cagrilir.
 - Clerk JWT'sini Supabase'e aktarir: `auth().getToken({ template: 'supabase' })`.
 - RLS, Clerk user context ile calismis olur.
 - Cookie bazli session yoktur; her istekte Clerk token alinir.
 
-##### 2.2 — Admin Client
+##### 2.2 — Admin Client ✓
 
 Dosya: `apps/app/lib/supabase-admin.ts`
 
@@ -203,16 +208,17 @@ Dosya: `apps/app/lib/supabase-admin.ts`
 - RLS bypass eder; sadece webhook ve kritik server action'larda kullanilir.
 - Mevcut webhook (`apps/app/app/api/webhooks/clerk/route.ts`) bu client'a gecis yapar.
 
-##### 2.3 — Mevcut `lib/supabase.ts` Duzeltme
+##### 2.3 — Mevcut `lib/supabase.ts` Duzeltme ✓
 
 - Anon client client-side bilesenler icin korunur.
-- Server ve admin client ayri dosyalara tasindi; eski dosyadan import'lar guncellenir.
+- Server ve admin client ayri dosyalara tasindi.
+- ◐ Action katmani hala cogunlukla admin client'a bagli (RLS bypass).
 
 ---
 
-#### Blok 3 — Auth Sonrasi Yonlendirme ve Route Gruplari
+#### Blok 3 — Auth Sonrasi Yonlendirme ve Route Gruplari ✓
 
-##### 3.1 — Route Grubu Yapisi
+##### 3.1 — Route Grubu Yapisi ✓
 
 Mevcut `app/` dizini yeniden duzenlenir:
 
@@ -253,9 +259,9 @@ apps/app/app/
   layout.tsx
 ```
 
-##### 3.2 — Protected Layout (Onboarding Guard)
+##### 3.2 — Protected Layout (Onboarding Guard) ✓
 
-Dosya: `apps/app/app/(protected)/layout.tsx`
+Dosya: `apps/app/app/(protected)/layout.tsx` (onboarding `app/onboarding/` — guard disinda)
 
 Mantik:
 
@@ -272,20 +278,20 @@ Mantik:
 
 ---
 
-#### Blok 4 — Onboarding Akisi
+#### Blok 4 — Onboarding Akisi ✓
 
 UserFlows.md §2 referans alinir.
 
-##### 4.1 — Onboarding Page (Server Component)
+##### 4.1 — Onboarding Page (Server Component) ✓
 
 Dosya: `apps/app/app/(protected)/onboarding/page.tsx`
 
 - Kullanicinin zaten organizasyonu varsa `/dashboard`'a redirect.
 - `OnboardingStepper` client component'ini render eder.
 
-##### 4.2 — Onboarding Stepper (Client Component)
+##### 4.2 — Onboarding Stepper (Client Component) ✓
 
-Dosya: `apps/app/app/(protected)/onboarding/_components/onboarding-stepper.tsx`
+Dosya: `apps/app/app/onboarding/_components/onboarding-stepper.tsx`
 
 5 adimli stepper:
 
@@ -320,9 +326,9 @@ Step 5 — Ready
   CTA: "Dashboard'a Git"
 ```
 
-##### 4.3 — Onboarding Server Actions
+##### 4.3 — Onboarding Server Actions ✓
 
-Dosya: `apps/app/app/(protected)/onboarding/actions.ts`
+Dosya: `apps/app/app/onboarding/actions.ts`
 
 ```text
 createOrganization(data):
@@ -344,29 +350,28 @@ addInitialAthletes(organizationId, teamId, athletes[]):
 ```
 
 Her action:
-- `createAdminClient()` veya `createServerClient()` kullanir.
-- Zod ile input validation.
-- Hata durumunda anlamli mesaj dondurur.
+- ✓ `createSupabaseAdminClient()` kullanir.
+- ✗ Zod ile input validation (henuz yok).
+- ✓ Hata durumunda anlamli mesaj dondurur.
 
 ---
 
-#### Blok 5 — Route Skeleton Sayfalari
+#### Blok 5 — Route Skeleton Sayfalari ✓ (icerik Faz 2–5 ile genisletildi)
 
-Her sayfa basit placeholder — gercek icerik sonraki fazlarda gelir.
+Ilk placeholder'lar tamamlandi; asagidaki route'lar gercek CRUD/registry UI ile calisir:
 
-| Route | Dosya | Gosterecegi |
-|---|---|---|
-| `/dashboard` | `dashboard/page.tsx` | "Coach Dashboard" baslik, bos kart grid |
-| `/teams` | `teams/page.tsx` | "Teams" baslik, bos empty state |
-| `/athletes` | `athletes/page.tsx` | "Athletes" baslik, bos empty state |
-| `/sessions` | `sessions/page.tsx` | "Sessions" baslik, bos empty state |
-| `/settings/billing` | `settings/billing/page.tsx` | Plan bilgisi placeholder |
-
-Her sayfa `AppShell` ile sarmalanir.
+| Route | Durum |
+|---|---|
+| `/dashboard`, `/teams`, `/athletes`, `/sessions` | ✓ |
+| `/readiness`, `/nutrition`, `/load-recovery`, `/calendar`, `/training-planner` | ✓ |
+| `/drills`, `/wearables`, `/ai-reports`, `/team-memory`, `/reports` | ✓ (AI/RAG uretim yok) |
+| `/settings/*` (profile, org, billing, staff, integrations) | ◐ staff/integrations placeholder |
+| `/invite/athlete/[token]` | ✓ |
+| `/athlete/dashboard` | ◐ koç aggregate (sporcu paneli degil) |
 
 ---
 
-#### Blok 6 — Webhook Refactor
+#### Blok 6 — Webhook Refactor ✓
 
 Dosya: `apps/app/app/api/webhooks/clerk/route.ts`
 
@@ -397,23 +402,22 @@ Degisiklikler:
 
 ---
 
-### FAZ 2 — Team Operations ve CRUD (Planlama Asamas&#305;)
+### FAZ 2 — Team Operations ve CRUD ◐ (devam ediyor)
 
 **Amac:** Onboarding sonrasi gercek operasyon ekranlari.
 
 ```text
 Agent gorevleri:
-- Organization onboarding: create/update organization
-- Organization switcher/manager: sidebar uzerinden aktif organizasyon secimi
-- Organization CRUD: yeni organizasyon ekle, ad/tip/sehir/ulke guncelle, sil/arsivle
-- Plan gate: Basic hesapta 1 organizasyon ve 3 team member limiti
-- Plan gate: Pro ve Pro Plus hesaplarda ek organizasyon ve daha yuksek member limitleri
-- Team CRUD: liste, detay, duzenle, sil
-- Athlete CRUD: liste, detay, form, duzenle, sil
-- Athlete invite token olusturma
-- Staff yonetimi: davet, rol atama
-- Entitlement helper: max_teams, max_athletes kontrolu
-- Permission helper: owner/admin/coach/athlete rol kontrolleri
+- ✓ Organization onboarding: create/update organization
+- ✓ Organization switcher/manager: sidebar uzerinden aktif organizasyon secimi
+- ◐ Organization CRUD: yeni organizasyon ekle, guncelle (sil/arsivle yok)
+- ◐ Plan gate: team_billing_entitlements + canCreateOrganization
+- ✓ Team CRUD: liste, duzenle, sil
+- ✓ Athlete CRUD: liste, form, duzenle, sil
+- ✓ Athlete invite token olusturma (link; e-posta yok)
+- ✗ Staff yonetimi: davet, rol atama (/settings/staff placeholder)
+- ◐ Entitlement helper: plan okuma var; tum limitler enforced degil
+- ✓ Permission helper: rol kontrolleri action'larda (admin client ile)
 ```
 
 Organization management plan:
@@ -447,87 +451,69 @@ UX:
   - Silme ilk asamada hard delete yerine archive/delete guard ile planlanir.
 ```
 
-Faz 2 planlamasi Faz 1 cikis kriterleri karsilanainca yapilacak.
-
 ---
 
-### FAZ 3 — Sessions ve Athlete Daily Data (Planlama Asamas&#305;)
+### FAZ 3 — Sessions ve Athlete Daily Data ◐
 
 **Amac:** Urunun gercek operasyon verisi toplanmaya baslar.
 
 ```text
-Migration: 002_sessions.sql
-  - sessions
-  - session_attendance
-  - training_blocks
-  - wellness_checkins
-  - nutrition_logs
-  - personal_trainings
+Migration: ✓ docs/supabase/003_sessions.sql, 004_daily_data.sql
+  - ✓ sessions, session_attendance, training_blocks
+  - ✓ wellness_checkins, nutrition_logs
+  - ✗ personal_trainings (app yok)
 
 App route'lari:
-  - /sessions (liste + olustur)
-  - /sessions/[id] (detay + tamamla + RPE)
-  - /readiness (check-in akisi)
-  - /nutrition (gunluk log)
-  - /athlete/dashboard (sporcu ozet)
+  - ✓ /sessions (liste + olustur + attendance + blocks)
+  - ✗ /sessions/[id] (detay + tamamla)
+  - ◐ /readiness, /nutrition (koç sporcu adina giris)
+  - ✗ /athlete/dashboard (sporcu ozet — su an koç aggregate)
+  - ✓ Kontrollu sozluk: session focus/intensity, attendance, drills, team-memory
 ```
 
 ---
 
-### FAZ 4 — Wearables, Files ve Import (Planlama Asamas&#305;)
+### FAZ 4 — Wearables, Files ve Import ◐
 
 ```text
-Migration: 003_wearables_files.sql
-  - wearable_connections
-  - wearable_daily_summaries
-  - wearable_activities
-  - session_files
-  - session_file_summaries
+Migration: ✓ docs/supabase/006_wearables.sql
+  - ✓ wearable_connections (kayit formu)
+  - ✗ summaries/activities sync, session_files
 
 Entegrasyonlar:
-  - Strava OAuth
-  - CSV import
-  - Dosya upload (Supabase Storage)
-  - Token sifreleme (AES-256-GCM)
+  - ✗ Strava OAuth
+  - ✗ CSV import isleme
+  - ✗ Dosya upload pipeline
+  - ✗ Token sifreleme (AES-256-GCM)
 ```
 
 ---
 
-### FAZ 5 — AI Reports ve Team Memory (Planlama Asamas&#305;)
+### FAZ 5 — AI Reports ve Team Memory ◐
 
 ```text
-Migration: 004_ai_rag.sql
-  - ai_reports
-  - athlete_observations
-  - team_patterns
-  - drills
-  - training_plans
-  - performance_goals
-  - documents
-  - document_embeddings
-  - assistant_threads
-  - assistant_messages
+Migration: ✓ 005_drills.sql, 007_ai_reports.sql, 008_team_memory.sql
+  - ✓ drills, ai_reports (manuel kayit), observations, patterns
+  - ✗ documents, embeddings, assistant (001'de var, app yok)
 
 AI Katmani:
-  - LLM provider adapter (OpenAI / Gemini / OpenRouter)
-  - Structured JSON output validation (Zod)
-  - Session analysis pipeline
-  - Team Memory RAG sorgu akisi
-  - document_embeddings ivfflat index
+  - ✗ LLM provider adapter
+  - ✗ Session analysis pipeline (createAiReport → manual)
+  - ✗ Team Memory RAG sorgu akisi
 ```
 
 ---
 
-### FAZ 6 — Billing, Reports ve Self-host (Planlama Asamas&#305;)
+### FAZ 6 — Billing, Reports ve Self-host ✗
 
 ```text
-- Clerk Billing webhook
-- billing_entitlements sync
-- Feature gate enforcement (server-side)
-- PDF rapor export
-- Self-host setup akisi
-- api_keys yonetimi
-- reports ve report_exports tablolari
+- ✗ Clerk Billing webhook
+- ◐ team_billing_entitlements okuma; tam sync yok
+- ◐ Feature gate kismi
+- ✗ PDF rapor export
+- ✗ Self-host setup akisi
+- ✗ api_keys yonetimi
+- ◐ /reports sayfasi (placeholder metin)
 ```
 
 ---
@@ -585,12 +571,19 @@ Kritik hatalar audit_logs'a yazilir
 
 | Dosya | Durum | Kapsam |
 |---|---|---|
-| `docs/supabase/001_initial_schema.sql` | Mevcut | Genis v3.0 schema referansi; session, wearable, AI/RAG dahil tam kapsam |
-| `docs/supabase/002_phase1_foundation.sql` | Hazir | Foundation overlay, RLS, storage, `team_billing_entitlements` |
-| `docs/supabase/003_sessions.sql` | Faz 3 | sessions, attendance, training_blocks, checkins, nutrition, personal_trainings |
-| `docs/supabase/004_wearables_files.sql` | Faz 4 | wearable tablolar, session_files |
-| `docs/supabase/005_ai_rag.sql` | Faz 5 | ai_reports, documents, embeddings, assistant |
-| `docs/supabase/006_billing_reports.sql` | Faz 6 | reports, api_keys, system_settings |
+| `docs/supabase/001_initial_schema.sql` | ✓ Mevcut | Genis v3.0 schema referansi |
+| `docs/supabase/002_phase1_foundation.sql` | ✓ Uygulandi | Foundation, RLS, `team_billing_entitlements` |
+| `docs/supabase/003_sessions.sql` | ✓ Uygulandi | sessions, attendance, training_blocks |
+| `docs/supabase/004_daily_data.sql` | ✓ Uygulandi | wellness_checkins, nutrition_logs |
+| `docs/supabase/005_drills.sql` | ✓ Uygulandi | drills + training_blocks.drill_id |
+| `docs/supabase/006_wearables.sql` | ✓ Uygulandi | wearable_connections, summaries, activities |
+| `docs/supabase/007_ai_reports.sql` | ✓ Uygulandi | ai_reports |
+| `docs/supabase/008_team_memory.sql` | ✓ Uygulandi | athlete_observations, team_patterns |
+| `documents` / `embeddings` / `assistant_*` | ✗ App yok | 001'de tanimli; ayri migration veya 001 uygulamasi gerekir |
+| `personal_trainings` | ✗ App yok | 001 / planlanan Faz 3 |
+| `reports`, `api_keys`, self-host | ✗ Faz 6 | Henuz migration dosyasi yok |
+
+Guncel ozet: `docs/supabase/README.md`
 
 ---
 
