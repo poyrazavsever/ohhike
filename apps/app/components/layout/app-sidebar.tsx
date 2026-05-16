@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { switchActiveOrganization } from "../../app/actions/workspace";
+import { isAthleteRole } from "../../lib/org-roles";
 import type { WorkspaceShellData } from "../../lib/workspace";
 
 const navGroups = [
@@ -103,6 +104,44 @@ const navGroups = [
         href: "/reports",
         label: "Reports",
         icon: "solar:file-download-bold",
+      },
+    ],
+  },
+];
+
+const athleteNavGroups = [
+  {
+    label: "My portal",
+    items: [
+      {
+        href: "/athlete/home",
+        label: "Home",
+        icon: "solar:home-2-bold",
+      },
+      {
+        href: "/athlete/check-in",
+        label: "Daily check-in",
+        icon: "solar:pulse-2-bold",
+      },
+      {
+        href: "/athlete/nutrition",
+        label: "Nutrition",
+        icon: "solar:cup-hot-bold",
+      },
+      {
+        href: "/athlete/profile",
+        label: "My profile",
+        icon: "solar:user-id-bold",
+      },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      {
+        href: "/settings/profile",
+        label: "Account settings",
+        icon: "solar:user-circle-bold",
       },
     ],
   },
@@ -380,6 +419,8 @@ function SidebarUserCard() {
 
 export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
   const pathname = usePathname();
+  const isAthlete = isAthleteRole(workspace.role);
+  const groups = isAthlete ? athleteNavGroups : navGroups;
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-card lg:flex lg:flex-col">
@@ -387,7 +428,7 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
       <WorkspaceCard workspace={workspace} />
 
       <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
-        {navGroups.map((group) => (
+        {groups.map((group) => (
           <div key={group.label} className="mt-4">
             <div className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {group.label}

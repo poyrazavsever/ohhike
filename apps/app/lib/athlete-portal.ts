@@ -9,6 +9,8 @@ import { isAthleteRole } from "./org-roles";
 import {
   isAthletePortalPath,
   isCoachWorkspacePath,
+  pathnameMatchesPrefix,
+  COACH_ATHLETE_INSIGHT_PATHS,
 } from "./portal-routes";
 import { createSupabaseAdminClient } from "./supabase-admin";
 import {
@@ -131,7 +133,10 @@ export async function requireAthletePortalAccess(pathname: string) {
     return;
   }
 
-  if (isCoachWorkspacePath(pathname)) {
+  if (
+    isCoachWorkspacePath(pathname) ||
+    pathnameMatchesPrefix(pathname, COACH_ATHLETE_INSIGHT_PATHS)
+  ) {
     redirect("/athlete/home");
   }
 
@@ -163,6 +168,41 @@ export async function requireAthletePortalAccess(pathname: string) {
   }
 }
 
+export async function getAthleteOnboardingPageData(): Promise<{
+  workspace: CurrentWorkspace;
+  athlete: AthleteRow | null;
+  teamName: string | null;
+}> {
+  const workspace = await getCurrentWorkspace();
+
+  if (!isAthleteRole(workspace.membership.role)) {
+    redirect("/dashboard");
+  }
+
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/login");
+  }
+
+  const athlete = await getLinkedAthleteForUser(
+    userId,
+    workspace.organization.id,
+  );
+
+  let teamName: string | null = null;
+  if (athlete) {
+    const supabase = createSupabaseAdminClient();
+    const { data: team } = await supabase
+      .from("teams")
+      .select("name")
+      .eq("id", athlete.team_id)
+      .maybeSingle();
+    teamName = team?.name ?? null;
+  }
+
+  return { workspace, athlete, teamName };
+}
+
 export async function getAthleteHomeData(): Promise<{
   portal: AthletePortalContext;
   latestCheckin: Tables<"wellness_checkins"> | null;
@@ -180,7 +220,6 @@ export async function getAthleteHomeData(): Promise<{
   const supabase = createSupabaseAdminClient();
   const since = new Date();
   since.setDate(since.getDate() - 7);
-  const sinceDate = since.toISOString().slice(0, 10);
 
   const [{ data: checkins }, { data: nutritionLogs }, { data: sessions }, { data: recentAttendance }] =
     await Promise.all([
