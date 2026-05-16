@@ -10,6 +10,11 @@ import {
   type CreateAthleteObservationInput,
   type CreateTeamPatternInput,
 } from "../../../actions/workspace";
+import {
+  MEMORY_SEVERITY_OPTIONS,
+  OBSERVATION_CATEGORY_OPTIONS,
+  TEAM_PATTERN_TYPE_OPTIONS,
+} from "../../../../lib/coach-vocabulary";
 import type { AthleteTeamOption } from "../../../../lib/workspace";
 
 type AthleteOption = {
@@ -49,7 +54,7 @@ function emptyObservation(teamId: string, athleteId: string): CreateAthleteObser
 function emptyPattern(teamId: string): CreateTeamPatternInput {
   return {
     teamId,
-    patternType: "",
+    patternType: "tactical",
     title: "",
     description: "",
     severity: "",
@@ -113,7 +118,7 @@ export function TeamMemoryForms({
   }
 
   return (
-    <div className="mt-6 flex flex-wrap justify-end gap-3">
+    <div className="mt-4 flex flex-wrap justify-end gap-3">
       <button
         type="button"
         disabled={teams.length === 0 || athletes.length === 0}
@@ -231,7 +236,7 @@ export function TeamMemoryForms({
                   }
                   placeholder="Title"
                 />
-                <input
+                <select
                   className={inputClassName()}
                   value={observationForm.category}
                   onChange={(event) =>
@@ -240,9 +245,14 @@ export function TeamMemoryForms({
                       category: event.target.value,
                     }))
                   }
-                  placeholder="Category"
-                />
-                <input
+                >
+                  {OBSERVATION_CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt.value || "none"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <select
                   className={inputClassName()}
                   value={observationForm.severity}
                   onChange={(event) =>
@@ -251,8 +261,13 @@ export function TeamMemoryForms({
                       severity: event.target.value,
                     }))
                   }
-                  placeholder="Severity"
-                />
+                >
+                  {MEMORY_SEVERITY_OPTIONS.map((opt) => (
+                    <option key={opt.value || "none"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
                 <textarea
                   className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
                   value={observationForm.observation}
@@ -294,7 +309,7 @@ export function TeamMemoryForms({
                     </option>
                   ))}
                 </select>
-                <input
+                <select
                   className={inputClassName()}
                   value={patternForm.patternType}
                   onChange={(event) =>
@@ -303,8 +318,13 @@ export function TeamMemoryForms({
                       patternType: event.target.value,
                     }))
                   }
-                  placeholder="Pattern type"
-                />
+                >
+                  {TEAM_PATTERN_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
                 <input
                   className={inputClassName()}
                   value={patternForm.title}
@@ -316,7 +336,7 @@ export function TeamMemoryForms({
                   }
                   placeholder="Title"
                 />
-                <input
+                <select
                   className={inputClassName()}
                   value={patternForm.severity}
                   onChange={(event) =>
@@ -325,8 +345,13 @@ export function TeamMemoryForms({
                       severity: event.target.value,
                     }))
                   }
-                  placeholder="Severity"
-                />
+                >
+                  {MEMORY_SEVERITY_OPTIONS.map((opt) => (
+                    <option key={opt.value || "none"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
                 <textarea
                   className={`${inputClassName()} min-h-28 resize-none md:col-span-2`}
                   value={patternForm.description}

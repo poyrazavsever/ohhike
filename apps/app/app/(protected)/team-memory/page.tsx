@@ -3,6 +3,11 @@ import {
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
 import { getTeamMemoryData } from "../../../lib/workspace";
+import {
+  memorySeverityLabel,
+  observationCategoryLabel,
+  teamPatternTypeLabel,
+} from "../../../lib/coach-vocabulary";
 import { TeamMemoryForms } from "./_components/team-memory-forms";
 
 function formatDate(value: string | null) {
@@ -91,11 +96,12 @@ export default async function TeamMemoryPage() {
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">
                         {observation.athleteName} ·{" "}
                         {observation.teamName ?? "No team"} ·{" "}
+                        {observationCategoryLabel(observation.category)} ·{" "}
                         {formatDate(observation.created_at)}
                       </p>
                     </div>
                     <div className="rounded-lg bg-primary-soft px-2.5 py-1 text-xs font-extrabold text-primary-700">
-                      {observation.severity ?? "note"}
+                      {memorySeverityLabel(observation.severity)}
                     </div>
                   </div>
                   <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
@@ -129,7 +135,11 @@ export default async function TeamMemoryPage() {
                         {pattern.title}
                       </p>
                       <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                        {pattern.teamName ?? "No team"} · {pattern.pattern_type}
+                        {pattern.teamName ?? "No team"} ·{" "}
+                        {teamPatternTypeLabel(pattern.pattern_type)}
+                        {pattern.severity
+                          ? ` · ${memorySeverityLabel(pattern.severity)}`
+                          : ""}
                       </p>
                     </div>
                     <div className="rounded-lg bg-primary-soft px-2.5 py-1 text-xs font-extrabold text-primary-700">

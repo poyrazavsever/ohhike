@@ -5,6 +5,10 @@ import {
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
 import { getDrillsData } from "../../../lib/workspace";
+import {
+  drillCategoryLabel,
+  drillDifficultyLabel,
+} from "../../../lib/coach-vocabulary";
 import { CreateDrillForm } from "./_components/create-drill-form";
 
 function formatSportType(value: string) {
@@ -82,8 +86,8 @@ export default async function DrillsPage() {
                   </h2>
                   <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {formatSportType(drill.sport_type)} ·{" "}
-                    {drill.category ?? "No category"} ·{" "}
-                    {drill.difficulty ?? "No difficulty"}
+                    {drillCategoryLabel(drill.category)} ·{" "}
+                    {drillDifficultyLabel(drill.difficulty)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
