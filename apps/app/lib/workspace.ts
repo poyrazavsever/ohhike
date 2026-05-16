@@ -87,6 +87,11 @@ export type CalendarSession = Session & {
   teamName: string | null;
 };
 
+export type TrainingPlannerSession = Session & {
+  teamName: string | null;
+  trainingBlocks: TrainingBlock[];
+};
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -976,5 +981,83 @@ export async function getCalendarData(): Promise<{
         teamName:
           teams?.find((team) => team.id === session.team_id)?.name ?? null,
       })) ?? [],
+  };
+}
+
+export async function getTrainingPlannerData(): Promise<{
+  workspace: CurrentWorkspace;
+  sessions: TrainingPlannerSession[];
+  totals: {
+    sessions: number;
+    blocks: number;
+    plannedMinutes: number;
+    completedBlocks: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: sessions, error: sessionsError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("scheduled_at", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+  ]);
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  const sessionIds = (sessions ?? []).map((session) => session.id);
+  const { data: trainingBlocks, error: blocksError } =
+    sessionIds.length > 0
+      ? await supabase
+          .from("training_blocks")
+          .select("*")
+          .in("session_id", sessionIds)
+          .order("order_index", { ascending: true })
+      : { data: [], error: null };
+
+  if (blocksError) {
+    throw new Error(blocksError.message);
+  }
+
+  const plannerSessions =
+    sessions?.map((session) => ({
+      ...session,
+      teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
+      trainingBlocks:
+        trainingBlocks?.filter((block) => block.session_id === session.id) ?? [],
+    })) ?? [];
+
+  return {
+    workspace,
+    sessions: plannerSessions,
+    totals: {
+      sessions: plannerSessions.length,
+      blocks: trainingBlocks?.length ?? 0,
+      plannedMinutes:
+        trainingBlocks?.reduce(
+          (total, block) => total + (block.planned_duration_min ?? 0),
+          0,
+        ) ?? 0,
+      completedBlocks:
+        trainingBlocks?.filter((block) => block.completed).length ?? 0,
+    },
   };
 }
