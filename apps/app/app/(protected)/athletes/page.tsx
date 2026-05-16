@@ -1,5 +1,6 @@
 import { PageHeader } from "../../../components/layout/page-header";
 import { getAthletesData } from "../../../lib/workspace";
+import { AthleteRowActions } from "./_components/athlete-row-actions";
 import { CreateAthleteForm } from "./_components/create-athlete-form";
 
 function getAthleteName(firstName: string, lastName: string | null) {
@@ -30,17 +31,18 @@ export default async function AthletesPage() {
 
       {athletes.length > 0 ? (
         <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card">
-          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-4 border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-4 border-b border-border px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
             <span>Athlete</span>
             <span>Team</span>
             <span>Status</span>
             <span>Claim</span>
+            <span>Actions</span>
           </div>
           <div className="divide-y divide-border">
             {athletes.map((athlete) => (
               <article
                 key={athlete.id}
-                className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-4 px-5 py-4"
+                className="grid grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-4 px-5 py-4"
               >
                 <div>
                   <p className="text-sm font-extrabold text-foreground">
@@ -60,6 +62,7 @@ export default async function AthletesPage() {
                 <p className="text-sm font-semibold text-muted-foreground">
                   {athlete.user_id ? "Claimed" : "Not invited"}
                 </p>
+                <AthleteRowActions athlete={athlete} teams={teams} />
               </article>
             ))}
           </div>

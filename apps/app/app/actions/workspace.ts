@@ -4,7 +4,11 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import type { OrganizationType, SportType } from "../../lib/database.types";
+import type {
+  OrganizationType,
+  SessionType,
+  SportType,
+} from "../../lib/database.types";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
@@ -31,6 +35,19 @@ const sportTypes = [
   "esports",
   "other",
 ] as const satisfies readonly SportType[];
+
+const sessionTypes = [
+  "team_training",
+  "personal_training",
+  "match",
+  "friendly_match",
+  "recovery",
+  "test_day",
+  "analysis_meeting",
+  "nutrition_session",
+  "education_session",
+  "other",
+] as const satisfies readonly SessionType[];
 
 export type WorkspaceActionResult =
   | {
@@ -87,6 +104,24 @@ export type CreateAthleteInput = {
   dominantSide?: string;
 };
 
+export type UpdateAthleteInput = CreateAthleteInput & {
+  athleteId: string;
+};
+
+export type CreateSessionInput = {
+  teamId: string;
+  title: string;
+  type: SessionType;
+  scheduledAt?: string;
+  location?: string;
+  opponent?: string;
+  plannedDurationMin?: string;
+  plannedIntensity?: string;
+  focusArea?: string;
+  coachNotes?: string;
+  athleteIds: string[];
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -98,6 +133,10 @@ function isOrganizationType(value: string): value is OrganizationType {
 
 function isSportType(value: string): value is SportType {
   return sportTypes.includes(value as SportType);
+}
+
+function isSessionType(value: string): value is SessionType {
+  return sessionTypes.includes(value as SessionType);
 }
 
 function slugify(value: string) {
@@ -123,6 +162,17 @@ function parsePositiveInteger(value: string | undefined) {
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function parseDateTime(value: string | undefined) {
+  const cleaned = cleanString(value);
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const date = new Date(cleaned);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 async function canCurrentWorkspaceCreateOrganization() {
@@ -780,6 +830,288 @@ export async function createAthlete(
   revalidatePath("/athletes");
   revalidatePath("/dashboard");
   revalidatePath("/teams");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function updateAthlete(
+  input: UpdateAthleteInput,
+): Promise<WorkspaceActionResult> {
+  const firstName = cleanString(input.firstName);
+
+  if (!firstName) {
+    return {
+      ok: false,
+      error: "Athlete first name is required.",
+    };
+  }
+
+  const email = cleanString(input.email);
+
+  if (email && !isValidEmail(email)) {
+    return {
+      ok: false,
+      error: "Please enter a valid athlete email address.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can update athletes.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("id", input.teamId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (teamError || !team) {
+    return {
+      ok: false,
+      error: "Please select a valid team.",
+    };
+  }
+
+  const lastName = cleanString(input.lastName);
+  const { error } = await supabase
+    .from("athletes")
+    .update({
+      team_id: team.id,
+      first_name: firstName,
+      last_name: lastName,
+      display_name: [firstName, lastName].filter(Boolean).join(" "),
+      email,
+      number: parsePositiveInteger(input.number),
+      position: cleanString(input.position),
+      dominant_side: cleanString(input.dominantSide),
+    })
+    .eq("id", input.athleteId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "athlete.updated",
+    entity_type: "athlete",
+    entity_id: input.athleteId,
+  });
+
+  revalidatePath("/athletes");
+  revalidatePath("/dashboard");
+  revalidatePath("/teams");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function deleteAthlete(
+  athleteId: string,
+): Promise<WorkspaceActionResult> {
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can delete athletes.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { error } = await supabase
+    .from("athletes")
+    .delete()
+    .eq("id", athleteId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "athlete.deleted",
+    entity_type: "athlete",
+    entity_id: athleteId,
+  });
+
+  revalidatePath("/athletes");
+  revalidatePath("/dashboard");
+  revalidatePath("/teams");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createSession(
+  input: CreateSessionInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const title = cleanString(input.title);
+
+  if (!title) {
+    return {
+      ok: false,
+      error: "Session title is required.",
+    };
+  }
+
+  if (!isSessionType(input.type)) {
+    return {
+      ok: false,
+      error: "Invalid session type.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can create sessions.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("id", input.teamId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (teamError || !team) {
+    return {
+      ok: false,
+      error: "Please select a valid team.",
+    };
+  }
+
+  const athleteIds = [...new Set(input.athleteIds)].filter(Boolean);
+
+  if (athleteIds.length > 0) {
+    const { data: athletes, error: athletesError } = await supabase
+      .from("athletes")
+      .select("id")
+      .eq("organization_id", organization.id)
+      .eq("team_id", team.id)
+      .in("id", athleteIds);
+
+    if (athletesError) {
+      return {
+        ok: false,
+        error: athletesError.message,
+      };
+    }
+
+    if ((athletes?.length ?? 0) !== athleteIds.length) {
+      return {
+        ok: false,
+        error: "One or more selected athletes do not belong to this team.",
+      };
+    }
+  }
+
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .insert({
+      organization_id: organization.id,
+      team_id: team.id,
+      title,
+      type: input.type,
+      status: "planned",
+      scheduled_at: parseDateTime(input.scheduledAt),
+      location: cleanString(input.location),
+      opponent: cleanString(input.opponent),
+      planned_duration_min: parsePositiveInteger(input.plannedDurationMin),
+      planned_intensity: parsePositiveInteger(input.plannedIntensity),
+      focus_area: cleanString(input.focusArea),
+      coach_notes: cleanString(input.coachNotes),
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (sessionError) {
+    return {
+      ok: false,
+      error: sessionError.message,
+    };
+  }
+
+  if (athleteIds.length > 0) {
+    const { error: attendanceError } = await supabase
+      .from("session_attendance")
+      .insert(
+        athleteIds.map((athleteId) => ({
+          session_id: session.id,
+          athlete_id: athleteId,
+          attended: false,
+        })),
+      );
+
+    if (attendanceError) {
+      return {
+        ok: false,
+        error: attendanceError.message,
+      };
+    }
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "session.created",
+    entity_type: "session",
+    entity_id: session.id,
+  });
+
+  revalidatePath("/sessions");
+  revalidatePath("/dashboard");
 
   return {
     ok: true,

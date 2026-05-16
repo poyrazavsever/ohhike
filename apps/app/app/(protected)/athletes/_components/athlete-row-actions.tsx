@@ -1,0 +1,301 @@
+"use client";
+
+import { Icon } from "@iconify/react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+
+import {
+  deleteAthlete,
+  updateAthlete,
+  type UpdateAthleteInput,
+} from "../../../actions/workspace";
+import type { AthleteWithTeamName, AthleteTeamOption } from "../../../../lib/workspace";
+
+function inputClassName() {
+  return "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
+}
+
+export function AthleteRowActions({
+  athlete,
+  teams,
+}: {
+  athlete: AthleteWithTeamName;
+  teams: AthleteTeamOption[];
+}) {
+  const router = useRouter();
+  const [mode, setMode] = useState<"edit" | "delete" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState<UpdateAthleteInput>({
+    athleteId: athlete.id,
+    teamId: athlete.team_id,
+    firstName: athlete.first_name,
+    lastName: athlete.last_name ?? "",
+    email: athlete.email ?? "",
+    number: String(athlete.number ?? ""),
+    position: athlete.position ?? "",
+    dominantSide: athlete.dominant_side ?? "",
+  });
+
+  function closeModal() {
+    setError(null);
+    setMode(null);
+  }
+
+  function submitUpdate() {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await updateAthlete(form);
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setMode(null);
+      router.refresh();
+    });
+  }
+
+  function submitDelete() {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await deleteAthlete(athlete.id);
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setMode(null);
+      router.refresh();
+    });
+  }
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setMode("edit")}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
+        >
+          <Icon icon="solar:pen-2-bold" className="size-3.5" />
+          Edit
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("delete")}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-destructive hover:text-destructive-foreground"
+        >
+          <Icon icon="solar:trash-bin-trash-bold" className="size-3.5" />
+          Delete
+        </button>
+      </div>
+
+      {mode ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            aria-label="Close modal"
+            onClick={closeModal}
+            className="absolute inset-0 cursor-default"
+          />
+
+          <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-border bg-card p-5 shadow-xl md:p-6">
+            {mode === "edit" ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-700">
+                      <Icon icon="solar:pen-2-bold" className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-base font-extrabold text-foreground">
+                        Edit athlete
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-muted-foreground">
+                        Update athlete profile and team assignment.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                  >
+                    <Icon icon="solar:close-circle-bold" className="size-3.5" />
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <select
+                    className={`${inputClassName()} md:col-span-2`}
+                    value={form.teamId}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        teamId: event.target.value,
+                      }))
+                    }
+                  >
+                    {teams.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className={inputClassName()}
+                    value={form.firstName}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        firstName: event.target.value,
+                      }))
+                    }
+                    placeholder="First name"
+                  />
+                  <input
+                    className={inputClassName()}
+                    value={form.lastName}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        lastName: event.target.value,
+                      }))
+                    }
+                    placeholder="Last name"
+                  />
+                  <input
+                    type="email"
+                    className={inputClassName()}
+                    value={form.email}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="athlete@example.com"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className={inputClassName()}
+                    value={form.number}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        number: event.target.value,
+                      }))
+                    }
+                    placeholder="Number"
+                  />
+                  <input
+                    className={inputClassName()}
+                    value={form.position}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        position: event.target.value,
+                      }))
+                    }
+                    placeholder="Position / role"
+                  />
+                  <input
+                    className={inputClassName()}
+                    value={form.dominantSide}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        dominantSide: event.target.value,
+                      }))
+                    }
+                    placeholder="Dominant side"
+                  />
+                </div>
+
+                {error ? (
+                  <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+                    {error}
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-primary"
+                  >
+                    <Icon icon="solar:close-circle-bold" className="size-4" />
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={submitUpdate}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Icon icon="solar:diskette-bold" className="size-4" />
+                    {isPending ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive-soft text-destructive-foreground">
+                    <Icon icon="solar:trash-bin-trash-bold" className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-base font-extrabold text-foreground">
+                      Delete athlete
+                    </p>
+                    <p className="mt-2 text-sm font-medium leading-6 text-muted-foreground">
+                      This will delete <strong>{athlete.display_name ?? athlete.first_name}</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                {error ? (
+                  <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+                    {error}
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-primary"
+                  >
+                    <Icon icon="solar:close-circle-bold" className="size-4" />
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={submitDelete}
+                    className="inline-flex items-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-extrabold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Icon icon="solar:trash-bin-trash-bold" className="size-4" />
+                    {isPending ? "Deleting..." : "Delete athlete"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}

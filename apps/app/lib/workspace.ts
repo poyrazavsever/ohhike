@@ -10,6 +10,7 @@ type OrganizationMember = Tables<"organization_members">;
 type Team = Tables<"teams">;
 type Athlete = Tables<"athletes">;
 type TeamEntitlement = Tables<"team_billing_entitlements">;
+type Session = Tables<"sessions">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -28,6 +29,11 @@ export type AthleteWithTeamName = Athlete & {
 };
 
 export type AthleteTeamOption = Pick<Team, "id" | "name" | "sport_type">;
+
+export type SessionWithMeta = Session & {
+  teamName: string | null;
+  attendanceCount: number;
+};
 
 export type WorkspaceShellData = {
   organizationId: string;
@@ -301,5 +307,77 @@ export async function getAthletesData(): Promise<{
       teamName: teams?.find((team) => team.id === athlete.team_id)?.name ?? null,
     })),
     teams: teams ?? [],
+  };
+}
+
+export async function getSessionsData(): Promise<{
+  workspace: CurrentWorkspace;
+  sessions: SessionWithMeta[];
+  teams: AthleteTeamOption[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: sessions, error: sessionsError },
+    { data: teams, error: teamsError },
+    { data: athletes, error: athletesError },
+  ] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("scheduled_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  const sessionsWithMeta = await Promise.all(
+    (sessions ?? []).map(async (session) => {
+      const { count, error } = await supabase
+        .from("session_attendance")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", session.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return {
+        ...session,
+        teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
+        attendanceCount: count ?? 0,
+      };
+    }),
+  );
+
+  return {
+    workspace,
+    sessions: sessionsWithMeta,
+    teams: teams ?? [],
+    athletes: athletes ?? [],
   };
 }

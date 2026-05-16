@@ -48,6 +48,28 @@ export type AthleteStatus =
 
 export type TeamPlanTier = "basic_team" | "pro_team" | "pro_plus_team";
 
+export type SessionType =
+  | "team_training"
+  | "personal_training"
+  | "match"
+  | "friendly_match"
+  | "recovery"
+  | "test_day"
+  | "analysis_meeting"
+  | "nutrition_session"
+  | "education_session"
+  | "other";
+
+export type SessionStatus =
+  | "draft"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "analyzing"
+  | "analysis_completed"
+  | "analysis_failed";
+
 export type Database = {
   public: {
     Tables: {
@@ -423,6 +445,168 @@ export type Database = {
         };
         Relationships: [];
       };
+      sessions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string;
+          type: SessionType;
+          status: SessionStatus | null;
+          title: string;
+          description: string | null;
+          opponent: string | null;
+          location: string | null;
+          scheduled_at: string | null;
+          started_at: string | null;
+          ended_at: string | null;
+          planned_duration_min: number | null;
+          actual_duration_min: number | null;
+          focus_area: string | null;
+          planned_intensity: number | null;
+          coach_notes: string | null;
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id: string;
+          type: SessionType;
+          status?: SessionStatus | null;
+          title: string;
+          description?: string | null;
+          opponent?: string | null;
+          location?: string | null;
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          planned_duration_min?: number | null;
+          actual_duration_min?: number | null;
+          focus_area?: string | null;
+          planned_intensity?: number | null;
+          coach_notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string;
+          type?: SessionType;
+          status?: SessionStatus | null;
+          title?: string;
+          description?: string | null;
+          opponent?: string | null;
+          location?: string | null;
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          ended_at?: string | null;
+          planned_duration_min?: number | null;
+          actual_duration_min?: number | null;
+          focus_area?: string | null;
+          planned_intensity?: number | null;
+          coach_notes?: string | null;
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      session_attendance: {
+        Row: {
+          id: string;
+          session_id: string;
+          athlete_id: string;
+          attended: boolean | null;
+          absence_reason: string | null;
+          minutes_played: number | null;
+          rpe: number | null;
+          athlete_note: string | null;
+          coach_note: string | null;
+          pain_reported: boolean | null;
+          pain_area: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          athlete_id: string;
+          attended?: boolean | null;
+          absence_reason?: string | null;
+          minutes_played?: number | null;
+          rpe?: number | null;
+          athlete_note?: string | null;
+          coach_note?: string | null;
+          pain_reported?: boolean | null;
+          pain_area?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          athlete_id?: string;
+          attended?: boolean | null;
+          absence_reason?: string | null;
+          minutes_played?: number | null;
+          rpe?: number | null;
+          athlete_note?: string | null;
+          coach_note?: string | null;
+          pain_reported?: boolean | null;
+          pain_area?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      training_blocks: {
+        Row: {
+          id: string;
+          session_id: string;
+          title: string;
+          description: string | null;
+          order_index: number;
+          planned_duration_min: number | null;
+          actual_duration_min: number | null;
+          intensity: number | null;
+          drill_id: string | null;
+          completed: boolean | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          title: string;
+          description?: string | null;
+          order_index?: number;
+          planned_duration_min?: number | null;
+          actual_duration_min?: number | null;
+          intensity?: number | null;
+          drill_id?: string | null;
+          completed?: boolean | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          title?: string;
+          description?: string | null;
+          order_index?: number;
+          planned_duration_min?: number | null;
+          actual_duration_min?: number | null;
+          intensity?: number | null;
+          drill_id?: string | null;
+          completed?: boolean | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -505,6 +689,8 @@ export type Database = {
       organization_type: OrganizationType;
       sport_type: SportType;
       team_plan_tier: TeamPlanTier;
+      session_type: SessionType;
+      session_status: SessionStatus;
     };
     CompositeTypes: Record<string, never>;
   };
