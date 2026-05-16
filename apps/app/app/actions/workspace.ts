@@ -156,6 +156,23 @@ export type UpdateSessionAttendanceInput = {
   entries: SessionAttendanceInput[];
 };
 
+export type TrainingBlockInput = {
+  id?: string;
+  title: string;
+  description?: string;
+  orderIndex: string;
+  plannedDurationMin?: string;
+  actualDurationMin?: string;
+  intensity?: string;
+  completed: boolean;
+  notes?: string;
+};
+
+export type UpdateSessionTrainingBlocksInput = {
+  sessionId: string;
+  blocks: TrainingBlockInput[];
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -196,6 +213,11 @@ function parsePositiveInteger(value: string | undefined) {
 
   const parsed = Number.parseInt(cleaned, 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parseIntensity(value: string | undefined) {
+  const parsed = parsePositiveInteger(value);
+  return parsed !== null && parsed >= 1 && parsed <= 10 ? parsed : null;
 }
 
 function isValidEmail(value: string) {
@@ -1442,6 +1464,109 @@ export async function updateSessionAttendance(
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.attendance_updated",
+    entity_type: "session",
+    entity_id: session.id,
+  });
+
+  revalidatePath("/sessions");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function updateSessionTrainingBlocks(
+  input: UpdateSessionTrainingBlocksInput,
+): Promise<WorkspaceActionResult> {
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and admins can update training blocks.",
+    };
+  }
+
+  const blocks = input.blocks
+    .map((block, index) => ({
+      ...block,
+      title: cleanString(block.title),
+      orderIndex: parsePositiveInteger(block.orderIndex) ?? index,
+      plannedDurationMin: parsePositiveInteger(block.plannedDurationMin),
+      actualDurationMin: parsePositiveInteger(block.actualDurationMin),
+      intensity: parseIntensity(block.intensity),
+      description: cleanString(block.description),
+      notes: cleanString(block.notes),
+    }))
+    .filter((block) => block.title);
+
+  if (blocks.length !== input.blocks.filter((block) => cleanString(block.title)).length) {
+    return {
+      ok: false,
+      error: "Every training block needs a title.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .select("id")
+    .eq("id", input.sessionId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (sessionError || !session) {
+    return {
+      ok: false,
+      error: "Session could not be found.",
+    };
+  }
+
+  const { error: deleteError } = await supabase
+    .from("training_blocks")
+    .delete()
+    .eq("session_id", session.id);
+
+  if (deleteError) {
+    return {
+      ok: false,
+      error: deleteError.message,
+    };
+  }
+
+  if (blocks.length > 0) {
+    const { error: insertError } = await supabase.from("training_blocks").insert(
+      blocks.map((block) => ({
+        session_id: session.id,
+        title: block.title as string,
+        description: block.description,
+        order_index: block.orderIndex,
+        planned_duration_min: block.plannedDurationMin,
+        actual_duration_min: block.actualDurationMin,
+        intensity: block.intensity,
+        completed: block.completed,
+        notes: block.notes,
+      })),
+    );
+
+    if (insertError) {
+      return {
+        ok: false,
+        error: insertError.message,
+      };
+    }
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "session.training_blocks_updated",
     entity_type: "session",
     entity_id: session.id,
   });

@@ -2,6 +2,7 @@ import { PageHeader } from "../../../components/layout/page-header";
 import { getSessionsData } from "../../../lib/workspace";
 import { CreateSessionForm } from "./_components/create-session-form";
 import { SessionCardActions } from "./_components/session-card-actions";
+import { SessionTrainingBlocksButton } from "./_components/session-training-blocks-button";
 
 function formatSessionType(type: string) {
   return type
@@ -59,10 +60,11 @@ export default async function SessionsPage() {
                     teams={teams}
                     athletes={athletes}
                   />
+                  <SessionTrainingBlocksButton session={session} />
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-4">
+              <div className="mt-5 grid gap-3 md:grid-cols-5">
                 <div className="rounded-2xl bg-background p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Scheduled
@@ -95,6 +97,14 @@ export default async function SessionsPage() {
                   </p>
                   <p className="mt-2 text-sm font-extrabold text-foreground">
                     {session.attendanceCount}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-background p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    Blocks
+                  </p>
+                  <p className="mt-2 text-sm font-extrabold text-foreground">
+                    {session.trainingBlocks.length}
                   </p>
                 </div>
               </div>
