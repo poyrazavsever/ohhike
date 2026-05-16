@@ -11,6 +11,7 @@ type Team = Tables<"teams">;
 type Athlete = Tables<"athletes">;
 type TeamEntitlement = Tables<"team_billing_entitlements">;
 type Session = Tables<"sessions">;
+type SessionAttendance = Tables<"session_attendance">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -33,6 +34,7 @@ export type AthleteTeamOption = Pick<Team, "id" | "name" | "sport_type">;
 export type SessionWithMeta = Session & {
   teamName: string | null;
   attendanceCount: number;
+  attendance: SessionAttendance[];
 };
 
 export type WorkspaceShellData = {
@@ -355,6 +357,19 @@ export async function getSessionsData(): Promise<{
     throw new Error(athletesError.message);
   }
 
+  const sessionIds = (sessions ?? []).map((session) => session.id);
+  const { data: attendance, error: attendanceError } =
+    sessionIds.length > 0
+      ? await supabase
+          .from("session_attendance")
+          .select("*")
+          .in("session_id", sessionIds)
+      : { data: [], error: null };
+
+  if (attendanceError) {
+    throw new Error(attendanceError.message);
+  }
+
   const sessionsWithMeta = await Promise.all(
     (sessions ?? []).map(async (session) => {
       const { count, error } = await supabase
@@ -370,6 +385,8 @@ export async function getSessionsData(): Promise<{
         ...session,
         teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
         attendanceCount: count ?? 0,
+        attendance:
+          attendance?.filter((entry) => entry.session_id === session.id) ?? [],
       };
     }),
   );

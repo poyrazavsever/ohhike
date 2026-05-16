@@ -1,6 +1,7 @@
 import { PageHeader } from "../../../components/layout/page-header";
 import { getSessionsData } from "../../../lib/workspace";
 import { CreateSessionForm } from "./_components/create-session-form";
+import { SessionCardActions } from "./_components/session-card-actions";
 
 function formatSessionType(type: string) {
   return type
@@ -49,8 +50,15 @@ export default async function SessionsPage() {
                     {session.teamName ?? "No team"} · {formatSessionType(session.type)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
-                  {session.status ?? "planned"}
+                <div className="flex flex-col items-start gap-3 md:items-end">
+                  <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                    {session.status ?? "planned"}
+                  </div>
+                  <SessionCardActions
+                    session={session}
+                    teams={teams}
+                    athletes={athletes}
+                  />
                 </div>
               </div>
 
