@@ -9,6 +9,7 @@ import type {
   SessionStatus,
   SessionType,
   SportType,
+  WearableProvider,
 } from "../../lib/database.types";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
@@ -60,6 +61,18 @@ const sessionStatuses = [
   "analysis_completed",
   "analysis_failed",
 ] as const satisfies readonly SessionStatus[];
+
+const wearableProviders = [
+  "strava",
+  "garmin",
+  "apple_health",
+  "health_connect",
+  "polar",
+  "fitbit",
+  "manual",
+  "csv_import",
+  "other",
+] as const satisfies readonly WearableProvider[];
 
 export type WorkspaceActionResult =
   | {
@@ -214,6 +227,13 @@ export type CreateDrillInput = {
   tags?: string;
 };
 
+export type CreateWearableConnectionInput = {
+  athleteId: string;
+  provider: WearableProvider;
+  providerUserId?: string;
+  scopes?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -233,6 +253,10 @@ function isSessionType(value: string): value is SessionType {
 
 function isSessionStatus(value: string): value is SessionStatus {
   return sessionStatuses.includes(value as SessionStatus);
+}
+
+function isWearableProvider(value: string): value is WearableProvider {
+  return wearableProviders.includes(value as WearableProvider);
 }
 
 function slugify(value: string) {
@@ -1946,6 +1970,90 @@ export async function createDrill(
 
   revalidatePath("/drills");
   revalidatePath("/training-planner");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createWearableConnection(
+  input: CreateWearableConnectionInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  if (!isWearableProvider(input.provider)) {
+    return {
+      ok: false,
+      error: "Invalid wearable provider.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can manage wearable connections.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: athlete, error: athleteError } = await supabase
+    .from("athletes")
+    .select("id")
+    .eq("id", input.athleteId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (athleteError || !athlete) {
+    return {
+      ok: false,
+      error: "Please select a valid athlete.",
+    };
+  }
+
+  const { error } = await supabase.from("wearable_connections").upsert(
+    {
+      organization_id: organization.id,
+      athlete_id: athlete.id,
+      user_id: userId,
+      provider: input.provider,
+      provider_user_id: cleanString(input.providerUserId),
+      scopes: parseTags(input.scopes),
+      is_active: true,
+      sync_error: null,
+    },
+    {
+      onConflict: "athlete_id,provider",
+    },
+  );
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "wearable_connection.upserted",
+    entity_type: "wearable_connection",
+  });
+
+  revalidatePath("/wearables");
 
   return {
     ok: true,

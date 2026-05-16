@@ -16,6 +16,7 @@ type TrainingBlock = Tables<"training_blocks">;
 type WellnessCheckin = Tables<"wellness_checkins">;
 type NutritionLog = Tables<"nutrition_logs">;
 type Drill = Tables<"drills">;
+type WearableConnection = Tables<"wearable_connections">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -95,6 +96,11 @@ export type TrainingPlannerSession = Session & {
 
 export type DrillWithUsage = Drill & {
   usageCount: number;
+};
+
+export type WearableConnectionWithAthlete = WearableConnection & {
+  athleteName: string;
+  teamName: string | null;
 };
 
 export type WorkspaceShellData = {
@@ -1111,6 +1117,105 @@ export async function getDrillsData(): Promise<{
         .length,
       customDrills: drillsWithUsage.filter((drill) => !drill.is_system_drill)
         .length,
+    },
+  };
+}
+
+export async function getWearablesData(): Promise<{
+  workspace: CurrentWorkspace;
+  connections: WearableConnectionWithAthlete[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  totals: {
+    connections: number;
+    activeConnections: number;
+    summaries: number;
+    activities: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: connections, error: connectionsError },
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+    { count: summariesCount, error: summariesError },
+    { count: activitiesCount, error: activitiesError },
+  ] = await Promise.all([
+    supabase
+      .from("wearable_connections")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("wearable_daily_summaries")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    supabase
+      .from("wearable_activities")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+  ]);
+
+  if (connectionsError) {
+    throw new Error(connectionsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (summariesError) {
+    throw new Error(summariesError.message);
+  }
+
+  if (activitiesError) {
+    throw new Error(activitiesError.message);
+  }
+
+  return {
+    workspace,
+    connections:
+      connections?.map((connection) => {
+        const athlete = athletes?.find(
+          (currentAthlete) => currentAthlete.id === connection.athlete_id,
+        );
+        const team = teams?.find((currentTeam) => currentTeam.id === athlete?.team_id);
+        const athleteName = [
+          athlete?.number ? `#${athlete.number}` : null,
+          athlete?.first_name,
+          athlete?.last_name,
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        return {
+          ...connection,
+          athleteName: athleteName || "Unknown athlete",
+          teamName: team?.name ?? null,
+        };
+      }) ?? [],
+    athletes: athletes ?? [],
+    totals: {
+      connections: connections?.length ?? 0,
+      activeConnections:
+        connections?.filter((connection) => connection.is_active).length ?? 0,
+      summaries: summariesCount ?? 0,
+      activities: activitiesCount ?? 0,
     },
   };
 }

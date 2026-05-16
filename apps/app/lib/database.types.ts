@@ -70,6 +70,17 @@ export type SessionStatus =
   | "analysis_completed"
   | "analysis_failed";
 
+export type WearableProvider =
+  | "strava"
+  | "garmin"
+  | "apple_health"
+  | "health_connect"
+  | "polar"
+  | "fitbit"
+  | "manual"
+  | "csv_import"
+  | "other";
+
 export type Database = {
   public: {
     Tables: {
@@ -784,6 +795,189 @@ export type Database = {
           is_system_drill?: boolean | null;
           created_at?: string | null;
           updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      wearable_connections: {
+        Row: {
+          id: string;
+          organization_id: string;
+          athlete_id: string;
+          user_id: string | null;
+          provider: WearableProvider;
+          provider_user_id: string | null;
+          access_token_encrypted: string | null;
+          refresh_token_encrypted: string | null;
+          token_expires_at: string | null;
+          scopes: string[] | null;
+          is_active: boolean | null;
+          last_synced_at: string | null;
+          sync_error: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          athlete_id: string;
+          user_id?: string | null;
+          provider: WearableProvider;
+          provider_user_id?: string | null;
+          access_token_encrypted?: string | null;
+          refresh_token_encrypted?: string | null;
+          token_expires_at?: string | null;
+          scopes?: string[] | null;
+          is_active?: boolean | null;
+          last_synced_at?: string | null;
+          sync_error?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          athlete_id?: string;
+          user_id?: string | null;
+          provider?: WearableProvider;
+          provider_user_id?: string | null;
+          access_token_encrypted?: string | null;
+          refresh_token_encrypted?: string | null;
+          token_expires_at?: string | null;
+          scopes?: string[] | null;
+          is_active?: boolean | null;
+          last_synced_at?: string | null;
+          sync_error?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      wearable_daily_summaries: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string;
+          provider: WearableProvider;
+          summary_date: string;
+          steps: number | null;
+          active_minutes: number | null;
+          distance_km: number | null;
+          calories: number | null;
+          resting_heart_rate: number | null;
+          avg_heart_rate: number | null;
+          max_heart_rate: number | null;
+          hrv: number | null;
+          sleep_hours: number | null;
+          sleep_score: number | null;
+          stress_score: number | null;
+          raw_payload: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id: string;
+          provider: WearableProvider;
+          summary_date: string;
+          steps?: number | null;
+          active_minutes?: number | null;
+          distance_km?: number | null;
+          calories?: number | null;
+          resting_heart_rate?: number | null;
+          avg_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          hrv?: number | null;
+          sleep_hours?: number | null;
+          sleep_score?: number | null;
+          stress_score?: number | null;
+          raw_payload?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string;
+          provider?: WearableProvider;
+          summary_date?: string;
+          steps?: number | null;
+          active_minutes?: number | null;
+          distance_km?: number | null;
+          calories?: number | null;
+          resting_heart_rate?: number | null;
+          avg_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          hrv?: number | null;
+          sleep_hours?: number | null;
+          sleep_score?: number | null;
+          stress_score?: number | null;
+          raw_payload?: Json | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      wearable_activities: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string;
+          provider: WearableProvider;
+          provider_activity_id: string | null;
+          activity_type: string | null;
+          title: string | null;
+          started_at: string | null;
+          duration_sec: number | null;
+          distance_km: number | null;
+          avg_heart_rate: number | null;
+          max_heart_rate: number | null;
+          calories: number | null;
+          elevation_gain_m: number | null;
+          matched_session_id: string | null;
+          raw_payload: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id: string;
+          provider: WearableProvider;
+          provider_activity_id?: string | null;
+          activity_type?: string | null;
+          title?: string | null;
+          started_at?: string | null;
+          duration_sec?: number | null;
+          distance_km?: number | null;
+          avg_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          calories?: number | null;
+          elevation_gain_m?: number | null;
+          matched_session_id?: string | null;
+          raw_payload?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string;
+          provider?: WearableProvider;
+          provider_activity_id?: string | null;
+          activity_type?: string | null;
+          title?: string | null;
+          started_at?: string | null;
+          duration_sec?: number | null;
+          distance_km?: number | null;
+          avg_heart_rate?: number | null;
+          max_heart_rate?: number | null;
+          calories?: number | null;
+          elevation_gain_m?: number | null;
+          matched_session_id?: string | null;
+          raw_payload?: Json | null;
+          created_at?: string | null;
         };
         Relationships: [];
       };
