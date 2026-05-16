@@ -377,52 +377,20 @@ export function serializeContextForLlm(context: SessionAnalysisContext): string 
   );
 }
 
-export async function tryGenerateSessionAnalysisWithOpenAI(
+export async function tryGenerateSessionAnalysisWithGemini(
   context: SessionAnalysisContext,
 ): Promise<SessionAnalysisOutput | null> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const { geminiGenerateJson } = await import("./gemini");
 
-  if (!apiKey) {
-    return null;
-  }
-
-  const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are Doctor Panda, the AI coaching intelligence assistant for OhHike CoachOS. Analyze session data and return JSON only. Do not invent unsupported facts. Do not provide medical diagnosis. Use severity low|medium|high. Include missing_data array when context is incomplete.",
-        },
-        {
-          role: "user",
-          content: `Analyze this session and return JSON with keys: title, summary, confidence_score (0-1), tactical_observations[], athlete_observations[], load_observations[], risk_alerts[], recommended_drills[{title,reason}], next_training_plan{focus,notes}, missing_data[].
+  const content = await geminiGenerateJson({
+    systemInstruction:
+      "You are Doctor Panda, the AI coaching intelligence assistant for OhHike CoachOS. Analyze session data and return JSON only. Do not invent unsupported facts. Do not provide medical diagnosis. Use severity low|medium|high. Include missing_data array when context is incomplete.",
+    userText: `Analyze this session and return JSON with keys: title, summary, confidence_score (0-1), tactical_observations[], athlete_observations[], load_observations[], risk_alerts[], recommended_drills[{title,reason}], next_training_plan{focus,notes}, missing_data[].
 
 Session data:
 ${serializeContextForLlm(context)}`,
-        },
-      ],
-    }),
+    temperature: 0.3,
   });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = payload.choices?.[0]?.message?.content;
 
   if (!content) {
     return null;

@@ -2,36 +2,12 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { geminiEmbedText, isGeminiConfigured } from "../gemini";
 import type { Database, DocumentType } from "../../database.types";
 import type { RetrievedMemoryDocument } from "./types";
 import { fetchOrganizationMemoryCorpus } from "./retrieve";
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
 const CHUNK_SIZE = 900;
-
-async function createEmbedding(text: string, apiKey: string) {
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: text.slice(0, 8000),
-    }),
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const payload = (await response.json()) as {
-    data?: Array<{ embedding?: number[] }>;
-  };
-
-  return payload.data?.[0]?.embedding ?? null;
-}
 
 function mapDocumentType(type: RetrievedMemoryDocument["documentType"]) {
   switch (type) {
@@ -55,9 +31,7 @@ export async function syncOrganizationMemoryEmbeddings(
   organizationId: string,
   userId: string,
 ): Promise<boolean> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-
-  if (!apiKey) {
+  if (!isGeminiConfigured()) {
     return false;
   }
 
@@ -78,7 +52,7 @@ export async function syncOrganizationMemoryEmbeddings(
 
     const content = `${memory.title}\n\n${memory.content}`.trim();
     const chunk = content.slice(0, CHUNK_SIZE);
-    const embedding = await createEmbedding(chunk, apiKey);
+    const embedding = await geminiEmbedText(chunk);
 
     if (!embedding) {
       continue;
@@ -123,13 +97,11 @@ export async function retrieveMemoryDocumentsByVector(
   filters: { teamId?: string | null },
   limit = 8,
 ): Promise<RetrievedMemoryDocument[]> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-
-  if (!apiKey) {
+  if (!isGeminiConfigured()) {
     return [];
   }
 
-  const embedding = await createEmbedding(question, apiKey);
+  const embedding = await geminiEmbedText(question);
 
   if (!embedding) {
     return [];

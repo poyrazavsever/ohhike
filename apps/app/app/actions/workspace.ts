@@ -35,8 +35,9 @@ import {
   buildSessionAnalysisContext,
   generateSessionAnalysisFromContext,
   getSessionAnalysisPromptVersion,
-  tryGenerateSessionAnalysisWithOpenAI,
+  tryGenerateSessionAnalysisWithGemini,
 } from "../../lib/ai/session-analysis";
+import { getGeminiConfig } from "../../lib/ai/gemini";
 import {
   canManageStaffInvites,
   isAthleteRole,
@@ -3889,10 +3890,11 @@ export async function generateSessionAiReport(
     checkins: checkins ?? [],
   });
 
-  const llmAnalysis = await tryGenerateSessionAnalysisWithOpenAI(analysisContext);
+  const llmAnalysis = await tryGenerateSessionAnalysisWithGemini(analysisContext);
   const analysis =
     llmAnalysis ?? generateSessionAnalysisFromContext(analysisContext);
   const usedLlm = Boolean(llmAnalysis);
+  const geminiConfig = getGeminiConfig();
 
   const { data: inserted, error: insertError } = await supabase
     .from("ai_reports")
@@ -3904,10 +3906,8 @@ export async function generateSessionAiReport(
       title: analysis.title,
       summary: analysis.summary,
       confidence_score: analysis.confidence_score,
-      model_provider: usedLlm ? "openai" : "rules",
-      model_name: usedLlm
-        ? process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini"
-        : "doctor-panda-rules-v1",
+      model_provider: usedLlm ? "gemini" : "rules",
+      model_name: usedLlm ? geminiConfig.model : "doctor-panda-rules-v1",
       prompt_version: getSessionAnalysisPromptVersion(),
       tactical_observations: analysis.tactical_observations,
       athlete_observations: analysis.athlete_observations,

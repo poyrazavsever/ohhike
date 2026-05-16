@@ -2,6 +2,7 @@ import {
   DashboardHero,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { isGeminiConfigured } from "../../../lib/ai/gemini";
 import {
   getTeamMemoryAssistantData,
   getTeamMemoryData,
@@ -69,7 +70,7 @@ export default async function TeamMemoryPage({
     },
   ];
 
-  const openAiConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
+  const geminiConfigured = isGeminiConfigured();
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -86,7 +87,7 @@ export default async function TeamMemoryPage({
         teams={teams}
         athletes={athletes}
         initialThreadId={activeThreadId}
-        openAiConfigured={openAiConfigured}
+        geminiConfigured={geminiConfigured}
       />
 
       <div className="mt-4">

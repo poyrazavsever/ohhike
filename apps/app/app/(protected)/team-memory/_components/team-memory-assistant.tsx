@@ -72,14 +72,14 @@ export function TeamMemoryAssistant({
   teams,
   athletes,
   initialThreadId,
-  openAiConfigured,
+  geminiConfigured,
 }: {
   threads: ThreadRow[];
   messages: MessageRow[];
   teams: AthleteTeamOption[];
   athletes: AthleteOption[];
   initialThreadId: string | null;
-  openAiConfigured: boolean;
+  geminiConfigured: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -167,9 +167,9 @@ export function TeamMemoryAssistant({
               and check-ins. Answers cite retrieved team memory only.
             </p>
             <p className="mt-2 text-xs font-semibold text-muted-foreground">
-              {openAiConfigured
-                ? "OpenAI enabled — hybrid keyword + vector retrieval."
-                : "Rule-based answers — set OPENAI_API_KEY for richer LLM replies and vector search."}
+              {geminiConfigured
+                ? "Gemini enabled — hybrid keyword + vector retrieval."
+                : "Rule-based answers — set GEMINI_API_KEY for richer LLM replies and vector search."}
             </p>
           </div>
         </div>

@@ -82,39 +82,18 @@ export function generateTeamMemoryAnswerFromRules(
   };
 }
 
-export async function tryGenerateTeamMemoryAnswerWithOpenAI(
+export async function tryGenerateTeamMemoryAnswerWithGemini(
   context: TeamMemoryQueryContext,
   documents: RetrievedMemoryDocument[],
   retrievalMode: TeamMemoryAnswer["retrieval_mode"],
 ): Promise<TeamMemoryAnswer | null> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const { geminiGenerateJson } = await import("../gemini");
 
-  if (!apiKey) {
-    return null;
-  }
-
-  const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.25,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `You are Doctor Panda, the Team Memory assistant inside OhHike CoachOS (${PROMPT_VERSION}).
+  const content = await geminiGenerateJson({
+    systemInstruction: `You are Doctor Panda, the Team Memory assistant inside OhHike CoachOS (${PROMPT_VERSION}).
 Answer using ONLY the retrieved memory documents and context. Do not invent data. No medical diagnosis.
 Return JSON with keys: direct_answer (string), supporting_evidence (array of {document_title, document_type, evidence_summary}), recommended_next_actions (array of {action, reason}), missing_data (string array).`,
-        },
-        {
-          role: "user",
-          content: `User role: ${context.userRole}
+    userText: `User role: ${context.userRole}
 Organization: ${context.organizationName}
 Team: ${context.teamName ?? "All teams"}
 Athlete: ${context.athleteName ?? "All athletes"}
@@ -124,19 +103,8 @@ ${context.question}
 
 Retrieved memory:
 ${serializeRetrievedDocuments(documents)}`,
-        },
-      ],
-    }),
+    temperature: 0.25,
   });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = payload.choices?.[0]?.message?.content;
 
   if (!content) {
     return null;
@@ -158,7 +126,7 @@ ${serializeRetrievedDocuments(documents)}`,
       recommended_next_actions: parsed.recommended_next_actions ?? [],
       missing_data: parsed.missing_data ?? [],
       retrieval_mode: retrievalMode,
-      model_provider: "openai",
+      model_provider: "gemini",
     };
   } catch {
     return null;
@@ -171,7 +139,7 @@ export async function generateTeamMemoryAnswer(
   retrievalMode: TeamMemoryAnswer["retrieval_mode"],
 ): Promise<TeamMemoryAnswer> {
   const llm =
-    (await tryGenerateTeamMemoryAnswerWithOpenAI(
+    (await tryGenerateTeamMemoryAnswerWithGemini(
       context,
       documents,
       retrievalMode,

@@ -34,7 +34,7 @@ export type TeamMemoryAnswer = {
   recommended_next_actions: TeamMemoryNextAction[];
   missing_data: string[];
   retrieval_mode: "vector" | "keyword" | "hybrid";
-  model_provider: "openai" | "rules";
+  model_provider: "gemini" | "rules";
 };
 
 export type TeamMemoryQueryContext = {
