@@ -53,3 +53,11 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `009_daily_data_schema_align.sql`, `001` sonrasi `004` calistirildiginda eksik kalan daily data kolonlarini tamamlar. Check-in hatasi (`created_by` schema cache) goruluyorsa bu dosyayi Supabase SQL Editor'de calistirin.
 - `010_organization_staff_invites.sql`, staff davet linkleri icin tabloyu kurar. Staff invite olustururken tablo bulunamadi hatasi aliyorsaniz bu dosyayi Supabase SQL Editor'de calistirin.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.
+- **Clerk + RLS (app):** Server action'larda `createActionSupabase()` Clerk JWT template `supabase` ile calisir. Clerk Dashboard → JWT Templates → Supabase sablonu; `sub` claim kullanicinin Clerk ID'si olmali. JWT yoksa check-in / nutrition / personal training kayitlari "Database access was denied" doner.
+
+## App client kullanimi (2026-05)
+
+| Client | Dosya | Kullanim |
+|--------|-------|----------|
+| `createActionSupabase()` | `lib/supabase-action.ts` | Varsayilan veri yazma/okuma (RLS) — readiness, nutrition, personal training |
+| `createSupabaseAdminClient()` | `lib/supabase-admin.ts` | Webhook, audit log, bootstrap, henuz migrate edilmemis action'lar |

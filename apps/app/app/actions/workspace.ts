@@ -43,7 +43,12 @@ import {
   isCoachStaffRole,
   isInvitableOrganizationRole,
 } from "../../lib/org-roles";
+import { writeWorkspaceAuditLog } from "../../lib/audit-log";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
+import {
+  createActionSupabase,
+  formatSupabaseActionError,
+} from "../../lib/supabase-action";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 
 const organizationTypes = [
@@ -2845,7 +2850,7 @@ export async function upsertReadinessCheckin(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   let athlete: { id: string; team_id: string } | null = null;
 
@@ -2874,7 +2879,9 @@ export async function upsertReadinessCheckin(
     if (athleteError || !data) {
       return {
         ok: false,
-        error: "Please select a valid athlete.",
+        error: athleteError
+          ? formatSupabaseActionError(athleteError.message)
+          : "Please select a valid athlete.",
       };
     }
     athlete = data;
@@ -2923,17 +2930,20 @@ export async function upsertReadinessCheckin(
 
     return {
       ok: false,
-      error: missingColumn
-        ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
-        : error.message,
+      error: formatSupabaseActionError(error.message, {
+        schemaAlignHint: missingColumn
+          ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+          : undefined,
+      }),
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeWorkspaceAuditLog({
+    organizationId: organization.id,
+    userId,
+    role: membership.role,
     action: "readiness_checkin.upserted",
-    entity_type: "wellness_checkin",
+    entityType: "wellness_checkin",
   });
 
   revalidatePath("/readiness");
@@ -2968,7 +2978,7 @@ export async function upsertNutritionLog(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
 
   let athlete: { id: string; team_id: string } | null = null;
 
@@ -3001,7 +3011,9 @@ export async function upsertNutritionLog(
     if (athleteError || !data) {
       return {
         ok: false,
-        error: "Please select a valid athlete.",
+        error: athleteError
+          ? formatSupabaseActionError(athleteError.message)
+          : "Please select a valid athlete.",
       };
     }
     athlete = data;
@@ -3038,17 +3050,20 @@ export async function upsertNutritionLog(
 
     return {
       ok: false,
-      error: missingColumn
-        ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
-        : error.message,
+      error: formatSupabaseActionError(error.message, {
+        schemaAlignHint: missingColumn
+          ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+          : undefined,
+      }),
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeWorkspaceAuditLog({
+    organizationId: organization.id,
+    userId,
+    role: membership.role,
     action: "nutrition_log.upserted",
-    entity_type: "nutrition_log",
+    entityType: "nutrition_log",
   });
 
   revalidatePath("/nutrition");
@@ -3070,8 +3085,6 @@ async function resolveAthleteForPersonalTraining(
   | { ok: true; athlete: { id: string; team_id: string } }
   | { ok: false; error: string }
 > {
-  const supabase = createSupabaseAdminClient();
-
   if (isAthleteRole(membership.role)) {
     const linked = await getLinkedAthleteForUser(userId, organizationId);
 
@@ -3096,6 +3109,7 @@ async function resolveAthleteForPersonalTraining(
     };
   }
 
+  const supabase = await createActionSupabase();
   const { data, error } = await supabase
     .from("athletes")
     .select("id, team_id")
@@ -3106,7 +3120,9 @@ async function resolveAthleteForPersonalTraining(
   if (error || !data) {
     return {
       ok: false,
-      error: "Please select a valid athlete.",
+      error: error
+        ? formatSupabaseActionError(error.message)
+        : "Please select a valid athlete.",
     };
   }
 
@@ -3164,7 +3180,7 @@ export async function createPersonalTraining(
     return athleteResult;
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createActionSupabase();
   const startedAt = parseDateTime(input.startedAt) ?? new Date().toISOString();
 
   const { error } = await supabase.from("personal_trainings").insert({
@@ -3185,15 +3201,16 @@ export async function createPersonalTraining(
   if (error) {
     return {
       ok: false,
-      error: error.message,
+      error: formatSupabaseActionError(error.message),
     };
   }
 
-  await supabase.from("audit_logs").insert({
-    organization_id: organization.id,
-    user_id: userId,
+  await writeWorkspaceAuditLog({
+    organizationId: organization.id,
+    userId,
+    role: membership.role,
     action: "personal_training.created",
-    entity_type: "personal_training",
+    entityType: "personal_training",
   });
 
   revalidatePath("/personal-training");

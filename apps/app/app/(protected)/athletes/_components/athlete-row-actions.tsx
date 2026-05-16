@@ -287,11 +287,13 @@ export function AthleteRowActions({
                     </div>
                     <div>
                       <p className="text-base font-extrabold text-foreground">
-                        Claim link
+                        Athlete claim link
                       </p>
                       <p className="mt-1 text-sm font-medium text-muted-foreground">
-                        Share this link with the athlete. It expires in 14 days.
-                        Previous pending invites for this profile are replaced.
+                        Email is not sent from CoachOS yet — copy this link and
+                        share it with the athlete (WhatsApp, SMS, or your team
+                        chat). It expires in 14 days. Creating a new link replaces
+                        any pending invite for this profile.
                       </p>
                     </div>
                   </div>
@@ -314,7 +316,7 @@ export function AthleteRowActions({
                 {inviteUrl ? (
                   <div className="mt-5">
                     <label className="text-xs font-extrabold uppercase tracking-[0.12em] text-muted-foreground">
-                      Link
+                      Invite link
                     </label>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                       <input
