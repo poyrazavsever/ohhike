@@ -33,4 +33,5 @@ if [ -n "$missing" ]; then
   exit 1
 fi
 
-exec HOSTNAME=0.0.0.0 node apps/app/server.js
+export HOSTNAME=0.0.0.0
+exec node apps/app/server.js

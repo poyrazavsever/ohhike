@@ -40,7 +40,7 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 ## Site does not load (domain valid, 502 / timeout)
 
 1. **Container port** in Dokploy must be **3000** (matches `EXPOSE` in Dockerfile).
-2. **HOSTNAME / bind address:** Docker sets `HOSTNAME` to the container id at runtime. Next.js uses `HOSTNAME` as the listen address unless overridden — Traefik then cannot reach the app (502). Our Dockerfiles force `HOSTNAME=0.0.0.0` in `CMD`. Quick test without redeploy: add env `HOSTNAME=0.0.0.0` in Dokploy and restart the container.
+2. **HOSTNAME / bind address:** Docker sets `HOSTNAME` to the container id at runtime. Next.js uses `HOSTNAME` as the listen address unless overridden — Traefik then cannot reach the app (502). `Dockerfile.web` forces `HOSTNAME=0.0.0.0` in `CMD`; the coach app entrypoint exports the same value before starting Next.js. If you are running an older coach image, redeploy after pulling the current entrypoint fix; adding only an env var does not repair the old broken startup command.
 3. **Logs:** Dokploy → Application → Logs. Look for `Ready on http://...:3000` or crash loops (missing `CLERK_SECRET_KEY`, etc.).
 4. **Health URL:** `https://your-app-domain/api/health` — should return JSON even before login.
 
