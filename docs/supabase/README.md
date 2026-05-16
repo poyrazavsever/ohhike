@@ -14,6 +14,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `008_team_memory.sql`: Team Memory icin `athlete_observations`, `team_patterns`, enum, index'ler ve RLS policy'lerini idempotent sekilde kurar.
 - `009_daily_data_schema_align.sql`: `001` ile olusturulmus `wellness_checkins` / `nutrition_logs` tablolarina `004` ile uyumlu kolonlari ekler (`created_by`, `fatigue`, vb.).
 - `010_organization_staff_invites.sql`: Settings → Staff ve `/invite/staff/[token]` icin `organization_staff_invites` tablosu ve RLS policy'leri.
+- `011_team_memory_rag.sql`: Team Memory Assistant icin `documents`, `document_embeddings`, `assistant_threads`, `assistant_messages` ve `match_document_embeddings` RPC.
 
 ## Kapsam
 
@@ -52,6 +53,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `008_team_memory.sql`, `/team-memory` route'u icin manuel/AI gozlem ve takim pattern registry katmanidir.
 - `009_daily_data_schema_align.sql`, `001` sonrasi `004` calistirildiginda eksik kalan daily data kolonlarini tamamlar. Check-in hatasi (`created_by` schema cache) goruluyorsa bu dosyayi Supabase SQL Editor'de calistirin.
 - `010_organization_staff_invites.sql`, staff davet linkleri icin tabloyu kurar. Staff invite olustururken tablo bulunamadi hatasi aliyorsaniz bu dosyayi Supabase SQL Editor'de calistirin.
+- `011_team_memory_rag.sql`, `/team-memory` assistant sohbeti ve vector arama icin tablolari kurar. Assistant veya embedding hatasi aliyorsaniz bu dosyayi calistirin; `OPENAI_API_KEY` ile embedding + LLM cevaplari acilir.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.
 - **Clerk + RLS (app):** Server action'larda `createActionSupabase()` Clerk JWT template `supabase` ile calisir. Clerk Dashboard → JWT Templates → Supabase sablonu; `sub` claim kullanicinin Clerk ID'si olmali. JWT yoksa check-in / nutrition / personal training kayitlari "Database access was denied" doner.
 

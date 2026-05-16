@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "../../database.types";
+import type { Database, DocumentType } from "../../database.types";
 import type { RetrievedMemoryDocument } from "./types";
 import { fetchOrganizationMemoryCorpus } from "./retrieve";
 
@@ -90,7 +90,7 @@ export async function syncOrganizationMemoryEmbeddings(
         organization_id: organizationId,
         team_id: memory.teamId,
         athlete_id: memory.athleteId,
-        type: mapDocumentType(memory.documentType),
+        type: mapDocumentType(memory.documentType) as DocumentType,
         title: memory.title,
         content,
         created_by: userId,
@@ -154,31 +154,33 @@ export async function retrieveMemoryDocumentsByVector(
 
   const documentMap = new Map((documents ?? []).map((row) => [row.id, row]));
 
-  return data
-    .map((row) => {
-      const document = documentMap.get(row.document_id);
-      if (!document) {
-        return null;
-      }
+  const results: RetrievedMemoryDocument[] = [];
 
-      const sourceKey =
-        typeof document.metadata === "object" &&
-        document.metadata &&
-        "source_key" in document.metadata &&
-        typeof document.metadata.source_key === "string"
-          ? document.metadata.source_key
-          : `document:${document.id}`;
+  for (const row of data) {
+    const document = documentMap.get(row.document_id);
+    if (!document) {
+      continue;
+    }
 
-      return {
-        id: sourceKey,
-        documentType: "other" as const,
-        title: document.title,
-        content: row.content_chunk || document.content,
-        teamId: document.team_id,
-        athleteId: document.athlete_id,
-        createdAt: document.created_at,
-        score: row.similarity ?? 0,
-      };
-    })
-    .filter((row): row is RetrievedMemoryDocument => row !== null);
+    const sourceKey =
+      typeof document.metadata === "object" &&
+      document.metadata &&
+      "source_key" in document.metadata &&
+      typeof document.metadata.source_key === "string"
+        ? document.metadata.source_key
+        : `document:${document.id}`;
+
+    results.push({
+      id: sourceKey,
+      documentType: "other",
+      title: document.title,
+      content: row.content_chunk || document.content,
+      teamId: document.team_id,
+      athleteId: document.athlete_id,
+      createdAt: document.created_at,
+      score: row.similarity ?? 0,
+    });
+  }
+
+  return results;
 }

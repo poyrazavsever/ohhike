@@ -2,12 +2,16 @@ import {
   DashboardHero,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
-import { getTeamMemoryData } from "../../../lib/workspace";
+import {
+  getTeamMemoryAssistantData,
+  getTeamMemoryData,
+} from "../../../lib/workspace";
 import {
   memorySeverityLabel,
   observationCategoryLabel,
   teamPatternTypeLabel,
 } from "../../../lib/coach-vocabulary";
+import { TeamMemoryAssistant } from "./_components/team-memory-assistant";
 import { TeamMemoryForms } from "./_components/team-memory-forms";
 
 function formatDate(value: string | null) {
@@ -20,9 +24,20 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-export default async function TeamMemoryPage() {
-  const { workspace, observations, patterns, teams, athletes, totals } =
-    await getTeamMemoryData();
+export default async function TeamMemoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ thread?: string }>;
+}) {
+  const { thread: threadParam } = await searchParams;
+  const [{ workspace, observations, patterns, teams, athletes, totals }, assistant] =
+    await Promise.all([
+      getTeamMemoryData(),
+      getTeamMemoryAssistantData(threadParam),
+    ]);
+
+  const activeThreadId = threadParam ?? null;
+  const activeMessages = threadParam ? assistant.messages : [];
 
   const metricCards = [
     {
@@ -39,10 +54,10 @@ export default async function TeamMemoryPage() {
       tone: "info" as const,
     },
     {
-      label: "Teams",
-      value: teams.length.toString(),
-      helper: "Available context",
-      icon: "solar:users-group-rounded-bold",
+      label: "Threads",
+      value: assistant.threads.length.toString(),
+      helper: "Assistant conversations",
+      icon: "solar:chat-round-dots-bold",
       tone: "secondary" as const,
     },
     {
@@ -54,13 +69,24 @@ export default async function TeamMemoryPage() {
     },
   ];
 
+  const openAiConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
+
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
       <DashboardHero
         eyebrow="AI Intelligence"
         title="Team Memory"
-        subtitle={`Durable coaching memory for ${workspace.organization.name}.`}
+        subtitle={`Ask Doctor Panda about coaching memory for ${workspace.organization.name}, or add observations and patterns below.`}
         mascotSrc="/maskotlar/gozetleme.png"
+      />
+
+      <TeamMemoryAssistant
+        threads={assistant.threads}
+        messages={activeMessages}
+        teams={teams}
+        athletes={athletes}
+        initialThreadId={activeThreadId}
+        openAiConfigured={openAiConfigured}
       />
 
       <div className="mt-4">
