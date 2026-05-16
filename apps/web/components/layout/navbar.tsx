@@ -89,6 +89,7 @@ function NavDropdown({
 export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [starCount, setStarCount] = useState<number | null>(null);
 
   useEffect(() => {
     const updateScrollState = () => {
@@ -122,6 +123,41 @@ export function Navbar() {
 
     return () => {
       window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadStarCount() {
+      try {
+        const response = await fetch(
+          "https://api.github.com/repos/poyrazavsever/ohhike",
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const repository = (await response.json()) as {
+          stargazers_count?: number;
+        };
+
+        if (typeof repository.stargazers_count === "number") {
+          setStarCount(repository.stargazers_count);
+        }
+      } catch {
+        // Keep the CTA usable if GitHub is unavailable or rate-limited.
+      }
+    }
+
+    void loadStarCount();
+
+    return () => {
+      controller.abort();
     };
   }, []);
 
@@ -186,6 +222,11 @@ export function Navbar() {
             >
               <Icon icon="mdi:github" className="size-4" />
               <span>Star</span>
+              {starCount !== null && (
+                <span className="ml-1 border-l border-border pl-2 text-[11px] text-muted-foreground">
+                  {starCount.toLocaleString("en-US")}
+                </span>
+              )}
             </a>
           </Button>
 
