@@ -1,5 +1,6 @@
 import { PageHeader } from "../../../components/layout/page-header";
 import { getTeamsData } from "../../../lib/workspace";
+import { CreateTeamForm } from "./_components/create-team-form";
 
 function formatSportType(sportType: string) {
   return sportType
@@ -25,8 +26,10 @@ export default async function TeamsPage() {
       <PageHeader
         eyebrow="Team Operations"
         title="Teams"
-        description={`Manage teams for ${workspace.organization.name}. Team CRUD will build on this list in the next phase.`}
+        description={`Manage teams for ${workspace.organization.name}. Create team foundations and connect athletes in the next step.`}
       />
+
+      <CreateTeamForm />
 
       {teams.length > 0 ? (
         <div className="mt-6 grid gap-4">

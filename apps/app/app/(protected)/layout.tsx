@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AppShell } from "../../components/layout/app-shell";
-import { hasActiveOrganizationMembership } from "../../lib/organization-membership";
+import { getWorkspaceShellData } from "../../lib/workspace";
 
 export default async function ProtectedLayout({
   children,
@@ -16,11 +16,7 @@ export default async function ProtectedLayout({
     redirect("/login");
   }
 
-  const hasMembership = await hasActiveOrganizationMembership(userId);
+  const workspace = await getWorkspaceShellData();
 
-  if (!hasMembership) {
-    redirect("/onboarding");
-  }
-
-  return <AppShell>{children}</AppShell>;
+  return <AppShell workspace={workspace}>{children}</AppShell>;
 }

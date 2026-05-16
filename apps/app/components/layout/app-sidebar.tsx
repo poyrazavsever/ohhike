@@ -4,8 +4,11 @@ import { Icon } from "@iconify/react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+
+import { switchActiveOrganization } from "../../app/actions/workspace";
+import type { WorkspaceShellData } from "../../lib/workspace";
 
 const navGroups = [
   {
@@ -112,6 +115,11 @@ const adminItems = [
     icon: "solar:user-circle-bold",
   },
   {
+    href: "/settings/organization",
+    label: "Organization",
+    icon: "solar:buildings-3-bold",
+  },
+  {
     href: "/settings/staff",
     label: "Staff",
     icon: "solar:user-plus-bold",
@@ -128,6 +136,158 @@ const adminItems = [
   },
 ];
 
+function formatPlan(plan: WorkspaceShellData["plan"]) {
+  if (!plan) {
+    return "Basic Team";
+  }
+
+  return plan
+    .split("_")
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatRole(role: WorkspaceShellData["role"]) {
+  return role
+    .split("_")
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleOrganizationSwitch(organizationId: string) {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await switchActiveOrganization(organizationId);
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setIsOpen(false);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="relative px-3 pb-3">
+      {isOpen ? (
+        <div className="absolute left-3 right-3 top-23 z-50 rounded-2xl border border-border bg-card p-2 shadow-sm">
+          <div className="px-3 py-2">
+            <p className="truncate text-xs font-extrabold text-foreground">
+              {workspace.organizationName}
+            </p>
+            <p className="mt-1 truncate text-[11px] font-medium text-muted-foreground">
+              {workspace.teamName ?? "No active team"} · {formatRole(workspace.role)}
+            </p>
+          </div>
+
+          <div className="my-1 h-px bg-border" />
+
+          <div className="grid gap-1">
+            {workspace.organizations.map((organization) => (
+              <button
+                key={organization.id}
+                type="button"
+                disabled={organization.isActive || isPending}
+                onClick={() => handleOrganizationSwitch(organization.id)}
+                className={
+                  organization.isActive
+                    ? "flex w-full items-center gap-2.5 rounded-xl bg-primary-soft px-3 py-2 text-left text-xs font-bold text-primary-700"
+                    : "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+                }
+              >
+                <Icon icon="solar:buildings-3-bold" className="size-4" />
+                <span className="min-w-0 flex-1 truncate">
+                  {organization.name}
+                </span>
+                {organization.isActive ? (
+                  <Icon icon="solar:check-circle-bold" className="size-4" />
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          {error ? (
+            <p className="px-3 py-2 text-xs font-bold text-destructive">
+              {error}
+            </p>
+          ) : null}
+
+          <Link
+            href={
+              workspace.canCreateOrganization
+                ? "/settings/organization/new"
+                : "/settings/billing"
+            }
+            onClick={() => setIsOpen(false)}
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Icon icon="solar:add-circle-bold" className="size-4" />
+            New organization
+            {!workspace.canCreateOrganization ? (
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+                Pro
+              </span>
+            ) : null}
+          </Link>
+
+          <Link
+            href="/settings/organization"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Icon icon="solar:settings-bold" className="size-4" />
+            Organization settings
+          </Link>
+
+          <Link
+            href="/settings/billing"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Icon icon="solar:card-bold" className="size-4" />
+            Manage plan
+          </Link>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-background p-3 text-left transition-colors hover:border-primary/35"
+      >
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-sm font-extrabold text-primary-700">
+          {workspace.organizationName.slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-extrabold text-foreground">
+            {workspace.organizationName}
+          </p>
+          <p className="truncate text-[11px] font-medium text-muted-foreground">
+            {workspace.teamName ?? "No active team"} · {formatPlan(workspace.plan)}
+          </p>
+        </div>
+        <Icon
+          icon="solar:alt-arrow-down-linear"
+          className={
+            isOpen
+              ? "size-4 shrink-0 rotate-180 text-muted-foreground transition-transform"
+              : "size-4 shrink-0 text-muted-foreground transition-transform"
+          }
+        />
+      </button>
+    </div>
+  );
+}
+
 function SidebarUserCard() {
   const { openUserProfile, signOut } = useClerk();
   const [isOpen, setIsOpen] = useState(false);
@@ -136,7 +296,7 @@ function SidebarUserCard() {
   return (
     <div className="relative border-t border-border p-3">
       {isOpen ? (
-        <div className="absolute bottom-[4.75rem] left-3 right-3 z-50 rounded-3xl border border-border bg-card p-2">
+        <div className="absolute bottom-19 left-3 right-3 z-50 rounded-3xl border border-border bg-card p-2">
           <div className="px-3 py-2">
             <p className="truncate text-xs font-semibold text-foreground">
               {user?.fullName ?? "Account"}
@@ -218,23 +378,13 @@ function SidebarUserCard() {
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
   const pathname = usePathname();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-card lg:flex lg:flex-col">
-      <div className="flex h-16 items-center px-5">
-        <Link href="/dashboard" aria-label="OhHike CoachOS dashboard">
-          <Image
-            src="/logo/logoWtextBlack.png"
-            alt="OH HIKE"
-            width={172}
-            height={48}
-            priority
-            className="h-9 w-auto object-contain"
-          />
-        </Link>
-      </div>
+      <div className="h-3" />
+      <WorkspaceCard workspace={workspace} />
 
       <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
         {navGroups.map((group) => (
