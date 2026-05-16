@@ -34,9 +34,17 @@ function getDisplayName(user: ClerkUserData) {
 }
 
 export async function POST(req: NextRequest) {
-  const event = await verifyWebhook(req, {
-    signingSecret: getClerkWebhookSigningSecret(),
-  });
+  let event;
+
+  try {
+    event = await verifyWebhook(req, {
+      signingSecret: getClerkWebhookSigningSecret(),
+    });
+  } catch (error) {
+    console.error("Failed to verify Clerk webhook.", error);
+    return new Response("Webhook verification failed", { status: 400 });
+  }
+
   const supabase = createSupabaseAdminClient();
 
   if (event.type === "user.deleted") {
