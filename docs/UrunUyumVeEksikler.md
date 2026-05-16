@@ -9,9 +9,11 @@
 
 Genel yön **doğru**: coach-first kadro modeli, organizasyon → takım → sporcu → seans/veri hiyerarşisi, migration’ların kademeli eklenmesi ve Team Operations ekranlarının büyük ölçüde çalışması PRD ve `DatabaseSchema.md` §2.3 (Athlete Claim Model) ile uyumlu.
 
-Ancak PRD **MVP** ve `UserFlows.md` hedefleri ile **uygulama arasında hâlâ önemli boşluklar** var: wearable OAuth/sync, dosya ve CSV ingest akışları, billing sync, PDF export, self-host setup, feature gate kapsamı, test altyapısı ve RLS geçişi henüz tamamlanmış değil.
+**Production MVP hedefi:** Hızlıca canlıya alıp sunmak. Omurga (auth, org, takım, sporcu, seans, günlük veri, davetler, AI/Team Memory MVP) çalışır durumda.
 
-**Sonuç:** Ürün omurgası artık Faz 1–3 seviyesinde çalışır durumda; athlete portal, session detail, personal training, staff invite ve AI/Team Memory için ilk gerçek ürün akışları mevcut. Bundan sonraki ana iş, mevcut sistemi güvenli ve üretim kalitesine yakın hale getirmek.
+**Bilinçli ertelenenler (Post-MVP):** RLS geçişi, Clerk JWT template zorunluluğu, E2E otomasyon, wearable OAuth/sync, billing sync, PDF, self-host, AI/RAG olgunluk.
+
+**Şu anki teknik karar:** Supabase **service role (admin client)** — org/rol filtreleri uygulama katmanında. Detaylı faz planı: `docs/AgentGorevDagilimi.md`.
 
 **Test rehberi:** Kırılma noktaları ve uçtan uca (E2E) test kapıları → [§9](#9-kırılma-noktaları-breaking-points) ve [§10](#10-uçtan-uca-test-kapıları-e2e-gates).
 
@@ -70,15 +72,16 @@ Bu **bilinçli coach-first** modeldir; “her şeyi sporcu girer” değildir.
 
 ## 4. Mimari ve Teknik Uyumsuzluklar
 
-### 4.1 Supabase client stratejisi (`AgentGorevDagilimi.md` §5)
+### 4.1 Supabase client stratejisi (MVP)
 
-| Beklenen | Gerçek |
-|----------|--------|
-| Server Action’larda varsayılan RLS client | readiness, nutrition, personal training `createActionSupabase()` kullanıyor; geniş query/action yüzeyi hâlâ admin client |
-| `createSupabaseServerClient()` / action client ile RLS | Dosyalar var; geçiş kısmi |
-| Zod ile action validation | Yok; `cleanString` / manuel kontroller |
+| Konu | Durum |
+|------|--------|
+| Varsayılan erişim | **Admin client (service role)** — bilinçli MVP kararı |
+| `createActionSupabase()` | Admin’e alias (readiness, nutrition, personal training dahil) |
+| `createSupabaseServerClient()` + RLS | Dosyalar repoda; **Post-MVP** geçiş |
+| Zod validation | Yok; `cleanString` / manuel kontroller |
 
-**Risk:** Tüm org verisi service role ile okunuyor; uygulama katmanında rol kontrolü var ama RLS tasarımı devre dışı kalıyor.
+**MVP risk notu:** RLS devre dışı; org izolasyonu action’lardaki `organization_id` + rol kontrollerine bağlı. Production sonrası Post-MVP’de RLS planlanır.
 
 ### 4.2 Migration tablosu (`AgentGorevDagilimi.md` §6)
 
@@ -169,45 +172,27 @@ Gerçek: `app/onboarding/` (guard dışı, doğru) — uyumlu ama plan metni gü
 
 ---
 
-## 7. Öncelikli Düzeltme / Tamamlama Önerileri
+## 7. Öncelik sırası (MVP production)
 
-**P0 — Güvenlik ve kalite**
+Canonical plan: **`docs/AgentGorevDagilimi.md`**
 
-1. Admin client kullanımını normal kullanıcı akışlarından azaltmak; RLS geçişini testlerle kapatmak.
-2. Auth, org switch, invite/claim, athlete portal, session detail ve Team Memory için E2E temelini kurmak.
-3. Dokümanları kodla aynı gerçeklikte tutmak.
-
-**P1 — MVP vaadi**
-
-4. Wearable OAuth + sync.
-5. CSV import ve session/file upload pipeline.
-6. Clerk Billing + entitlement sync.
-7. PDF/report export MVP.
-
-**P2 — AI/RAG olgunluğu**
-
-8. Chunking, source metadata, corpus refresh ve retrieval kalite ölçümü.
-9. AI feature gate ve audit davranışı.
-
-**P3 — Ürünleştirme**
-
-10. Self-host setup.
-11. `api_keys` UI.
-12. Davet e-postası veya bilinçli link-only ürün kararı.
+| Öncelik | Faz | İçerik |
+|---------|-----|--------|
+| **Şimdi** | M1 | Prod Supabase (002–011), Clerk webhook, deploy, env, manuel smoke |
+| **Şimdi** | M2 | Davet URL’leri, billing/integrations/reports placeholder copy, hata mesajları |
+| **Şimdi** | M3 | `apps/web` link audit, temel legal/pricing |
+| İsteğe bağlı | M4 | Dashboard kartları, Resend davet, basit reports listesi |
+| **En son** | Post-MVP | RLS, E2E, wearables OAuth, billing, AI/RAG, PDF, self-host |
 
 ---
 
-## 8. Sıradaki İşler (kısa liste)
+## 8. Sıradaki işler (özet)
 
-Önceki geliştirme sırasına göre **tamamlananlar**: settings iskeleti, UI foundation, sessions/drills/team-memory sözlük normalizasyonu, athlete invite/claim, attendance sözlüğü.
+**Aktif geliştirme:** FAZ M1 → M2 → M3 (`AgentGorevDagilimi.md`).
 
-**Sıradaki mantıklı paketler:**
+**Ertelenen (Post-MVP backlog):** RLS + Clerk JWT, Playwright, Strava/CSV, Clerk Billing, PDF, self-host, RAG kalite, Zod, org arşiv.
 
-1. RLS sertleştirme + negatif tenant testleri
-2. Wearable OAuth/sync ve file import
-3. Billing + feature gate
-4. Team Memory / AI kalite katmanı
-5. Reports + self-host setup
+§9–§11 (kırılma noktaları ve E2E kapıları) manuel smoke için referans; otomasyon Post-MVP.
 
 ---
 
@@ -222,7 +207,7 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 | ID | Kırılma noktası | Neden kritik | E2E kapısı | Durum |
 |----|-----------------|--------------|------------|--------|
 | **BP-A1** | Clerk sign-up/sign-in → `users` satırı | Webhook gecikmezse onboarding FK hatası | [E2E-01](#e2e-01--auth--clerk--supabase-users) | 🟢 |
-| **BP-A2** | Clerk JWT → Supabase RLS (`current_user_id`) | JWT template yoksa RLS client çalışmaz | [E2E-12](#e2e-12--rls-server-client-geçişi) | 🔴 (server client kullanılmıyor) |
+| **BP-A2** | Clerk JWT → Supabase RLS (`current_user_id`) | JWT template yoksa RLS client çalışmaz | [E2E-12](#e2e-12--rls-server-client-geçişi) | ⏭️ Post-MVP (MVP admin client) |
 | **BP-A3** | Oturum yokken `/invite/*` vs `(protected)/*` | Yanlış redirect, claim kesilir | [E2E-06](#e2e-06--athlete-invite--claim) | 🟢 |
 | **BP-A4** | Aynı e-posta: staff hesabı ile athlete claim | Yanlış org rolü / claim reddi | [E2E-06](#e2e-06--athlete-invite--claim) | 🟢 |
 
@@ -232,7 +217,7 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 |----|-----------------|--------------|------------|--------|
 | **BP-T1** | `ohhike_active_org_id` cookie ↔ `getCurrentWorkspace()` | Yanlış org’da CRUD, veri sızıntısı hissi | [E2E-02](#e2e-02--onboarding--ilk-organizasyon) · [E2E-03](#e2e-03--organizasyon-değiştirme) | 🟢 |
 | **BP-T2** | İkinci organizasyon oluşturma (plan gate) | Basic’te açılmamalı; Pro’da açılmalı | [E2E-04](#e2e-04--plan-gate-ek-organizasyon) | 🟡 |
-| **BP-T3** | Admin client ile cross-org `id` tahmini | Uygulama kontrolü atlanırsa başka org verisi | Tüm CRUD E2E’lerinde negatif test | 🟡 (RLS devre dışı) |
+| **BP-T3** | Admin client ile cross-org `id` tahmini | Uygulama kontrolü atlanırsa başka org verisi | Manuel: yanlış org id ile action | 🟡 (MVP admin; Post-MVP RLS) |
 | **BP-T4** | Takım silme → sporcular / seanslar | Cascade veya bloklama tutarlı olmalı | [E2E-05](#e2e-05--takım--sporcu-kadrosu) | 🟢 |
 
 ### 9.3 Sporcu modeli (coach-first + claim)
@@ -284,7 +269,7 @@ Durum etiketleri: **🟢 Şimdi test edilebilir** · **🟡 Kısmi (bilinen eksi
 
 - Supabase: `002`–`008` uygulanmış (`docs/supabase/README.md`).
 - Clerk: webhook endpoint canlı veya local tunnel; `user.created` → `users` satırı.
-- (RLS testleri için) Clerk → Supabase JWT template — [E2E-12](#e2e-12--rls-server-client-geçişi) öncesi zorunlu.
+- Clerk → Supabase JWT template — yalnızca [E2E-12](#e2e-12--rls-server-client-geçişi) / Post-MVP RLS için zorunlu (MVP deploy’da gerekmez).
 - İki test hesabı: **Coach** (owner/head_coach), **Athlete** (ayrı Clerk user).
 - Tarayıcıda çerez/storage temizliği veya ayrı profiller (karışık oturum testleri için).
 
