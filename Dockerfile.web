@@ -9,11 +9,12 @@ FROM base AS builder
 COPY . .
 RUN pnpm install --frozen-lockfile
 
-# Default allows build when Dokploy does not pass build-args; override in Dokploy env (build-time).
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3001
+# This is baked into static/client output; Dokploy must pass it at build time.
+ARG NEXT_PUBLIC_APP_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
+RUN node apps/web/scripts/validate-docker-build-env.mjs
 RUN pnpm turbo build --filter=web
 
 FROM base AS runner

@@ -141,7 +141,7 @@ export function Navbar() {
           aria-label="OH HIKE home"
         >
           <Image
-            src="/logo/logowtext.png"
+            src="/logo/logoWtext.png"
             alt="OH HIKE"
             width={154}
             height={42}
@@ -231,7 +231,7 @@ export function Navbar() {
               onClick={closeMenu}
             >
               <Image
-                src="/logo/logowtext.png"
+                src="/logo/logoWtext.png"
                 alt="OH HIKE"
                 width={154}
                 height={42}

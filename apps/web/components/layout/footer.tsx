@@ -57,7 +57,7 @@ export function Footer() {
               aria-label="OH HIKE home"
             >
               <Image
-                src="/logo/logowtext.png"
+                src="/logo/logoWtext.png"
                 alt="OH HIKE"
                 width={172}
                 height={48}
