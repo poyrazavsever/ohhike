@@ -404,12 +404,47 @@ Degisiklikler:
 ```text
 Agent gorevleri:
 - Organization onboarding: create/update organization
+- Organization switcher/manager: sidebar uzerinden aktif organizasyon secimi
+- Organization CRUD: yeni organizasyon ekle, ad/tip/sehir/ulke guncelle, sil/arsivle
+- Plan gate: Basic hesapta 1 organizasyon ve 3 team member limiti
+- Plan gate: Pro ve Pro Plus hesaplarda ek organizasyon ve daha yuksek member limitleri
 - Team CRUD: liste, detay, duzenle, sil
 - Athlete CRUD: liste, detay, form, duzenle, sil
 - Athlete invite token olusturma
 - Staff yonetimi: davet, rol atama
 - Entitlement helper: max_teams, max_athletes kontrolu
 - Permission helper: owner/admin/coach/athlete rol kontrolleri
+```
+
+Organization management plan:
+
+```text
+Sidebar:
+  - Ust bolumde aktif organization adi ve aktif team adi gosterilir.
+  - Dropdown/popover:
+    - Organizasyon degistir
+    - Organization settings
+    - New organization (plan gate ile)
+    - Delete/archive organization (owner only)
+
+Data model:
+  - Ilk asamada organizations + organization_members yeterli.
+  - Ek plan kapilari icin team_billing_entitlements aktif team planini okur.
+  - Basic: max_organizations = 1, max_team_members = 3
+  - Pro: multiple organizations enabled, max_team_members >= 20
+  - Pro Plus: multiple organizations enabled, max_team_members >= 50, advanced roles
+
+Server helpers:
+  - getCurrentWorkspace()
+  - getUserOrganizations()
+  - canCreateOrganization(userId)
+  - canInviteTeamMember(teamId)
+  - requireOrgRole(organizationId, roles)
+
+UX:
+  - Basic kullanici 2. organizasyon acmaya calisirsa upgrade card gosterilir.
+  - Organization silme destructive confirm ile yapilir.
+  - Silme ilk asamada hard delete yerine archive/delete guard ile planlanir.
 ```
 
 Faz 2 planlamasi Faz 1 cikis kriterleri karsilanainca yapilacak.
