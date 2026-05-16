@@ -1,6 +1,7 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { createClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
+
+import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 
 type ClerkEmailAddress = {
   email_address?: string;
@@ -16,21 +17,6 @@ type ClerkUserData = {
   primary_email_address_id?: string | null;
   profile_image_url?: string | null;
 };
-
-function createSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing Supabase webhook environment variables");
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
-}
 
 function getPrimaryEmail(user: ClerkUserData) {
   return (

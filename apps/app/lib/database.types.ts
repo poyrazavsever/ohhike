@@ -88,6 +88,7 @@ export type Database = {
           created_at?: string | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       organizations: {
         Row: {
@@ -135,6 +136,7 @@ export type Database = {
           created_at?: string | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       organization_members: {
         Row: {
@@ -164,6 +166,7 @@ export type Database = {
           invited_by?: string | null;
           joined_at?: string | null;
         };
+        Relationships: [];
       };
       teams: {
         Row: {
@@ -208,6 +211,7 @@ export type Database = {
           created_at?: string | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       team_staff: {
         Row: {
@@ -234,6 +238,7 @@ export type Database = {
           assigned_by?: string | null;
           created_at?: string | null;
         };
+        Relationships: [];
       };
       athletes: {
         Row: {
@@ -305,6 +310,7 @@ export type Database = {
           created_at?: string | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       athlete_invites: {
         Row: {
@@ -346,6 +352,7 @@ export type Database = {
           accepted_at?: string | null;
           created_at?: string | null;
         };
+        Relationships: [];
       };
       team_billing_entitlements: {
         Row: {
@@ -414,6 +421,7 @@ export type Database = {
           created_at?: string | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       audit_logs: {
         Row: {
@@ -452,6 +460,7 @@ export type Database = {
           metadata?: Json | null;
           created_at?: string | null;
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
