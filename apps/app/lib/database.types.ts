@@ -640,6 +640,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      personal_trainings: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string;
+          source: DataSource | null;
+          wearable_activity_id: string | null;
+          title: string | null;
+          training_type: string | null;
+          started_at: string | null;
+          duration_min: number | null;
+          distance_km: number | null;
+          rpe: number | null;
+          notes: string | null;
+          coach_reviewed: boolean | null;
+          coach_note: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id: string;
+          source?: DataSource | null;
+          wearable_activity_id?: string | null;
+          title?: string | null;
+          training_type?: string | null;
+          started_at?: string | null;
+          duration_min?: number | null;
+          distance_km?: number | null;
+          rpe?: number | null;
+          notes?: string | null;
+          coach_reviewed?: boolean | null;
+          coach_note?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string;
+          source?: DataSource | null;
+          wearable_activity_id?: string | null;
+          title?: string | null;
+          training_type?: string | null;
+          started_at?: string | null;
+          duration_min?: number | null;
+          distance_km?: number | null;
+          rpe?: number | null;
+          notes?: string | null;
+          coach_reviewed?: boolean | null;
+          coach_note?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       wellness_checkins: {
         Row: {
           id: string;

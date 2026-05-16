@@ -12,6 +12,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `006_wearables.sql`: Wearables sayfasi icin `wearable_connections`, `wearable_daily_summaries`, `wearable_activities`, index'ler ve RLS policy'lerini idempotent sekilde kurar.
 - `007_ai_reports.sql`: AI Reports sayfasi icin `ai_reports` tablosunu, enum tipini, index'leri ve RLS policy'lerini idempotent sekilde kurar.
 - `008_team_memory.sql`: Team Memory icin `athlete_observations`, `team_patterns`, enum, index'ler ve RLS policy'lerini idempotent sekilde kurar.
+- `009_daily_data_schema_align.sql`: `001` ile olusturulmus `wellness_checkins` / `nutrition_logs` tablolarina `004` ile uyumlu kolonlari ekler (`created_by`, `fatigue`, vb.).
 
 ## Kapsam
 
@@ -48,4 +49,5 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `006_wearables.sql`, `/wearables` route'u icin provider connection ve normalized wearable data katmanidir.
 - `007_ai_reports.sql`, `/ai-reports` route'u icin rapor kaydi ve ileride AI uretim pipeline'ina baglanacak rapor registry katmanidir.
 - `008_team_memory.sql`, `/team-memory` route'u icin manuel/AI gozlem ve takim pattern registry katmanidir.
+- `009_daily_data_schema_align.sql`, `001` sonrasi `004` calistirildiginda eksik kalan daily data kolonlarini tamamlar. Check-in hatasi (`created_by` schema cache) goruluyorsa bu dosyayi Supabase SQL Editor'de calistirin.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.

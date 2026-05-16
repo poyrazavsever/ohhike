@@ -22,6 +22,7 @@ import {
   isOptionalObservationCategory,
   isOptionalAbsenceReason,
   isOptionalBodyPainArea,
+  isOptionalPersonalTrainingType,
   isOptionalSessionFocusArea,
   isTeamPatternType,
 } from "../../lib/coach-vocabulary";
@@ -272,6 +273,23 @@ export type UpsertNutritionLogInput = {
   notes?: string;
 };
 
+export type CreatePersonalTrainingInput = {
+  athleteId: string;
+  title: string;
+  trainingType?: string;
+  startedAt?: string;
+  durationMin?: string;
+  distanceKm?: string;
+  rpe?: string;
+  notes?: string;
+};
+
+export type UpdatePersonalTrainingInput = CreatePersonalTrainingInput & {
+  trainingId: string;
+  coachReviewed?: boolean;
+  coachNote?: string;
+};
+
 export type CreateDrillInput = {
   title: string;
   sportType: SportType;
@@ -483,6 +501,22 @@ function parseDateTime(value: string | undefined) {
 
   const date = new Date(cleaned);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function parseDistanceKm(value: string | undefined) {
+  const cleaned = cleanString(value);
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(cleaned);
+
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
 }
 
 async function canCurrentWorkspaceCreateOrganization() {
@@ -2509,7 +2543,6 @@ export async function upsertReadinessCheckin(
       readiness_score: calculateReadinessScore(input),
       pain_area: painArea,
       notes: cleanString(input.notes),
-      created_by: userId,
     },
     {
       onConflict: "athlete_id,checkin_date",
@@ -2517,9 +2550,17 @@ export async function upsertReadinessCheckin(
   );
 
   if (error) {
+    const missingColumn =
+      error.message.includes("created_by") ||
+      error.message.includes("fatigue") ||
+      error.message.includes("muscle_soreness") ||
+      error.message.includes("schema cache");
+
     return {
       ok: false,
-      error: error.message,
+      error: missingColumn
+        ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+        : error.message,
     };
   }
 
@@ -2618,7 +2659,6 @@ export async function upsertNutritionLog(
       carbs_timing: cleanString(input.carbsTiming),
       supplements: cleanString(input.supplements),
       notes: cleanString(input.notes),
-      created_by: userId,
     },
     {
       onConflict: "athlete_id,log_date",
@@ -2626,9 +2666,16 @@ export async function upsertNutritionLog(
   );
 
   if (error) {
+    const missingColumn =
+      error.message.includes("created_by") ||
+      error.message.includes("hydration_score") ||
+      error.message.includes("schema cache");
+
     return {
       ok: false,
-      error: error.message,
+      error: missingColumn
+        ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+        : error.message,
     };
   }
 
@@ -2643,6 +2690,358 @@ export async function upsertNutritionLog(
   revalidatePath("/athlete/nutrition");
   revalidatePath("/athlete/home");
   revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+async function resolveAthleteForPersonalTraining(
+  athleteId: string,
+  organizationId: string,
+  membership: Awaited<ReturnType<typeof getCurrentWorkspace>>["membership"],
+  userId: string,
+): Promise<
+  | { ok: true; athlete: { id: string; team_id: string } }
+  | { ok: false; error: string }
+> {
+  const supabase = createSupabaseAdminClient();
+
+  if (isAthleteRole(membership.role)) {
+    const linked = await getLinkedAthleteForUser(userId, organizationId);
+
+    if (!linked || linked.id !== athleteId) {
+      return {
+        ok: false,
+        error: "You can only log personal training for your own profile.",
+      };
+    }
+
+    return { ok: true, athlete: { id: linked.id, team_id: linked.team_id } };
+  }
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "You do not have permission to manage personal training logs.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("athletes")
+    .select("id, team_id")
+    .eq("id", athleteId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return {
+      ok: false,
+      error: "Please select a valid athlete.",
+    };
+  }
+
+  return { ok: true, athlete: data };
+}
+
+export async function createPersonalTraining(
+  input: CreatePersonalTrainingInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const title = cleanString(input.title);
+
+  if (!title) {
+    return {
+      ok: false,
+      error: "Training title is required.",
+    };
+  }
+
+  const trainingType = cleanString(input.trainingType);
+
+  if (!isOptionalPersonalTrainingType(trainingType ?? "")) {
+    return {
+      ok: false,
+      error: "Invalid training type.",
+    };
+  }
+
+  const rpeResult = parseOptionalRpe(input.rpe);
+
+  if (!rpeResult.ok) {
+    return {
+      ok: false,
+      error: rpeResult.error,
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+  const athleteResult = await resolveAthleteForPersonalTraining(
+    input.athleteId,
+    organization.id,
+    membership,
+    userId,
+  );
+
+  if (!athleteResult.ok) {
+    return athleteResult;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const startedAt = parseDateTime(input.startedAt) ?? new Date().toISOString();
+
+  const { error } = await supabase.from("personal_trainings").insert({
+    organization_id: organization.id,
+    team_id: athleteResult.athlete.team_id,
+    athlete_id: athleteResult.athlete.id,
+    source: "manual",
+    title,
+    training_type: trainingType,
+    started_at: startedAt,
+    duration_min: parsePositiveInteger(input.durationMin),
+    distance_km: parseDistanceKm(input.distanceKm),
+    rpe: rpeResult.value,
+    notes: cleanString(input.notes),
+    coach_reviewed: false,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "personal_training.created",
+    entity_type: "personal_training",
+  });
+
+  revalidatePath("/personal-training");
+  revalidatePath("/athlete/training");
+  revalidatePath("/athlete/home");
+  revalidatePath("/load-recovery");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function updatePersonalTraining(
+  input: UpdatePersonalTrainingInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const title = cleanString(input.title);
+
+  if (!title) {
+    return {
+      ok: false,
+      error: "Training title is required.",
+    };
+  }
+
+  const trainingType = cleanString(input.trainingType);
+
+  if (!isOptionalPersonalTrainingType(trainingType ?? "")) {
+    return {
+      ok: false,
+      error: "Invalid training type.",
+    };
+  }
+
+  const rpeResult = parseOptionalRpe(input.rpe);
+
+  if (!rpeResult.ok) {
+    return {
+      ok: false,
+      error: rpeResult.error,
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+
+  const { data: existing } = await supabase
+    .from("personal_trainings")
+    .select("id, athlete_id")
+    .eq("id", input.trainingId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (!existing) {
+    return {
+      ok: false,
+      error: "Personal training entry could not be found.",
+    };
+  }
+
+  const athleteResult = await resolveAthleteForPersonalTraining(
+    input.athleteId,
+    organization.id,
+    membership,
+    userId,
+  );
+
+  if (!athleteResult.ok) {
+    return athleteResult;
+  }
+
+  if (
+    isAthleteRole(membership.role) &&
+    existing.athlete_id !== athleteResult.athlete.id
+  ) {
+    return {
+      ok: false,
+      error: "You can only update your own personal training logs.",
+    };
+  }
+
+  const coachCanReview = [
+    "owner",
+    "admin",
+    "head_coach",
+    "assistant_coach",
+    "analyst",
+  ].includes(membership.role);
+
+  const { error } = await supabase
+    .from("personal_trainings")
+    .update({
+      team_id: athleteResult.athlete.team_id,
+      athlete_id: athleteResult.athlete.id,
+      title,
+      training_type: trainingType,
+      started_at: parseDateTime(input.startedAt),
+      duration_min: parsePositiveInteger(input.durationMin),
+      distance_km: parseDistanceKm(input.distanceKm),
+      rpe: rpeResult.value,
+      notes: cleanString(input.notes),
+      coach_reviewed: coachCanReview ? input.coachReviewed ?? false : false,
+      coach_note: coachCanReview ? cleanString(input.coachNote) : null,
+    })
+    .eq("id", input.trainingId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "personal_training.updated",
+    entity_type: "personal_training",
+    entity_id: input.trainingId,
+  });
+
+  revalidatePath("/personal-training");
+  revalidatePath("/athlete/training");
+  revalidatePath("/load-recovery");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function deletePersonalTraining(
+  trainingId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+
+  const { data: existing } = await supabase
+    .from("personal_trainings")
+    .select("id, athlete_id")
+    .eq("id", trainingId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (!existing) {
+    return {
+      ok: false,
+      error: "Personal training entry could not be found.",
+    };
+  }
+
+  if (isAthleteRole(membership.role)) {
+    const linked = await getLinkedAthleteForUser(userId, organization.id);
+
+    if (!linked || linked.id !== existing.athlete_id) {
+      return {
+        ok: false,
+        error: "You can only delete your own personal training logs.",
+      };
+    }
+  } else if (
+    !["owner", "admin", "head_coach", "assistant_coach"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "You do not have permission to delete this entry.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("personal_trainings")
+    .delete()
+    .eq("id", trainingId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "personal_training.deleted",
+    entity_type: "personal_training",
+    entity_id: trainingId,
+  });
+
+  revalidatePath("/personal-training");
+  revalidatePath("/athlete/training");
+  revalidatePath("/load-recovery");
 
   return {
     ok: true,

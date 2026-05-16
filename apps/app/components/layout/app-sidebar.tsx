@@ -76,6 +76,11 @@ const navGroups = [
         icon: "solar:shield-warning-bold",
       },
       {
+        href: "/personal-training",
+        label: "Personal Training",
+        icon: "solar:running-bold",
+      },
+      {
         href: "/nutrition",
         label: "Nutrition",
         icon: "solar:cup-hot-bold",
@@ -127,6 +132,11 @@ const athleteNavGroups = [
         href: "/athlete/nutrition",
         label: "Nutrition",
         icon: "solar:cup-hot-bold",
+      },
+      {
+        href: "/athlete/training",
+        label: "Personal training",
+        icon: "solar:running-bold",
       },
       {
         href: "/athlete/profile",

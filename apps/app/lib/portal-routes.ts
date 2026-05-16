@@ -4,6 +4,7 @@ export const ATHLETE_PORTAL_PREFIXES = [
   "/athlete/onboarding",
   "/athlete/check-in",
   "/athlete/nutrition",
+  "/athlete/training",
   "/athlete/profile",
 ] as const;
 
@@ -21,6 +22,7 @@ export const COACH_WORKSPACE_PREFIXES = [
   "/drills",
   "/readiness",
   "/load-recovery",
+  "/personal-training",
   "/nutrition",
   "/wearables",
   "/ai-reports",

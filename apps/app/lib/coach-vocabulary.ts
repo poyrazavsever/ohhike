@@ -404,3 +404,45 @@ export function bodyPainAreaLabel(value: string | null | undefined): string {
 export function sessionRpeLabel(value: number | null | undefined): string {
   return sessionPlannedIntensityLabel(value);
 }
+
+export const PERSONAL_TRAINING_TYPE_OPTIONS = [
+  { value: "", label: "Not set" },
+  { value: "strength", label: "Strength" },
+  { value: "cardio", label: "Cardio / conditioning" },
+  { value: "technical", label: "Technical skills" },
+  { value: "recovery", label: "Recovery / mobility" },
+  { value: "skills", label: "Individual skills" },
+  { value: "gym", label: "Gym / weights" },
+  { value: "other", label: "Other" },
+] as const;
+
+export function isOptionalPersonalTrainingType(value: string): boolean {
+  const cleaned = value.trim();
+  if (!cleaned) {
+    return true;
+  }
+  return PERSONAL_TRAINING_TYPE_OPTIONS.some(
+    (option) => option.value === cleaned,
+  );
+}
+
+export function personalTrainingTypeSelectOptions(currentValue?: string) {
+  const base: Array<{ value: string; label: string }> = [
+    ...PERSONAL_TRAINING_TYPE_OPTIONS,
+  ];
+  const value = (currentValue ?? "").trim();
+  if (value && !base.some((option) => option.value === value)) {
+    base.push({ value, label: value });
+  }
+  return base;
+}
+
+export function personalTrainingTypeLabel(value: string | null | undefined): string {
+  if (!value) {
+    return "Not set";
+  }
+  const found = PERSONAL_TRAINING_TYPE_OPTIONS.find(
+    (option) => option.value === value,
+  );
+  return found?.label ?? value;
+}

@@ -15,6 +15,7 @@ type SessionAttendance = Tables<"session_attendance">;
 type TrainingBlock = Tables<"training_blocks">;
 type WellnessCheckin = Tables<"wellness_checkins">;
 type NutritionLog = Tables<"nutrition_logs">;
+type PersonalTraining = Tables<"personal_trainings">;
 type Drill = Tables<"drills">;
 type WearableConnection = Tables<"wearable_connections">;
 type AiReport = Tables<"ai_reports">;
@@ -52,6 +53,11 @@ export type ReadinessCheckinWithAthlete = WellnessCheckin & {
 };
 
 export type NutritionLogWithAthlete = NutritionLog & {
+  athleteName: string;
+  teamName: string | null;
+};
+
+export type PersonalTrainingWithAthlete = PersonalTraining & {
   athleteName: string;
   teamName: string | null;
 };
@@ -737,6 +743,78 @@ export async function getNutritionData(): Promise<{
 
       return {
         ...log,
+        athleteName: athleteName || "Unknown athlete",
+        teamName: team?.name ?? null,
+      };
+    }),
+    athletes: athletes ?? [],
+    teams: teams ?? [],
+  };
+}
+
+export async function getPersonalTrainingsData(): Promise<{
+  workspace: CurrentWorkspace;
+  trainings: PersonalTrainingWithAthlete[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  teams: AthleteTeamOption[];
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: trainings, error: trainingsError },
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("personal_trainings")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("started_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(60),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (trainingsError) {
+    throw new Error(trainingsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  return {
+    workspace,
+    trainings: (trainings ?? []).map((training) => {
+      const athlete = athletes?.find(
+        (currentAthlete) => currentAthlete.id === training.athlete_id,
+      );
+      const team = teams?.find((currentTeam) => currentTeam.id === training.team_id);
+      const athleteName = [
+        athlete?.number ? `#${athlete.number}` : null,
+        athlete?.first_name,
+        athlete?.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        ...training,
         athleteName: athleteName || "Unknown athlete",
         teamName: team?.name ?? null,
       };

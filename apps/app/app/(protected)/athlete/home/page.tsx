@@ -108,6 +108,12 @@ export default async function AthleteHomePage() {
               Log nutrition
             </Link>
             <Link
+              href="/athlete/training"
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-bold text-foreground transition-colors hover:border-primary hover:bg-primary-soft"
+            >
+              Log personal training
+            </Link>
+            <Link
               href="/athlete/profile"
               className="rounded-2xl border border-border px-4 py-3 text-sm font-bold text-foreground transition-colors hover:border-primary hover:bg-primary-soft"
             >

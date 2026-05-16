@@ -268,3 +268,28 @@ export async function getAthleteHomeData(): Promise<{
     sevenDayLoad: recentLoad,
   };
 }
+
+export async function getAthletePersonalTrainingsData(): Promise<{
+  portal: AthletePortalContext;
+  trainings: Tables<"personal_trainings">[];
+}> {
+  const portal = await getAthletePortalContext();
+  const supabase = createSupabaseAdminClient();
+
+  const { data: trainings, error } = await supabase
+    .from("personal_trainings")
+    .select("*")
+    .eq("athlete_id", portal.athlete.id)
+    .order("started_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    portal,
+    trainings: trainings ?? [],
+  };
+}

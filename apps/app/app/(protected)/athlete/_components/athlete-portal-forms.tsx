@@ -6,13 +6,18 @@ import { useState, useTransition } from "react";
 
 import {
   completeAthletePortalProfile,
+  createPersonalTraining,
   upsertNutritionLog,
   upsertReadinessCheckin,
   type CompleteAthletePortalProfileInput,
+  type CreatePersonalTrainingInput,
   type UpsertNutritionLogInput,
   type UpsertReadinessCheckinInput,
 } from "../../../actions/workspace";
-import { bodyPainAreaSelectOptions } from "../../../../lib/coach-vocabulary";
+import {
+  bodyPainAreaSelectOptions,
+  personalTrainingTypeSelectOptions,
+} from "../../../../lib/coach-vocabulary";
 
 function inputClassName() {
   return "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
@@ -357,6 +362,143 @@ export function AthleteSelfNutritionForm({ athleteId }: { athleteId: string }) {
         >
           <Icon icon="solar:diskette-bold" className="size-4" />
           {isPending ? "Saving…" : "Save log"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function emptyPersonalTraining(athleteId: string): CreatePersonalTrainingInput {
+  const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
+
+  return {
+    athleteId,
+    title: "",
+    trainingType: "",
+    startedAt: now,
+    durationMin: "",
+    distanceKm: "",
+    rpe: "",
+    notes: "",
+  };
+}
+
+export function AthleteSelfPersonalTrainingForm({
+  athleteId,
+}: {
+  athleteId: string;
+}) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [form, setForm] = useState(() => emptyPersonalTraining(athleteId));
+
+  const typeOptions = personalTrainingTypeSelectOptions(form.trainingType);
+
+  function submit() {
+    setError(null);
+
+    startTransition(async () => {
+      const result = await createPersonalTraining(form);
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setForm(emptyPersonalTraining(athleteId));
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-border bg-card p-5">
+      <p className="text-sm font-extrabold text-foreground">Log personal training</p>
+      <p className="mt-1 text-xs font-medium text-muted-foreground">
+        Record extra work outside scheduled team sessions.
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <select
+          className={inputClassName()}
+          value={form.trainingType}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              trainingType: event.target.value,
+            }))
+          }
+        >
+          {typeOptions.map((option) => (
+            <option key={option.value || "type"} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <input
+          className={inputClassName()}
+          value={form.title}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, title: event.target.value }))
+          }
+          placeholder="Title"
+        />
+        <input
+          type="datetime-local"
+          className={inputClassName()}
+          value={form.startedAt}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, startedAt: event.target.value }))
+          }
+        />
+        <input
+          type="number"
+          min="1"
+          className={inputClassName()}
+          value={form.durationMin}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              durationMin: event.target.value,
+            }))
+          }
+          placeholder="Minutes"
+        />
+        <input
+          type="number"
+          min="1"
+          max="10"
+          className={inputClassName()}
+          value={form.rpe}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, rpe: event.target.value }))
+          }
+          placeholder="RPE 1-10"
+        />
+        <textarea
+          className={`${inputClassName()} min-h-20 resize-none md:col-span-2`}
+          value={form.notes}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, notes: event.target.value }))
+          }
+          placeholder="Notes for your coach"
+        />
+      </div>
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+          {error}
+        </div>
+      ) : null}
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={submit}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+        >
+          <Icon icon="solar:diskette-bold" className="size-4" />
+          {isPending ? "Saving…" : "Save training"}
         </button>
       </div>
     </div>
