@@ -17,6 +17,7 @@ type WellnessCheckin = Tables<"wellness_checkins">;
 type NutritionLog = Tables<"nutrition_logs">;
 type Drill = Tables<"drills">;
 type WearableConnection = Tables<"wearable_connections">;
+type AiReport = Tables<"ai_reports">;
 
 export const ACTIVE_ORGANIZATION_COOKIE = "ohhike_active_org_id";
 
@@ -101,6 +102,12 @@ export type DrillWithUsage = Drill & {
 export type WearableConnectionWithAthlete = WearableConnection & {
   athleteName: string;
   teamName: string | null;
+};
+
+export type AiReportWithMeta = AiReport & {
+  teamName: string | null;
+  athleteName: string | null;
+  sessionTitle: string | null;
 };
 
 export type WorkspaceShellData = {
@@ -1216,6 +1223,109 @@ export async function getWearablesData(): Promise<{
         connections?.filter((connection) => connection.is_active).length ?? 0,
       summaries: summariesCount ?? 0,
       activities: activitiesCount ?? 0,
+    },
+  };
+}
+
+export async function getAiReportsData(): Promise<{
+  workspace: CurrentWorkspace;
+  reports: AiReportWithMeta[];
+  teams: AthleteTeamOption[];
+  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  sessions: Array<Pick<Session, "id" | "team_id" | "title">>;
+  totals: {
+    reports: number;
+    sessionReports: number;
+    athleteReports: number;
+    teamReports: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: reports, error: reportsError },
+    { data: teams, error: teamsError },
+    { data: athletes, error: athletesError },
+    { data: sessions, error: sessionsError },
+  ] = await Promise.all([
+    supabase
+      .from("ai_reports")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("athletes")
+      .select("id, team_id, first_name, last_name, number")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("sessions")
+      .select("id, team_id, title")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+
+  if (reportsError) {
+    throw new Error(reportsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  const reportsWithMeta =
+    reports?.map((report) => {
+      const team = teams?.find((currentTeam) => currentTeam.id === report.team_id);
+      const athlete = athletes?.find(
+        (currentAthlete) => currentAthlete.id === report.athlete_id,
+      );
+      const session = sessions?.find(
+        (currentSession) => currentSession.id === report.session_id,
+      );
+      const athleteName = [
+        athlete?.number ? `#${athlete.number}` : null,
+        athlete?.first_name,
+        athlete?.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        ...report,
+        teamName: team?.name ?? null,
+        athleteName: athleteName || null,
+        sessionTitle: session?.title ?? null,
+      };
+    }) ?? [];
+
+  return {
+    workspace,
+    reports: reportsWithMeta,
+    teams: teams ?? [],
+    athletes: athletes ?? [],
+    sessions: sessions ?? [],
+    totals: {
+      reports: reportsWithMeta.length,
+      sessionReports: reportsWithMeta.filter((report) => report.session_id)
+        .length,
+      athleteReports: reportsWithMeta.filter((report) => report.athlete_id)
+        .length,
+      teamReports: reportsWithMeta.filter((report) => report.team_id).length,
     },
   };
 }

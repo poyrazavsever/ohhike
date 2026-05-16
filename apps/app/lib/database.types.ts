@@ -81,6 +81,17 @@ export type WearableProvider =
   | "csv_import"
   | "other";
 
+export type AiReportType =
+  | "session_analysis"
+  | "match_analysis"
+  | "training_analysis"
+  | "player_development"
+  | "weekly_team_report"
+  | "load_report"
+  | "readiness_report"
+  | "nutrition_report"
+  | "scout_report";
+
 export type Database = {
   public: {
     Tables: {
@@ -977,6 +988,84 @@ export type Database = {
           elevation_gain_m?: number | null;
           matched_session_id?: string | null;
           raw_payload?: Json | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      ai_reports: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string | null;
+          session_id: string | null;
+          report_type: AiReportType;
+          title: string;
+          summary: string | null;
+          confidence_score: number | null;
+          model_provider: string | null;
+          model_name: string | null;
+          prompt_version: string | null;
+          tactical_observations: Json | null;
+          athlete_observations: Json | null;
+          load_observations: Json | null;
+          nutrition_observations: Json | null;
+          risk_alerts: Json | null;
+          recommended_drills: Json | null;
+          next_training_plan: Json | null;
+          raw_input: Json | null;
+          raw_output: Json | null;
+          created_by: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          session_id?: string | null;
+          report_type: AiReportType;
+          title: string;
+          summary?: string | null;
+          confidence_score?: number | null;
+          model_provider?: string | null;
+          model_name?: string | null;
+          prompt_version?: string | null;
+          tactical_observations?: Json | null;
+          athlete_observations?: Json | null;
+          load_observations?: Json | null;
+          nutrition_observations?: Json | null;
+          risk_alerts?: Json | null;
+          recommended_drills?: Json | null;
+          next_training_plan?: Json | null;
+          raw_input?: Json | null;
+          raw_output?: Json | null;
+          created_by?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          session_id?: string | null;
+          report_type?: AiReportType;
+          title?: string;
+          summary?: string | null;
+          confidence_score?: number | null;
+          model_provider?: string | null;
+          model_name?: string | null;
+          prompt_version?: string | null;
+          tactical_observations?: Json | null;
+          athlete_observations?: Json | null;
+          load_observations?: Json | null;
+          nutrition_observations?: Json | null;
+          risk_alerts?: Json | null;
+          recommended_drills?: Json | null;
+          next_training_plan?: Json | null;
+          raw_input?: Json | null;
+          raw_output?: Json | null;
+          created_by?: string | null;
           created_at?: string | null;
         };
         Relationships: [];

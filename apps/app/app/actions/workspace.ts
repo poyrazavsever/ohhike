@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 import type {
+  AiReportType,
   OrganizationType,
   SessionStatus,
   SessionType,
@@ -73,6 +74,18 @@ const wearableProviders = [
   "csv_import",
   "other",
 ] as const satisfies readonly WearableProvider[];
+
+const aiReportTypes = [
+  "session_analysis",
+  "match_analysis",
+  "training_analysis",
+  "player_development",
+  "weekly_team_report",
+  "load_report",
+  "readiness_report",
+  "nutrition_report",
+  "scout_report",
+] as const satisfies readonly AiReportType[];
 
 export type WorkspaceActionResult =
   | {
@@ -234,6 +247,15 @@ export type CreateWearableConnectionInput = {
   scopes?: string;
 };
 
+export type CreateAiReportInput = {
+  title: string;
+  reportType: AiReportType;
+  teamId?: string;
+  athleteId?: string;
+  sessionId?: string;
+  summary?: string;
+};
+
 function cleanString(value: string | undefined) {
   const cleaned = value?.trim();
   return cleaned ? cleaned : null;
@@ -257,6 +279,10 @@ function isSessionStatus(value: string): value is SessionStatus {
 
 function isWearableProvider(value: string): value is WearableProvider {
   return wearableProviders.includes(value as WearableProvider);
+}
+
+function isAiReportType(value: string): value is AiReportType {
+  return aiReportTypes.includes(value as AiReportType);
 }
 
 function slugify(value: string) {
@@ -2054,6 +2080,139 @@ export async function createWearableConnection(
   });
 
   revalidatePath("/wearables");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function createAiReport(
+  input: CreateAiReportInput,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const title = cleanString(input.title);
+
+  if (!title) {
+    return {
+      ok: false,
+      error: "Report title is required.",
+    };
+  }
+
+  if (!isAiReportType(input.reportType)) {
+    return {
+      ok: false,
+      error: "Invalid report type.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can create AI reports.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const teamId = cleanString(input.teamId);
+  const athleteId = cleanString(input.athleteId);
+  const sessionId = cleanString(input.sessionId);
+
+  if (teamId) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("id", teamId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!team) {
+      return {
+        ok: false,
+        error: "Please select a valid team.",
+      };
+    }
+  }
+
+  if (athleteId) {
+    const { data: athlete } = await supabase
+      .from("athletes")
+      .select("id")
+      .eq("id", athleteId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!athlete) {
+      return {
+        ok: false,
+        error: "Please select a valid athlete.",
+      };
+    }
+  }
+
+  if (sessionId) {
+    const { data: session } = await supabase
+      .from("sessions")
+      .select("id")
+      .eq("id", sessionId)
+      .eq("organization_id", organization.id)
+      .maybeSingle();
+
+    if (!session) {
+      return {
+        ok: false,
+        error: "Please select a valid session.",
+      };
+    }
+  }
+
+  const { error } = await supabase.from("ai_reports").insert({
+    organization_id: organization.id,
+    team_id: teamId,
+    athlete_id: athleteId,
+    session_id: sessionId,
+    report_type: input.reportType,
+    title,
+    summary: cleanString(input.summary),
+    model_provider: "manual",
+    model_name: "manual-draft",
+    prompt_version: "manual-v1",
+    raw_input: {
+      source: "manual",
+    },
+    raw_output: {},
+    created_by: userId,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "ai_report.created",
+    entity_type: "ai_report",
+  });
+
+  revalidatePath("/ai-reports");
 
   return {
     ok: true,

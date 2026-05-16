@@ -10,6 +10,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `004_daily_data.sql`: Performance Data baslangici icin `wellness_checkins` ve `nutrition_logs` tablolarini, index'leri ve RLS policy'lerini idempotent sekilde kurar.
 - `005_drills.sql`: Drill Library icin `drills` tablosunu, `training_blocks.drill_id` baglantisini, index'leri ve RLS policy'lerini idempotent sekilde kurar.
 - `006_wearables.sql`: Wearables sayfasi icin `wearable_connections`, `wearable_daily_summaries`, `wearable_activities`, index'ler ve RLS policy'lerini idempotent sekilde kurar.
+- `007_ai_reports.sql`: AI Reports sayfasi icin `ai_reports` tablosunu, enum tipini, index'leri ve RLS policy'lerini idempotent sekilde kurar.
 
 ## Kapsam
 
@@ -44,4 +45,5 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `004_daily_data.sql`, `/readiness` ve `/nutrition` route'lari icin incremental daily data katmanidir. `001_initial_schema.sql` zaten uygulanmissa tablo/policy'leri ezmeden gunceller.
 - `005_drills.sql`, `/drills` route'u ve Training Planner drill baglantilari icin incremental library katmanidir.
 - `006_wearables.sql`, `/wearables` route'u icin provider connection ve normalized wearable data katmanidir.
+- `007_ai_reports.sql`, `/ai-reports` route'u icin rapor kaydi ve ileride AI uretim pipeline'ina baglanacak rapor registry katmanidir.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.
