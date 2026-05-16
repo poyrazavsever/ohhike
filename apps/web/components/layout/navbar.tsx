@@ -11,12 +11,44 @@ import { getAppUrl } from "../../lib/site-url";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
 ];
 
-const communityItems = [
+const productItems = [
+  {
+    href: "/features/coach-dashboard",
+    label: "Coach Dashboard",
+    description: "Readiness, load, sessions, and AI insights.",
+  },
+  {
+    href: "/features/check-ins",
+    label: "Athlete Check-ins",
+    description: "Daily wellness, nutrition, RPE, and recovery signals.",
+  },
+  {
+    href: "/features/team-memory",
+    label: "Team Memory",
+    description: "Ask your historical team data practical questions.",
+  },
+  {
+    href: "/features/ai-reports",
+    label: "AI Reports",
+    description: "Turn sessions and notes into structured coaching reports.",
+  },
+  {
+    href: "/self-host",
+    label: "Self-host",
+    description: "Run CoachOS with your own database, storage, and AI keys.",
+  },
+  {
+    href: "/roadmap",
+    label: "Roadmap",
+    description: "See what is planned for the open-source core.",
+  },
+];
+
+const resourceItems = [
   {
     href: "/community",
     label: "Community",
@@ -32,7 +64,67 @@ const communityItems = [
     label: "Docs",
     description: "Product notes and implementation guides.",
   },
+  {
+    href: "/docs/self-host",
+    label: "Self-host Docs",
+    description: "Deployment and setup notes for technical teams.",
+  },
+  {
+    href: "/docs/integrations",
+    label: "Integrations",
+    description: "Wearables, CSV, AI providers, and storage options.",
+  },
+  {
+    href: "/security",
+    label: "Security",
+    description: "RLS, role access, sensitive data, and AI boundaries.",
+  },
 ];
+
+function NavDropdown({
+  items,
+  label,
+}: {
+  items: {
+    description: string;
+    href: string;
+    label: string;
+  }[];
+  label: string;
+}) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        aria-haspopup="menu"
+      >
+        {label}
+        <Icon
+          icon="solar:alt-arrow-down-linear"
+          className="size-4 translate-y-px transition-transform duration-200 ease-out group-hover:translate-y-0.5 group-hover:rotate-180 group-focus-within:translate-y-0.5 group-focus-within:rotate-180"
+        />
+      </button>
+
+      <div className="invisible absolute left-1/2 top-full z-50 mt-4 w-80 -translate-x-1/2 rounded-xl border border-border bg-background p-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+          >
+            <span className="block text-sm font-semibold text-foreground">
+              {item.label}
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+              {item.description}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -109,36 +201,14 @@ export function Navbar() {
             </Link>
           ))}
 
-          <div className="group relative">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              aria-haspopup="menu"
-            >
-              Community
-              <Icon
-                icon="solar:alt-arrow-down-linear"
-                className="size-4 translate-y-px transition-transform duration-200 ease-out group-hover:translate-y-0.5 group-hover:rotate-180 group-focus-within:translate-y-0.5 group-focus-within:rotate-180"
-              />
-            </button>
-
-            <div className="invisible absolute left-1/2 top-full z-50 mt-4 w-72 -translate-x-1/2 rounded-xl border border-border bg-background p-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-              {communityItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                >
-                  <span className="block text-sm font-semibold text-foreground">
-                    {item.label}
-                  </span>
-                  <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                    {item.description}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <NavDropdown label="Product" items={productItems} />
+          <NavDropdown label="Resources" items={resourceItems} />
+          <Link
+            href="/about"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
+          >
+            About Us
+          </Link>
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -240,10 +310,10 @@ export function Navbar() {
 
             <div className="mt-8">
               <div className="px-4 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Community
+                Product & Resources
               </div>
               <div className="mt-3 flex flex-col gap-2">
-                {communityItems.map((item) => (
+                {[...productItems, ...resourceItems].map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
+import { Footer } from "../components/layout/footer";
 import { Navbar } from "../components/layout/navbar";
 import "./globals.css";
 
-
 export const metadata: Metadata = {
-  title: "OH Hike!",
-  description: "O Hike! is a sport and health app for teams.",
+  title: "OhHike CoachOS",
+  description: "AI coaching operations platform for sports teams.",
 };
 
 export default function RootLayout({
@@ -19,6 +19,7 @@ export default function RootLayout({
       <body>
         <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );
