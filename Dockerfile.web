@@ -9,7 +9,8 @@ FROM base AS builder
 COPY . .
 RUN pnpm install --frozen-lockfile
 
-ARG NEXT_PUBLIC_APP_URL
+# Default allows build when Dokploy does not pass build-args; override in Dokploy env (build-time).
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3001
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 

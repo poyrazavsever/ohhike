@@ -24,6 +24,7 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 - Use `deploy/dokploy.env.app.example` for the **app** service.
 - Use `deploy/dokploy.env.web.example` for the **web** service.
 - In Dokploy, enable **pass env to build** (or build-time env) so `NEXT_PUBLIC_*` are available during `docker build`.
+- **Web app:** set `NEXT_PUBLIC_APP_URL` to your **coach app** URL (e.g. `https://app.example.com`), not the marketing domain. If this is missing at build time, the site may build but “Get Started” links fall back to `http://localhost:3001`.
 
 `NEXT_PUBLIC_*` values are baked into the Next.js bundle at build time.
 
