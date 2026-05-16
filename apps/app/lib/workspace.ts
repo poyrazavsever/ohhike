@@ -508,6 +508,10 @@ export async function getSessionDetailData(sessionId: string): Promise<{
   session: SessionWithMeta;
   teams: AthleteTeamOption[];
   athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  latestAiReport: Pick<
+    Tables<"ai_reports">,
+    "id" | "title" | "summary" | "confidence_score" | "model_provider" | "created_at"
+  > | null;
 } | null> {
   const workspace = await getCurrentWorkspace();
   const supabase = createSupabaseAdminClient();
@@ -533,6 +537,7 @@ export async function getSessionDetailData(sessionId: string): Promise<{
     { data: athletes, error: athletesError },
     { data: attendance, error: attendanceError },
     { data: trainingBlocks, error: trainingBlocksError },
+    { data: latestAiReport, error: aiReportError },
   ] = await Promise.all([
     supabase
       .from("teams")
@@ -550,6 +555,14 @@ export async function getSessionDetailData(sessionId: string): Promise<{
       .select("*")
       .eq("session_id", session.id)
       .order("order_index", { ascending: true }),
+    supabase
+      .from("ai_reports")
+      .select("id, title, summary, confidence_score, model_provider, created_at")
+      .eq("session_id", session.id)
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (teamsError) {
@@ -568,6 +581,10 @@ export async function getSessionDetailData(sessionId: string): Promise<{
     throw new Error(trainingBlocksError.message);
   }
 
+  if (aiReportError) {
+    throw new Error(aiReportError.message);
+  }
+
   const sessionWithMeta: SessionWithMeta = {
     ...session,
     teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
@@ -581,6 +598,7 @@ export async function getSessionDetailData(sessionId: string): Promise<{
     session: sessionWithMeta,
     teams: teams ?? [],
     athletes: athletes ?? [],
+    latestAiReport: latestAiReport ?? null,
   };
 }
 

@@ -30,6 +30,12 @@ import {
   getLinkedAthleteForUser,
   isAthleteProfileComplete,
 } from "../../lib/athlete-portal";
+import {
+  buildSessionAnalysisContext,
+  generateSessionAnalysisFromContext,
+  getSessionAnalysisPromptVersion,
+  tryGenerateSessionAnalysisWithOpenAI,
+} from "../../lib/ai/session-analysis";
 import { isAthleteRole, isCoachStaffRole } from "../../lib/org-roles";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
@@ -113,6 +119,8 @@ export type WorkspaceActionResult =
       claimUrl?: string;
       /** Present after switching the active organization. */
       redirectTo?: string;
+      /** Present after generating an AI report. */
+      reportId?: string;
     }
   | {
       ok: false;
@@ -2964,6 +2972,196 @@ export async function createAiReport(
 
   return {
     ok: true,
+  };
+}
+
+export async function generateSessionAiReport(
+  sessionId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can generate AI reports.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("id", sessionId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (sessionError || !session) {
+    return {
+      ok: false,
+      error: "Session could not be found.",
+    };
+  }
+
+  const [
+    { data: team, error: teamError },
+    { data: athletes, error: athletesError },
+    { data: attendance, error: attendanceError },
+    { data: trainingBlocks, error: blocksError },
+  ] = await Promise.all([
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("id", session.team_id)
+      .eq("organization_id", organization.id)
+      .maybeSingle(),
+    supabase
+      .from("athletes")
+      .select("id, first_name, last_name, number, team_id")
+      .eq("organization_id", organization.id)
+      .eq("team_id", session.team_id),
+    supabase.from("session_attendance").select("*").eq("session_id", session.id),
+    supabase
+      .from("training_blocks")
+      .select("*")
+      .eq("session_id", session.id)
+      .order("order_index", { ascending: true }),
+  ]);
+
+  if (teamError || !team) {
+    return {
+      ok: false,
+      error: "Team for this session could not be loaded.",
+    };
+  }
+
+  if (athletesError) {
+    return {
+      ok: false,
+      error: athletesError.message,
+    };
+  }
+
+  if (attendanceError) {
+    return {
+      ok: false,
+      error: attendanceError.message,
+    };
+  }
+
+  if (blocksError) {
+    return {
+      ok: false,
+      error: blocksError.message,
+    };
+  }
+
+  const athleteIds = (athletes ?? []).map((athlete) => athlete.id);
+  const sessionDate = session.scheduled_at
+    ? new Date(session.scheduled_at)
+    : new Date();
+  const checkinSince = new Date(sessionDate);
+  checkinSince.setDate(checkinSince.getDate() - 7);
+  const sinceDate = checkinSince.toISOString().slice(0, 10);
+
+  const { data: checkins, error: checkinsError } =
+    athleteIds.length > 0
+      ? await supabase
+          .from("wellness_checkins")
+          .select("*")
+          .in("athlete_id", athleteIds)
+          .gte("checkin_date", sinceDate)
+          .order("checkin_date", { ascending: false })
+      : { data: [], error: null };
+
+  if (checkinsError) {
+    return {
+      ok: false,
+      error: checkinsError.message,
+    };
+  }
+
+  const analysisContext = buildSessionAnalysisContext({
+    organizationName: organization.name,
+    team,
+    session,
+    athletes: athletes ?? [],
+    attendance: attendance ?? [],
+    trainingBlocks: trainingBlocks ?? [],
+    checkins: checkins ?? [],
+  });
+
+  const llmAnalysis = await tryGenerateSessionAnalysisWithOpenAI(analysisContext);
+  const analysis =
+    llmAnalysis ?? generateSessionAnalysisFromContext(analysisContext);
+  const usedLlm = Boolean(llmAnalysis);
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("ai_reports")
+    .insert({
+      organization_id: organization.id,
+      team_id: session.team_id,
+      session_id: session.id,
+      report_type: "session_analysis",
+      title: analysis.title,
+      summary: analysis.summary,
+      confidence_score: analysis.confidence_score,
+      model_provider: usedLlm ? "openai" : "rules",
+      model_name: usedLlm
+        ? process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini"
+        : "doctor-panda-rules-v1",
+      prompt_version: getSessionAnalysisPromptVersion(),
+      tactical_observations: analysis.tactical_observations,
+      athlete_observations: analysis.athlete_observations,
+      load_observations: analysis.load_observations,
+      risk_alerts: analysis.risk_alerts,
+      recommended_drills: analysis.recommended_drills,
+      next_training_plan: analysis.next_training_plan,
+      raw_input: {
+        source: "session_analysis",
+        session_id: session.id,
+        context: analysisContext,
+      },
+      raw_output: analysis,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !inserted) {
+    return {
+      ok: false,
+      error: insertError?.message ?? "Could not save the AI report.",
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: userId,
+    action: "ai_report.generated",
+    entity_type: "ai_report",
+    entity_id: inserted.id,
+  });
+
+  revalidatePath("/ai-reports");
+  revalidatePath(`/sessions/${sessionId}`);
+
+  return {
+    ok: true,
+    reportId: inserted.id,
   };
 }
 

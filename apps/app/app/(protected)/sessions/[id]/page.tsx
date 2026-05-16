@@ -16,6 +16,7 @@ import {
 import { getSessionDetailData } from "../../../../lib/workspace";
 import { SessionCardActions } from "../_components/session-card-actions";
 import { SessionCompleteButton } from "../_components/session-complete-button";
+import { SessionGenerateAiReportButton } from "../_components/session-generate-ai-report-button";
 import { SessionTrainingBlocksButton } from "../_components/session-training-blocks-button";
 
 function formatSessionType(type: string) {
@@ -83,7 +84,7 @@ export default async function SessionDetailPage({
     notFound();
   }
 
-  const { workspace, session, teams, athletes } = data;
+  const { workspace, session, teams, athletes, latestAiReport } = data;
   const teamAthletes = athletes.filter(
     (athlete) => athlete.team_id === session.team_id,
   );
@@ -268,13 +269,21 @@ export default async function SessionDetailPage({
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-dashed border-border bg-card/60 px-4 py-3 text-sm font-medium text-muted-foreground">
-        AI session analysis and file import will be available on this page in a
-        later release. For now, add a manual report from{" "}
-        <Link href="/ai-reports" className="font-bold text-primary">
-          AI Reports
-        </Link>
-        .
+      <div className="mt-4">
+        <SessionGenerateAiReportButton
+          sessionId={session.id}
+          existingReportId={latestAiReport?.id}
+        />
+        {latestAiReport?.summary ? (
+          <div className="mt-3 rounded-2xl border border-border bg-card/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Latest analysis · {latestAiReport.model_provider ?? "ai"}
+            </p>
+            <p className="mt-2 text-sm font-medium leading-6 text-foreground">
+              {latestAiReport.summary}
+            </p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
