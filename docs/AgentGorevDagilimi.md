@@ -76,7 +76,7 @@ Butun Supabase migration SQL'leri `docs/supabase/` klasorune kaydedilir.
 
 Kural:
 
-- Her migration ayri numarali bir `.sql` dosyasidir: `001_foundation.sql`, `002_sessions.sql` vb.
+- Her migration ayri numarali bir `.sql` dosyasidir. Mevcut `001_initial_schema.sql` korundugu icin Faz 1 foundation calismasi `002_phase1_foundation.sql` olarak kaydedildi.
 - Her yeni migration sonrasi `docs/supabase/README.md` guncellenir.
 - Supabase Dashboard SQL Editor'a elle yapistirilerek uygulanir veya Supabase CLI ile migrate edilir.
 - Cakisma olmamasi icin migration sirasi dosya numarasiyla belirlenir.
@@ -101,7 +101,7 @@ Kural:
 
 ##### 1.1 — Foundation Migration SQL
 
-Dosya: `docs/supabase/001_foundation.sql`
+Dosya: `docs/supabase/002_phase1_foundation.sql`
 
 Icerigi:
 
@@ -170,7 +170,7 @@ Storage Buckets:
   - organization-logos (public: true)
 ```
 
-`docs/supabase/README.md` guncellenir: 001_foundation.sql eklenir, kapsami belirtilir.
+`docs/supabase/README.md` guncellenir: `002_phase1_foundation.sql` eklenir, kapsami belirtilir.
 
 ---
 
@@ -550,11 +550,12 @@ Kritik hatalar audit_logs'a yazilir
 
 | Dosya | Durum | Kapsam |
 |---|---|---|
-| `docs/supabase/001_foundation.sql` | Planli | Extensions, enum'lar, foundation tablolar, RLS, storage |
-| `docs/supabase/002_sessions.sql` | Faz 3 | sessions, attendance, training_blocks, checkins, nutrition, personal_trainings |
-| `docs/supabase/003_wearables_files.sql` | Faz 4 | wearable tablolar, session_files |
-| `docs/supabase/004_ai_rag.sql` | Faz 5 | ai_reports, documents, embeddings, assistant |
-| `docs/supabase/005_billing_reports.sql` | Faz 6 | reports, api_keys, system_settings |
+| `docs/supabase/001_initial_schema.sql` | Mevcut | Genis v3.0 schema referansi; session, wearable, AI/RAG dahil tam kapsam |
+| `docs/supabase/002_phase1_foundation.sql` | Hazir | Foundation overlay, RLS, storage, `team_billing_entitlements` |
+| `docs/supabase/003_sessions.sql` | Faz 3 | sessions, attendance, training_blocks, checkins, nutrition, personal_trainings |
+| `docs/supabase/004_wearables_files.sql` | Faz 4 | wearable tablolar, session_files |
+| `docs/supabase/005_ai_rag.sql` | Faz 5 | ai_reports, documents, embeddings, assistant |
+| `docs/supabase/006_billing_reports.sql` | Faz 6 | reports, api_keys, system_settings |
 
 ---
 

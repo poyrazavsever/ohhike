@@ -5,6 +5,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 ## Dosyalar
 
 - `001_initial_schema.sql`: Ilk migration. Extension, enum, tablo, index, storage bucket, RLS helper, tablo RLS policy ve storage policy tanimlarini icerir.
+- `002_phase1_foundation.sql`: Faz 1 foundation overlay. Mevcut `001_initial_schema.sql` dosyasini ezmeden foundation tablolari, RLS helper/policy'leri ve takim bazli `team_billing_entitlements` modelini idempotent sekilde kurar.
 
 ## Kapsam
 
@@ -34,4 +35,5 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 
 - `docs/DatabaseSchema.md` v3.0 kaynak alinmistir.
 - `billing_entitlements` v3.0 dokumanindaki organization-level modeli takip eder. `docs/PricingPolicy.md` takim bazli v3.1 modeli tarif ettigi icin billing implementasyonu sirasinda ek bir `team_billing_entitlements` migration'i yazilmalidir.
+- `002_phase1_foundation.sql`, `docs/PricingPolicy.md` v3.1 kararini uygulamak icin `team_billing_entitlements` tablosunu ekler. Bundan sonraki app onboarding ve feature gate isleri takim bazli entitlement okumalidir.
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilmalidir; RLS normal client ile owner kaydi olmayan organizasyonu yonetmeye izin vermez.
