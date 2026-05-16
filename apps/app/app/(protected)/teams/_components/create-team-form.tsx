@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -76,8 +77,9 @@ export function CreateTeamForm() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover"
+        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover"
       >
+        <Icon icon="solar:add-circle-bold" className="size-4" />
         Create team
       </button>
 
@@ -97,7 +99,11 @@ export function CreateTeamForm() {
 
           <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-border bg-card p-5 shadow-xl md:p-6">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="flex gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-700">
+                  <Icon icon="solar:users-group-rounded-bold" className="size-5" />
+                </div>
+                <div>
                 <p
                   id="create-team-title"
                   className="text-base font-extrabold text-foreground"
@@ -107,12 +113,14 @@ export function CreateTeamForm() {
                 <p className="mt-1 text-sm font-medium text-muted-foreground">
                   Add another team under the active organization.
                 </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
               >
+                <Icon icon="solar:close-circle-bold" className="size-3.5" />
                 Close
               </button>
             </div>
@@ -198,16 +206,18 @@ export function CreateTeamForm() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-primary"
+                className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-primary"
               >
+                <Icon icon="solar:close-circle-bold" className="size-4" />
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={isPending}
                 onClick={submit}
-                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
+                <Icon icon="solar:diskette-bold" className="size-4" />
                 {isPending ? "Creating..." : "Save team"}
               </button>
             </div>

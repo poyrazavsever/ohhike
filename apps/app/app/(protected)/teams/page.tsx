@@ -1,6 +1,7 @@
 import { PageHeader } from "../../../components/layout/page-header";
 import { getTeamsData } from "../../../lib/workspace";
 import { CreateTeamForm } from "./_components/create-team-form";
+import { TeamCardActions } from "./_components/team-card-actions";
 
 function formatSportType(sportType: string) {
   return sportType
@@ -49,8 +50,11 @@ export default async function TeamsPage() {
                     {team.level ? ` · ${team.level}` : ""}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
-                  {formatPlan(team.entitlement?.plan)}
+                <div className="flex items-center gap-2">
+                  <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                    {formatPlan(team.entitlement?.plan)}
+                  </div>
+                  <TeamCardActions team={team} />
                 </div>
               </div>
 

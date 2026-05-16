@@ -73,6 +73,10 @@ export type CreateTeamInput = {
   weeklyTrainingCount?: string;
 };
 
+export type UpdateTeamInput = CreateTeamInput & {
+  teamId: string;
+};
+
 export type CreateAthleteInput = {
   teamId: string;
   firstName: string;
@@ -528,6 +532,153 @@ export async function createTeam(
     action: "team.created",
     entity_type: "team",
     entity_id: team.id,
+  });
+
+  revalidatePath("/teams");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function updateTeam(
+  input: UpdateTeamInput,
+): Promise<WorkspaceActionResult> {
+  const teamName = cleanString(input.name);
+
+  if (!teamName) {
+    return {
+      ok: false,
+      error: "Team name is required.",
+    };
+  }
+
+  if (!isSportType(input.sportType)) {
+    return {
+      ok: false,
+      error: "Invalid sport type.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (!["owner", "admin", "head_coach"].includes(membership.role)) {
+    return {
+      ok: false,
+      error: "Only owners, admins and head coaches can update teams.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { error } = await supabase
+    .from("teams")
+    .update({
+      name: teamName,
+      sport_type: input.sportType,
+      age_group: cleanString(input.ageGroup),
+      level: cleanString(input.level),
+      season_goal: cleanString(input.seasonGoal),
+      weekly_training_count: parsePositiveInteger(input.weeklyTrainingCount) ?? 0,
+    })
+    .eq("id", input.teamId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "team.updated",
+    entity_type: "team",
+    entity_id: input.teamId,
+  });
+
+  revalidatePath("/teams");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+  };
+}
+
+export async function deleteTeam(
+  teamId: string,
+): Promise<WorkspaceActionResult> {
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (!["owner", "admin"].includes(membership.role)) {
+    return {
+      ok: false,
+      error: "Only owners and admins can delete teams.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  const { count: teamCount, error: teamCountError } = await supabase
+    .from("teams")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organization.id);
+
+  if (teamCountError) {
+    return {
+      ok: false,
+      error: teamCountError.message,
+    };
+  }
+
+  if ((teamCount ?? 0) <= 1) {
+    return {
+      ok: false,
+      error: "Create another team before deleting the last team.",
+    };
+  }
+
+  const { count: athleteCount, error: athleteCountError } = await supabase
+    .from("athletes")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId);
+
+  if (athleteCountError) {
+    return {
+      ok: false,
+      error: athleteCountError.message,
+    };
+  }
+
+  if ((athleteCount ?? 0) > 0) {
+    return {
+      ok: false,
+      error: "Move or remove athletes before deleting this team.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("teams")
+    .delete()
+    .eq("id", teamId)
+    .eq("organization_id", organization.id);
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+    };
+  }
+
+  await supabase.from("audit_logs").insert({
+    organization_id: organization.id,
+    user_id: membership.user_id,
+    action: "team.deleted",
+    entity_type: "team",
+    entity_id: teamId,
   });
 
   revalidatePath("/teams");
