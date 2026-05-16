@@ -1,4 +1,9 @@
-import { PageHeader } from "../../../components/layout/page-header";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../components/dashboard/dashboard-cards";
 import { getTeamsData } from "../../../lib/workspace";
 import { CreateTeamForm } from "./_components/create-team-form";
 import { TeamCardActions } from "./_components/team-card-actions";
@@ -21,72 +26,88 @@ function formatPlan(plan: string | null | undefined) {
 
 export default async function TeamsPage() {
   const { workspace, teams } = await getTeamsData();
+  const athleteCount = teams.reduce((total, team) => total + team.athleteCount, 0);
+  const weeklySessions = teams.reduce(
+    (total, team) => total + (team.weekly_training_count ?? 0),
+    0,
+  );
 
   return (
-    <section className="px-5 py-8 md:px-8">
-      <PageHeader
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
         eyebrow="Team Operations"
         title="Teams"
-        description={`Manage teams for ${workspace.organization.name}. Create team foundations and connect athletes in the next step.`}
+        subtitle={`Manage team foundations for ${workspace.organization.name}.`}
+        mascotSrc="/maskotlar/kutlama.png"
       />
 
-      <CreateTeamForm />
+      <div className="mt-4">
+        <CreateTeamForm />
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <MetricCard
+          label="Teams"
+          value={teams.length.toString()}
+          helper="Active team records"
+          icon="solar:users-group-rounded-bold"
+        />
+        <MetricCard
+          label="Athletes"
+          value={athleteCount.toString()}
+          helper="Assigned across teams"
+          icon="solar:user-id-bold"
+          tone="secondary"
+        />
+        <MetricCard
+          label="Weekly"
+          value={weeklySessions.toString()}
+          helper="Planned training count"
+          icon="solar:calendar-mark-bold"
+          tone="info"
+        />
+      </div>
 
       {teams.length > 0 ? (
-        <div className="mt-6 grid gap-4">
+        <div className="mt-4 grid gap-3">
           {teams.map((team) => (
             <article
               key={team.id}
-              className="rounded-3xl border border-border bg-card p-5"
+              className="rounded-2xl border border-border bg-card p-4"
             >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-lg font-extrabold text-foreground">
+                  <h2 className="text-base font-black text-foreground">
                     {team.name}
                   </h2>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
                     {formatSportType(team.sport_type)}
                     {team.age_group ? ` · ${team.age_group}` : ""}
                     {team.level ? ` · ${team.level}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="rounded-2xl bg-primary-soft px-4 py-2 text-xs font-extrabold text-primary-700">
+                  <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
                     {formatPlan(team.entitlement?.plan)}
                   </div>
                   <TeamCardActions team={team} />
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Athletes
-                  </p>
-                  <p className="mt-2 text-xl font-extrabold text-foreground">
-                    {team.athleteCount}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Weekly sessions
-                  </p>
-                  <p className="mt-2 text-xl font-extrabold text-foreground">
-                    {team.weekly_training_count ?? 0}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    AI reports
-                  </p>
-                  <p className="mt-2 text-xl font-extrabold text-foreground">
-                    {team.entitlement?.ai_reports_enabled ? "On" : "Off"}
-                  </p>
-                </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                <DetailStat label="Athletes" value={team.athleteCount} />
+                <DetailStat
+                  label="Weekly sessions"
+                  value={team.weekly_training_count ?? 0}
+                />
+                <DetailStat
+                  label="AI reports"
+                  value={team.entitlement?.ai_reports_enabled ? "On" : "Off"}
+                />
               </div>
 
               {team.season_goal ? (
-                <p className="mt-4 text-sm font-medium leading-6 text-muted-foreground">
+                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
                   {team.season_goal}
                 </p>
               ) : null}
@@ -94,14 +115,11 @@ export default async function TeamsPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <p className="text-sm font-bold text-foreground">
-            No teams loaded yet
-          </p>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            The first team will be created during onboarding.
-          </p>
-        </div>
+        <EmptyStateCard
+          title="No teams loaded yet"
+          description="The first team will be created during onboarding."
+          icon="solar:users-group-rounded-bold"
+        />
       )}
     </section>
   );
