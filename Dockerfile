@@ -28,8 +28,8 @@ ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
 
-# Warn when public env vars are missing at build (runtime env still works via lib/clerk-env.ts).
-RUN node apps/app/scripts/validate-docker-build-env.mjs || true
+# Public vars are baked into client output; fail fast when Dokploy build args are missing.
+RUN node apps/app/scripts/validate-docker-build-env.mjs
 
 RUN pnpm turbo build --filter=app
 

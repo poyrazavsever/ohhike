@@ -23,7 +23,7 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 
 - Use `deploy/dokploy.env.app.example` for the **app** service.
 - Use `deploy/dokploy.env.web.example` for the **web** service.
-- In Dokploy, enable **pass env to build** (or build-time env) so `NEXT_PUBLIC_*` are available during `docker build`.
+- In Dokploy, add the required `NEXT_PUBLIC_*` keys as **Build-time Arguments** so they are available during `docker build`. Both Dockerfiles fail fast if these public values are missing where they are needed.
 - **Clerk 500 / Missing publishableKey:** Runtime env must include `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or `CLERK_PUBLISHABLE_KEY` with the same `pk_` value) and `CLERK_SECRET_KEY`. No quotes around values. After changing env, **restart** the container.
 - **Webhook signing secret:** Prefer Clerk's official env name `CLERK_WEBHOOK_SIGNING_SECRET=whsec_...`. The app still accepts legacy `CLERK_WEBHOOK_SECRET`, but new deployments should use the canonical name.
 - **Clerk encryption_key_missing / 502 on start:** When `CLERK_SECRET_KEY` is set in Docker, also set `CLERK_ENCRYPTION_KEY` (generate once: `openssl rand -base64 32`). Use the **same** value in local `.env.local` and Dokploy. Without it, the container entrypoint exits → **502 Bad Gateway**.
