@@ -179,16 +179,13 @@ export function Navbar() {
             asChild
           >
             <a
-              href="https://github.com"
+              href="https://github.com/poyrazavsever/ohhike"
               target="_blank"
               rel="noreferrer"
-              aria-label="Star OH HIKE on GitHub"
+              aria-label="Star poyrazavsever/ohhike on GitHub"
             >
               <Icon icon="mdi:github" className="size-4" />
               <span>Star</span>
-              <span className="ml-1 border-l border-border pl-2 text-[11px] text-muted-foreground">
-                12.4K
-              </span>
             </a>
           </Button>
 
