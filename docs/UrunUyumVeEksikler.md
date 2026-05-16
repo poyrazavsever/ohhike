@@ -13,6 +13,8 @@ Ancak PRD **MVP** ve `UserFlows.md` hedefleri ile **uygulama arasında önemli b
 
 **Sonuç:** Ürün omurgası (Faz 1 + kısmen Faz 2–3 app) iyi ilerliyor; fark yaratan özellikler (AI, Team Memory RAG, sporcu self-service, billing) çoğunlukla **kayıt/registry UI** seviyesinde.
 
+**Test rehberi:** Kırılma noktaları ve uçtan uca (E2E) test kapıları → [§9](#9-kırılma-noktaları-breaking-points) ve [§10](#10-uçtan-uca-test-kapıları-e2e-gates).
+
 ---
 
 ## 2. PRD MVP ile Karşılaştırma
