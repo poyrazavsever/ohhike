@@ -19,7 +19,6 @@ RUN pnpm turbo build --filter=web
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 WORKDIR /app
@@ -28,4 +27,4 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 
 EXPOSE 3000
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node apps/web/server.js"]

@@ -33,7 +33,6 @@ RUN pnpm turbo build --filter=app
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 WORKDIR /app
@@ -42,4 +41,6 @@ COPY --from=builder /app/apps/app/.next/standalone ./
 COPY --from=builder /app/apps/app/.next/static ./apps/app/.next/static
 
 EXPOSE 3000
-CMD ["node", "apps/app/server.js"]
+# Docker/Dokploy sets HOSTNAME to the container id; Next binds to that and Traefik gets 502.
+# Force 0.0.0.0 at process start (do not rely on ENV HOSTNAME in the image).
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node apps/app/server.js"]
