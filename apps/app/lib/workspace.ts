@@ -121,6 +121,10 @@ export type TeamPatternWithMeta = TeamPattern & {
   teamName: string | null;
 };
 
+export type ReportsCenterAiReport = AiReport & {
+  teamName: string | null;
+};
+
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
@@ -1443,6 +1447,99 @@ export async function getTeamMemoryData(): Promise<{
       activePatterns: patternsWithMeta.filter(
         (pattern) => pattern.status === "active",
       ).length,
+    },
+  };
+}
+
+export async function getReportsData(): Promise<{
+  workspace: CurrentWorkspace;
+  aiReports: ReportsCenterAiReport[];
+  totals: {
+    aiReports: number;
+    sessions: number;
+    readinessCheckins: number;
+    nutritionLogs: number;
+    wearableActivities: number;
+  };
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const [
+    { data: aiReports, error: aiReportsError },
+    { data: teams, error: teamsError },
+    { count: sessionsCount, error: sessionsError },
+    { count: readinessCount, error: readinessError },
+    { count: nutritionCount, error: nutritionError },
+    { count: wearableActivitiesCount, error: wearableActivitiesError },
+  ] = await Promise.all([
+    supabase
+      .from("ai_reports")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    supabase
+      .from("wellness_checkins")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    supabase
+      .from("nutrition_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    supabase
+      .from("wearable_activities")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+  ]);
+
+  if (aiReportsError) {
+    throw new Error(aiReportsError.message);
+  }
+
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+
+  if (readinessError) {
+    throw new Error(readinessError.message);
+  }
+
+  if (nutritionError) {
+    throw new Error(nutritionError.message);
+  }
+
+  if (wearableActivitiesError) {
+    throw new Error(wearableActivitiesError.message);
+  }
+
+  return {
+    workspace,
+    aiReports:
+      aiReports?.map((report) => ({
+        ...report,
+        teamName:
+          teams?.find((team) => team.id === report.team_id)?.name ?? null,
+      })) ?? [],
+    totals: {
+      aiReports: aiReports?.length ?? 0,
+      sessions: sessionsCount ?? 0,
+      readinessCheckins: readinessCount ?? 0,
+      nutritionLogs: nutritionCount ?? 0,
+      wearableActivities: wearableActivitiesCount ?? 0,
     },
   };
 }
