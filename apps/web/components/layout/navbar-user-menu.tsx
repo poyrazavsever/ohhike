@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { getAccountTypeFromMetadata } from "../../lib/account-type";
 import { isCoachNetworkEnabled } from "../../lib/coach-network";
-import { getAppUrl } from "../../lib/site-url";
+import { getAppDashboardUrl } from "../../lib/site-url";
 import { coachNetworkAthleteItems } from "./navbar-coach-network";
 
 function useCloseOnOutside(
@@ -85,32 +85,32 @@ function SignedInMenuItems({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      {accountType === "coach" ? (
-        <a
-          href={getAppUrl("/dashboard")}
-          onClick={onNavigate}
-          className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-        >
-          <Icon icon="solar:widget-5-bold" className="size-4 text-primary" />
-          Open CoachOS
-        </a>
-      ) : (
-        athleteLinks.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className="block rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted"
-          >
-            <span className="block text-sm font-semibold text-foreground">
-              {item.label}
-            </span>
-            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-              {item.description}
-            </span>
-          </Link>
-        ))
-      )}
+      <a
+        href={getAppDashboardUrl(accountType)}
+        onClick={onNavigate}
+        className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+      >
+        <Icon icon="solar:widget-5-bold" className="size-4 text-primary" />
+        Dashboard&apos;a git
+      </a>
+
+      {accountType !== "coach"
+        ? athleteLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className="block rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted"
+            >
+              <span className="block text-sm font-semibold text-foreground">
+                {item.label}
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                {item.description}
+              </span>
+            </Link>
+          ))
+        : null}
 
       <div className="my-1 h-px bg-border" />
 

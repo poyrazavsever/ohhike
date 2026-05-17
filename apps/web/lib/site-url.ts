@@ -1,3 +1,5 @@
+import type { AccountType } from "./account-type";
+
 const DEFAULT_APP_URL = "http://localhost:3001";
 
 /** Dokploy build may pass an empty ARG; treat that as unset so prerender does not throw. */
@@ -20,4 +22,17 @@ const appUrl = resolveAppBaseUrl();
 
 export function getAppUrl(path = "/") {
   return new URL(path, appUrl).toString();
+}
+
+/** CoachOS app home for the signed-in account type (uses NEXT_PUBLIC_APP_URL). */
+export function getAppDashboardPath(accountType: AccountType | null): string {
+  if (accountType === "athlete") {
+    return "/athlete/home";
+  }
+
+  return "/dashboard";
+}
+
+export function getAppDashboardUrl(accountType: AccountType | null): string {
+  return getAppUrl(getAppDashboardPath(accountType));
 }
