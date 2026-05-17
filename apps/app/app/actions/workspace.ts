@@ -57,6 +57,12 @@ import {
 } from "../../lib/supabase-action";
 import { getAppBaseUrl, buildAppUrl } from "../../lib/app-url";
 import { sendInviteEmail } from "../../lib/email";
+import {
+  decryptStravaSecret,
+  encryptStravaSecret,
+  listStravaActivities,
+  refreshStravaToken,
+} from "../../lib/strava";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 import {
   getPrimaryTeamEntitlement,
@@ -3674,6 +3680,151 @@ export async function createWearableConnection(
 
   return {
     ok: true,
+  };
+}
+
+export async function syncStravaConnection(
+  connectionId: string,
+): Promise<WorkspaceActionResult> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      ok: false,
+      error: "You need to sign in again.",
+    };
+  }
+
+  const { organization, membership } = await getCurrentWorkspace();
+
+  if (
+    !["owner", "admin", "head_coach", "assistant_coach", "analyst"].includes(
+      membership.role,
+    )
+  ) {
+    return {
+      ok: false,
+      error: "Only coaches and analysts can sync wearable connections.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: connection, error: connectionError } = await supabase
+    .from("wearable_connections")
+    .select("*")
+    .eq("id", connectionId)
+    .eq("organization_id", organization.id)
+    .eq("provider", "strava")
+    .maybeSingle();
+
+  if (connectionError || !connection) {
+    return {
+      ok: false,
+      error: "Strava connection could not be found.",
+    };
+  }
+
+  const { data: athlete } = await supabase
+    .from("athletes")
+    .select("team_id")
+    .eq("id", connection.athlete_id)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  if (!athlete) {
+    return {
+      ok: false,
+      error: "Athlete for this Strava connection could not be found.",
+    };
+  }
+
+  const entitlement = await getTeamEntitlement(athlete.team_id);
+
+  if (!entitlement.wearable_enabled) {
+    return {
+      ok: false,
+      error: "Wearables are available on Pro and Pro Plus team plans.",
+    };
+  }
+
+  if (!connection.access_token_encrypted || !connection.refresh_token_encrypted) {
+    return {
+      ok: false,
+      error: "This Strava connection is missing OAuth tokens.",
+    };
+  }
+
+  let accessToken = decryptStravaSecret(connection.access_token_encrypted);
+  let refreshToken = decryptStravaSecret(connection.refresh_token_encrypted);
+  const expiresAt = connection.token_expires_at
+    ? new Date(connection.token_expires_at).getTime()
+    : 0;
+
+  if (expiresAt <= Date.now() + 60_000) {
+    const refreshed = await refreshStravaToken(refreshToken);
+    accessToken = refreshed.access_token;
+    refreshToken = refreshed.refresh_token;
+
+    await supabase
+      .from("wearable_connections")
+      .update({
+        access_token_encrypted: encryptStravaSecret(accessToken),
+        refresh_token_encrypted: encryptStravaSecret(refreshToken),
+        token_expires_at: new Date(refreshed.expires_at * 1000).toISOString(),
+      })
+      .eq("id", connection.id);
+  }
+
+  const activities = await listStravaActivities(accessToken);
+  const rows = activities.map((activity) => ({
+    organization_id: organization.id,
+    team_id: athlete.team_id,
+    athlete_id: connection.athlete_id,
+    provider: "strava" as const,
+    provider_activity_id: String(activity.id),
+    activity_type: activity.sport_type ?? activity.type ?? null,
+    title: activity.name,
+    started_at: activity.start_date ?? null,
+    duration_sec: activity.elapsed_time ?? null,
+    distance_km:
+      activity.distance != null ? Number((activity.distance / 1000).toFixed(2)) : null,
+    avg_heart_rate:
+      activity.average_heartrate != null
+        ? Math.round(activity.average_heartrate)
+        : null,
+    max_heart_rate:
+      activity.max_heartrate != null ? Math.round(activity.max_heartrate) : null,
+    calories: null,
+    elevation_gain_m: activity.total_elevation_gain ?? null,
+    raw_payload: activity,
+  }));
+
+  if (rows.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("wearable_activities")
+      .upsert(rows, { onConflict: "provider,provider_activity_id" });
+
+    if (upsertError) {
+      return {
+        ok: false,
+        error: upsertError.message,
+      };
+    }
+  }
+
+  await supabase
+    .from("wearable_connections")
+    .update({
+      last_synced_at: new Date().toISOString(),
+      sync_error: null,
+    })
+    .eq("id", connection.id);
+
+  revalidatePath("/wearables");
+
+  return {
+    ok: true,
+    message: `Synced ${rows.length} Strava activities.`,
   };
 }
 

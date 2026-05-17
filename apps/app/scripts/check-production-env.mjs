@@ -16,6 +16,8 @@ const optional = [
   "GEMINI_EMBEDDING_MODEL",
   "RESEND_API_KEY",
   "INVITE_EMAIL_FROM",
+  "STRAVA_CLIENT_ID",
+  "STRAVA_CLIENT_SECRET",
 ];
 
 const missing = required.filter((key) => {

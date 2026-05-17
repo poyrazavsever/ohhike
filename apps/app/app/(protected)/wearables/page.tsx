@@ -8,6 +8,8 @@ import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-
 import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import { getWearablesData } from "../../../lib/workspace";
 import { CreateWearableConnectionForm } from "./_components/create-wearable-connection-form";
+import { StravaConnectForm } from "./_components/strava-connect-form";
+import { StravaSyncButton } from "./_components/strava-sync-button";
 
 function formatProvider(value: string) {
   return value
@@ -79,7 +81,10 @@ export default async function WearablesPage() {
 
       <div className="mt-4">
         {entitlement.wearable_enabled ? (
-          <CreateWearableConnectionForm athletes={athletes} />
+          <div className="flex flex-col items-end gap-2">
+            {athletes.length > 0 ? <StravaConnectForm athletes={athletes} /> : null}
+            <CreateWearableConnectionForm athletes={athletes} />
+          </div>
         ) : null}
       </div>
 
@@ -129,6 +134,12 @@ export default async function WearablesPage() {
                   }
                 />
               </div>
+
+              {connection.provider === "strava" ? (
+                <div className="mt-4">
+                  <StravaSyncButton connectionId={connection.id} />
+                </div>
+              ) : null}
 
               {connection.sync_error ? (
                 <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft p-3 text-sm font-bold text-destructive-foreground">

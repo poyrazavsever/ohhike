@@ -208,7 +208,7 @@ Sıra önerisi; ihtiyaca göre kaydırılabilir.
 | 1 | Canlı auth + smoke kapatma | webhook delivery, register → onboarding → dashboard |
 | 2 | `/reports` liste (PDF yok) | DB özet |
 | 3 | **PDF export** | ✅ İlk AI report PDF endpoint’i + indirme bağlantıları tamam |
-| 4 | **Strava** OAuth + sync | `006_wearables` üzerine |
+| 4 | **Strava** OAuth + sync | ◐ OAuth connect + manuel activity sync tamam; webhook / auto sync bekliyor |
 | 5 | Davet e-postası (Resend) | ✅ Athlete + staff invite email fallback akışı tamam |
 | 6 | Dashboard metrik kartları | |
 | 7 | Wearable CSV import | |
