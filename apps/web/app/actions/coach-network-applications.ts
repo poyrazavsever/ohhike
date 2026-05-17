@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { CreateCoachNetworkApplicationInput } from "../../lib/coach-network/application-types";
+import { ensureConversationParticipants } from "../../lib/coach-network/conversation-participants";
 import { ensureSupabaseUser } from "../../lib/ensure-supabase-user";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 
@@ -38,8 +39,6 @@ export async function createCoachNetworkApplication(
     return { ok: false, error: "All consent checkboxes are required." };
   }
 
-  await ensureSupabaseUser(userId);
-
   const supabase = createSupabaseAdminClient();
 
   const { data: coachProfile, error: coachError } = await supabase
@@ -60,15 +59,25 @@ export async function createCoachNetworkApplication(
     return { ok: false, error: "This coach is not accepting new clients." };
   }
 
-  const { data: existing } = await supabase
+  if (coachProfile.coach_user_id === userId) {
+    return {
+      ok: false,
+      error: "You cannot apply to your own coaching profile. Sign in as an athlete test account or choose another coach.",
+    };
+  }
+
+  await ensureSupabaseUser(userId);
+  await ensureSupabaseUser(coachProfile.coach_user_id);
+
+  const { data: existingApplication } = await supabase
     .from("coach_network_applications")
-    .select("id")
+    .select("id, status, conversation_id")
     .eq("athlete_user_id", userId)
     .eq("coach_profile_id", coachProfile.id)
     .in("status", [...activeStatuses])
     .maybeSingle();
 
-  if (existing) {
+  if (existingApplication && existingApplication.status !== "draft") {
     return {
       ok: false,
       error: "You already have an active application with this coach.",
@@ -81,44 +90,91 @@ export async function createCoachNetworkApplication(
     .eq("user_id", userId)
     .maybeSingle();
 
-  const { data: conversation, error: conversationError } = await supabase
-    .from("marketplace_conversations")
-    .insert({
-      conversation_type: "application",
-      organization_id: coachProfile.organization_id,
-    })
-    .select("id")
-    .single();
+  let conversationId = existingApplication?.conversation_id ?? null;
 
-  if (conversationError || !conversation) {
+  if (!conversationId) {
+    const { data: conversation, error: conversationError } = await supabase
+      .from("marketplace_conversations")
+      .insert({
+        conversation_type: "application",
+        organization_id: coachProfile.organization_id,
+      })
+      .select("id")
+      .single();
+
+    if (conversationError || !conversation) {
+      return {
+        ok: false,
+        error: conversationError?.message ?? "Could not start conversation.",
+      };
+    }
+
+    conversationId = conversation.id;
+  }
+
+  try {
+    await ensureConversationParticipants(supabase, conversationId, [
+      { userId, role: "athlete" },
+      { userId: coachProfile.coach_user_id, role: "coach" },
+    ]);
+  } catch (error) {
     return {
       ok: false,
-      error: conversationError?.message ?? "Could not start conversation.",
+      error: error instanceof Error ? error.message : "Could not add conversation participants.",
     };
   }
 
-  const participants = [
-    {
-      conversation_id: conversation.id,
-      user_id: userId,
-      participant_role: "athlete" as const,
-    },
-    {
-      conversation_id: conversation.id,
-      user_id: coachProfile.coach_user_id,
-      participant_role: "coach" as const,
-    },
-  ];
+  const now = new Date().toISOString();
 
-  const { error: participantsError } = await supabase
-    .from("marketplace_conversation_participants")
-    .insert(participants);
+  if (existingApplication?.status === "draft") {
+    const { data: updated, error: updateError } = await supabase
+      .from("coach_network_applications")
+      .update({
+        athlete_marketplace_profile_id: athleteProfile?.id ?? null,
+        package_id: input.packageId ?? input.formData.preferredPackageId ?? null,
+        conversation_id: conversationId,
+        status: "submitted",
+        athlete_message: message,
+        form_data: input.formData,
+        submitted_at: now,
+        metadata: {
+          coachDisplayName: coachProfile.display_name,
+        },
+      })
+      .eq("id", existingApplication.id)
+      .select("id")
+      .single();
 
-  if (participantsError) {
-    return { ok: false, error: participantsError.message };
+    if (updateError || !updated) {
+      return {
+        ok: false,
+        error: updateError?.message ?? "Could not update application.",
+      };
+    }
+
+    await supabase
+      .from("marketplace_conversations")
+      .update({
+        context_id: updated.id,
+        last_message_at: now,
+      })
+      .eq("id", conversationId);
+
+    await supabase.from("marketplace_messages").insert({
+      conversation_id: conversationId,
+      organization_id: coachProfile.organization_id,
+      sender_user_id: userId,
+      body: message,
+      message_type: "text",
+      metadata: { applicationId: updated.id },
+    });
+
+    revalidatePath("/athlete/applications");
+    revalidatePath("/find-coach");
+
+    return { ok: true, applicationId: updated.id };
   }
 
-  const now = new Date().toISOString();
   const { data: application, error: applicationError } = await supabase
     .from("coach_network_applications")
     .insert({
@@ -127,7 +183,7 @@ export async function createCoachNetworkApplication(
       coach_profile_id: coachProfile.id,
       organization_id: coachProfile.organization_id,
       package_id: input.packageId ?? input.formData.preferredPackageId ?? null,
-      conversation_id: conversation.id,
+      conversation_id: conversationId,
       status: "submitted",
       athlete_message: message,
       form_data: input.formData,
@@ -152,10 +208,10 @@ export async function createCoachNetworkApplication(
       context_id: application.id,
       last_message_at: now,
     })
-    .eq("id", conversation.id);
+    .eq("id", conversationId);
 
   await supabase.from("marketplace_messages").insert({
-    conversation_id: conversation.id,
+    conversation_id: conversationId,
     organization_id: coachProfile.organization_id,
     sender_user_id: userId,
     body: message,

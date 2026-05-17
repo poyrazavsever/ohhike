@@ -7,6 +7,7 @@ import {
   acceptCoachNetworkOfferCore,
   declineCoachNetworkOfferCore,
 } from "../../lib/coach-network/accept-offer";
+import { ensureConversationParticipants } from "../../lib/coach-network/conversation-participants";
 import type { Json } from "../../lib/database.types";
 import { writeWorkspaceAuditLog } from "../../lib/audit-log";
 import { getMarketingUrl } from "../../lib/marketing-url";
@@ -249,18 +250,18 @@ export async function sendCoachNetworkOffer(
       return { ok: false, error: conversationError?.message ?? "Conversation failed." };
     }
 
-    await supabase.from("marketplace_conversation_participants").insert([
-      {
-        conversation_id: conversation.id,
-        user_id: application.athlete_user_id,
-        participant_role: "athlete",
-      },
-      {
-        conversation_id: conversation.id,
-        user_id: userId,
-        participant_role: "coach",
-      },
-    ]);
+    try {
+      await ensureConversationParticipants(supabase, conversation.id, [
+        { userId: application.athlete_user_id, role: "athlete" },
+        { userId, role: "coach" },
+      ]);
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          error instanceof Error ? error.message : "Could not add conversation participants.",
+      };
+    }
 
     const { data: offer, error: offerError } = await supabase
       .from("coach_network_offers")
