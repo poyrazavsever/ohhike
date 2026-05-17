@@ -83,7 +83,7 @@ export function CoachCard({ coach }: { coach: PublicCoachCard }) {
           View profile
         </Link>
         <Link
-          href={`${profileHref}?apply=1`}
+          href={`/coach-network/apply/${coach.id}`}
           className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-border px-4 text-xs font-extrabold text-foreground hover:border-primary/40 hover:bg-primary-soft"
         >
           Apply

@@ -125,6 +125,12 @@ const navGroups = [
         icon: "solar:shop-2-bold",
         feature: "coachMarketplace",
       },
+      {
+        href: "/coach-network/applications",
+        label: "Applications",
+        icon: "solar:inbox-bold",
+        feature: "coachMarketplace",
+      },
     ],
   },
 ];

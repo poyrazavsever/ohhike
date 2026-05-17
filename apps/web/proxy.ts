@@ -35,6 +35,7 @@ const isPublicRoute = createRouteMatcher([
 const isCoachNetworkProtectedRoute = createRouteMatcher([
   "/account-type(.*)",
   "/athlete(.*)",
+  "/coach-network/apply(.*)",
 ]);
 
 export default clerkMiddleware(

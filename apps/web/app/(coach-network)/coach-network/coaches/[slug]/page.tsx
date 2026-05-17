@@ -1,4 +1,5 @@
 import { Icon } from "@iconify/react";
+import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -53,6 +54,10 @@ export default async function CoachPublicProfilePage({
   }
 
   const showApplyHint = apply === "1";
+  const { userId } = await auth();
+  const applyHref = userId
+    ? `/coach-network/apply/${coach.id}`
+    : `/login?redirect_url=${encodeURIComponent(`/coach-network/apply/${coach.id}`)}`;
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-12 md:px-8">
@@ -139,10 +144,14 @@ export default async function CoachPublicProfilePage({
         <div className="mt-8 flex flex-wrap gap-3">
           {coach.isAcceptingClients ? (
             <Link
-              href="/login?redirect_url=/coach-network/apply"
+              href={applyHref}
               className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-extrabold text-white hover:bg-primary-hover"
             >
-              {showApplyHint ? "Sign in to apply" : "Apply for coaching"}
+              {userId
+                ? showApplyHint
+                  ? "Continue application"
+                  : "Apply for coaching"
+                : "Sign in to apply"}
             </Link>
           ) : (
             <span className="inline-flex h-11 items-center rounded-full bg-muted px-6 text-sm font-extrabold text-muted-foreground">

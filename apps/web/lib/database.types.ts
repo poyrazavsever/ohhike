@@ -111,6 +111,67 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      coach_network_applications: {
+        Row: {
+          id: string;
+          athlete_user_id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          status: string;
+          athlete_message: string | null;
+          coach_response: string | null;
+          form_data: Json | null;
+          submitted_at: string | null;
+          created_at: string | null;
+          conversation_id: string | null;
+          package_id: string | null;
+          athlete_marketplace_profile_id: string | null;
+          coach_marketplace_profiles?: {
+            id: string;
+            slug: string;
+            display_name: string;
+            photo_url: string | null;
+          } | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      marketplace_conversations: {
+        Row: {
+          id: string;
+          conversation_type: string;
+          organization_id: string | null;
+          context_id: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      marketplace_conversation_participants: {
+        Row: {
+          conversation_id: string;
+          user_id: string;
+          participant_role: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      marketplace_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          organization_id: string | null;
+          sender_user_id: string;
+          body: string;
+          message_type: string;
+          metadata: Json | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       coaching_packages: {
         Row: {
           id: string;

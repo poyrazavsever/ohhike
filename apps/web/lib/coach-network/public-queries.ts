@@ -93,6 +93,50 @@ export async function listPublicCoaches(
   return (data ?? []).map((row) => mapCoachCard(row as CoachProfileRow));
 }
 
+export async function getPublicCoachProfileForApply(coachProfileId: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: profile, error } = await supabase
+    .from("coach_marketplace_profiles")
+    .select(
+      "id, slug, display_name, headline, photo_url, is_public, is_accepting_clients",
+    )
+    .eq("id", coachProfileId)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!profile) {
+    return null;
+  }
+
+  const { data: packages } = await supabase
+    .from("coaching_packages")
+    .select("id, title, description, duration_weeks, price_cents, currency")
+    .eq("coach_profile_id", profile.id)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  return {
+    id: profile.id,
+    slug: profile.slug,
+    displayName: profile.display_name,
+    headline: profile.headline ?? null,
+    photoUrl: profile.photo_url,
+    isAcceptingClients: profile.is_accepting_clients,
+    packages: (packages ?? []).map((pkg) => ({
+      id: pkg.id,
+      title: pkg.title,
+      description: pkg.description,
+      durationWeeks: pkg.duration_weeks,
+      priceCents: pkg.price_cents,
+      currency: pkg.currency,
+    })),
+  };
+}
+
 export async function getPublicCoachBySlug(
   slug: string,
 ): Promise<PublicCoachProfile | null> {
