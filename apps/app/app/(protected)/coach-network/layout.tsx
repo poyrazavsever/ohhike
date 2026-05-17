@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { isCoachNetworkEnabled } from "../../lib/coach-network";
+import { isCoachNetworkEnabled } from "../../../lib/coach-network";
 
 export default function CoachNetworkLayout({
   children,

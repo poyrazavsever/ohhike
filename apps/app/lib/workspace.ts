@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { toEffectiveTeamEntitlement } from "./billing/entitlements";
+import { isCoachNetworkEnabled } from "./coach-network";
 import type { OrganizationRole, Tables } from "./database.types";
 import { canManageStaffInvites } from "./org-roles";
 import { createSupabaseAdminClient } from "./supabase-admin";
@@ -155,6 +156,7 @@ export type WorkspaceShellData = {
     trainingPlanner: boolean;
     wearables: boolean;
     pdfExport: boolean;
+    coachMarketplace: boolean;
   };
   organizations: Array<{
     id: string;
@@ -290,6 +292,9 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
       trainingPlanner: effectiveEntitlement.training_planner_enabled,
       wearables: effectiveEntitlement.wearable_enabled,
       pdfExport: effectiveEntitlement.pdf_export_enabled,
+      coachMarketplace:
+        isCoachNetworkEnabled() &&
+        (plan === "pro_team" || plan === "pro_plus_team"),
     },
     organizations:
       memberships?.map((membership) => {

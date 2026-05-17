@@ -116,6 +116,17 @@ const navGroups = [
       },
     ],
   },
+  {
+    label: "Coach Network",
+    items: [
+      {
+        href: "/coach-network/profile",
+        label: "Marketplace profile",
+        icon: "solar:shop-2-bold",
+        feature: "coachMarketplace",
+      },
+    ],
+  },
 ];
 
 const athleteNavGroups = [

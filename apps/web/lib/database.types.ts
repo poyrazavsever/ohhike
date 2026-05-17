@@ -82,6 +82,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      coach_marketplace_profiles: {
+        Row: {
+          id: string;
+          organization_id: string;
+          coach_user_id: string;
+          slug: string;
+          display_name: string;
+          headline: string | null;
+          bio: string | null;
+          photo_url: string | null;
+          specialties: string[] | null;
+          sports: SportType[] | null;
+          coaching_modes: string[] | null;
+          languages: string[] | null;
+          location_country: string | null;
+          location_city: string | null;
+          years_experience: number | null;
+          pricing_display: string | null;
+          response_time_avg_hours: number | null;
+          is_public: boolean;
+          is_accepting_clients: boolean;
+          average_rating: number | null;
+          review_count: number;
+          created_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coaching_packages: {
+        Row: {
+          id: string;
+          coach_profile_id: string;
+          title: string;
+          description: string | null;
+          duration_weeks: number | null;
+          price_cents: number | null;
+          currency: string;
+          is_active: boolean;
+          sort_order: number;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
