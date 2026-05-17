@@ -8,6 +8,11 @@ const buildPublicKeys = [
 ];
 
 const missing = buildPublicKeys.filter((key) => !process.env[key]?.trim());
+const revenueCatEnabled = process.env.NEXT_PUBLIC_REVENUECAT_ENABLED === "true";
+
+if (revenueCatEnabled && !process.env.NEXT_PUBLIC_REVENUECAT_API_KEY?.trim()) {
+  missing.push("NEXT_PUBLIC_REVENUECAT_API_KEY");
+}
 
 if (missing.length === 0) {
   console.log("docker-build-env: all NEXT_PUBLIC_* build variables are set.");

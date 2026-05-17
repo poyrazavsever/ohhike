@@ -38,6 +38,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@revenuecat/purchases-js':
+        specifier: ^1.15.0
+        version: 1.41.0
       '@supabase/supabase-js':
         specifier: ^2.105.4
         version: 2.105.4
@@ -544,6 +547,9 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@revenuecat/purchases-js@1.41.0':
+    resolution: {integrity: sha512-IvRbTzyNOguQGcWyTUxYbZZPTRK4fM9U7BFQrX6MKw8VAwTsyNX8nVsPWjr0qZS5nJNEd5h88g842HC0Q9aBjg==}
 
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
@@ -2149,6 +2155,8 @@ snapshots:
       react: 19.2.0
     optionalDependencies:
       '@types/react': 19.2.2
+
+  '@revenuecat/purchases-js@1.41.0': {}
 
   '@stablelib/base64@1.0.1': {}
 

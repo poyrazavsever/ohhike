@@ -22,6 +22,9 @@ export const PRODUCTION_ENV_OPTIONAL = [
   "INVITE_EMAIL_FROM",
   "STRAVA_CLIENT_ID",
   "STRAVA_CLIENT_SECRET",
+  "NEXT_PUBLIC_REVENUECAT_ENABLED",
+  "NEXT_PUBLIC_REVENUECAT_API_KEY",
+  "REVENUECAT_SECRET_API_KEY",
 ] as const;
 
 export function getMissingProductionEnvKeys(): string[] {

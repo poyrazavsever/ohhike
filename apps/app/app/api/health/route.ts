@@ -18,6 +18,10 @@ export async function GET() {
     service: "ohhike-app",
     coachNetworkEnabled,
     coachNetworkEnv: process.env.NEXT_PUBLIC_COACH_NETWORK_ENABLED ?? null,
+    revenueCatEnabled: process.env.NEXT_PUBLIC_REVENUECAT_ENABLED === "true",
+    hasRevenueCatApiKey: Boolean(
+      process.env.NEXT_PUBLIC_REVENUECAT_API_KEY?.trim(),
+    ),
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
     missing,
     optionalMissing,

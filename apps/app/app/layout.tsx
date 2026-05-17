@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
 import { getClerkPublishableKey } from "../lib/clerk-env";
+import "@revenuecat/purchases-js/styles";
 import "./globals.css";
 
 export const metadata: Metadata = {

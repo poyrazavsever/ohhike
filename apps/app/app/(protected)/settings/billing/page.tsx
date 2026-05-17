@@ -5,10 +5,16 @@ import {
 import { toEffectiveTeamEntitlement } from "../../../../lib/billing/entitlements";
 import { parseEntitlementMetadata } from "../../../../lib/billing/promo-codes";
 import { billingPlans, getBillingPlan } from "../../../../lib/billing/plans";
+import {
+  getRevenueCatPublicApiKey,
+  getRevenueCatTeamAppUserId,
+  isRevenueCatEnabled,
+} from "../../../../lib/billing/revenuecat";
 import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 import { getBillingSettingsData } from "../../../../lib/workspace";
 import { DevPlanSwitcher } from "./_components/dev-plan-switcher";
 import { PromoCodeForm } from "./_components/promo-code-form";
+import { RevenueCatTestCheckout } from "./_components/revenuecat-test-checkout";
 
 function devPlanOverrideEnabled() {
   return (
@@ -22,9 +28,13 @@ export default async function BillingSettingsPage() {
   const currentPlan = getBillingPlan(entitlement?.plan);
   const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
   const showDevPlanSwitcher = devPlanOverrideEnabled();
-  const entitlementMeta = parseEntitlementMetadata(entitlement?.metadata ?? null);
+  const entitlementMeta = parseEntitlementMetadata(
+    entitlement?.metadata ?? null,
+  );
   const activePromoCode =
-    typeof entitlementMeta.promo_code === "string" ? entitlementMeta.promo_code : null;
+    typeof entitlementMeta.promo_code === "string"
+      ? entitlementMeta.promo_code
+      : null;
 
   let activePromoLabel: string | null = null;
   if (activePromoCode && team) {
@@ -36,6 +46,9 @@ export default async function BillingSettingsPage() {
       .maybeSingle();
     activePromoLabel = promo?.label ?? activePromoCode;
   }
+  const revenueCatEnabled = isRevenueCatEnabled();
+  const revenueCatApiKey = getRevenueCatPublicApiKey();
+  const revenueCatAppUserId = team ? getRevenueCatTeamAppUserId(team.id) : null;
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -61,12 +74,23 @@ export default async function BillingSettingsPage() {
         />
       ) : null}
 
+      {revenueCatEnabled && revenueCatAppUserId ? (
+        <RevenueCatTestCheckout
+          apiKey={revenueCatApiKey}
+          appUserId={revenueCatAppUserId}
+          currentPlan={currentPlan.name}
+        />
+      ) : null}
+
       <div className="mt-4 grid gap-2 md:grid-cols-3">
         <DetailStat label="Team" value={team?.name ?? "No team yet"} />
         <DetailStat label="Current plan" value={currentPlan.name} />
         <DetailStat
           label="Member limit"
-          value={entitlement?.max_team_members ?? currentPlan.entitlements.maxTeamMembers}
+          value={
+            entitlement?.max_team_members ??
+            currentPlan.entitlements.maxTeamMembers
+          }
         />
       </div>
 
@@ -77,15 +101,21 @@ export default async function BillingSettingsPage() {
         />
         <DetailStat
           label="Team Memory"
-          value={effectiveEntitlement.team_memory_enabled ? "Included" : "Locked"}
+          value={
+            effectiveEntitlement.team_memory_enabled ? "Included" : "Locked"
+          }
         />
         <DetailStat
           label="PDF export"
-          value={effectiveEntitlement.pdf_export_enabled ? "Included" : "Locked"}
+          value={
+            effectiveEntitlement.pdf_export_enabled ? "Included" : "Locked"
+          }
         />
         <DetailStat
           label="Branded reports"
-          value={effectiveEntitlement.branded_reports_enabled ? "Included" : "Locked"}
+          value={
+            effectiveEntitlement.branded_reports_enabled ? "Included" : "Locked"
+          }
         />
       </div>
 
@@ -133,14 +163,13 @@ export default async function BillingSettingsPage() {
 
       <div className="mt-4 rounded-xl border border-border bg-background p-4">
         <p className="text-sm font-extrabold text-foreground">
-          Checkout decision still open
+          Billing integration status
         </p>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          CoachOS organizations currently live in Supabase, while Clerk Billing
-          organization checkout requires an active Clerk Organization. Before
-          enabling checkout, choose whether to mirror CoachOS organizations into
-          Clerk Organizations or use user-scoped billing with an explicit team
-          mapping layer.
+          RevenueCat Test Store can drive plan testing without Stripe. Team
+          access still resolves from Supabase after a server-side sync, so the
+          production provider can later move to Stripe without changing feature
+          gates across the app.
         </p>
       </div>
     </section>
