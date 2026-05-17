@@ -3,12 +3,20 @@ import { notFound } from "next/navigation";
 
 import { AuthShell } from "../../../../components/auth/auth-shell";
 import { authAppearance } from "../../../../components/auth/clerk-appearance";
+import { authRedirectTarget } from "../../../../lib/auth-redirect";
 import { isCoachNetworkEnabled } from "../../../../lib/coach-network";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ redirect_url?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (!isCoachNetworkEnabled()) {
     notFound();
   }
+
+  const params = await searchParams;
+  const redirectTo = authRedirectTarget(params.redirect_url, "/account-type");
 
   return (
     <AuthShell mode="login">
@@ -16,7 +24,8 @@ export default function LoginPage() {
         path="/login"
         routing="path"
         signUpUrl="/register"
-        fallbackRedirectUrl="/account-type"
+        fallbackRedirectUrl={redirectTo}
+        forceRedirectUrl={redirectTo}
         appearance={authAppearance}
       />
     </AuthShell>

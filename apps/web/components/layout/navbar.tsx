@@ -14,6 +14,7 @@ import {
   NavbarCoachNetworkMobile,
 } from "./navbar-coach-network";
 import { NavDropdown } from "./navbar-nav-dropdown";
+import { NavbarUserMenu, NavbarUserMenuMobile } from "./navbar-user-menu";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -188,7 +189,7 @@ export function Navbar() {
             </a>
           </Button>
 
-          {!isCoachNetworkEnabled() && (
+          {!isCoachNetworkEnabled() ? (
             <Button
               size="sm"
               className="h-9 px-5 text-xs shadow-none"
@@ -196,6 +197,8 @@ export function Navbar() {
             >
               <Link href={getAppUrl("/")}>Get Started</Link>
             </Button>
+          ) : (
+            <NavbarUserMenu />
           )}
         </div>
 
@@ -300,12 +303,22 @@ export function Navbar() {
 
             <NavbarCoachNetworkMobile onNavigate={closeMenu} />
 
+            <NavbarUserMenuMobile onNavigate={closeMenu} />
+
             <div className="mt-auto grid gap-3 pt-8">
-              <Button size="lg" asChild>
-                <Link href={getAppUrl("/")} onClick={closeMenu}>
-                  Get Started
-                </Link>
-              </Button>
+              {isCoachNetworkEnabled() ? (
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/find-coach" onClick={closeMenu}>
+                    Find a coach
+                  </Link>
+                </Button>
+              ) : (
+                <Button size="lg" asChild>
+                  <Link href={getAppUrl("/")} onClick={closeMenu}>
+                    Get Started
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline" size="lg" asChild>
                 <a
                   href="https://github.com"

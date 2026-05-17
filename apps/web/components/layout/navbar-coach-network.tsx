@@ -45,17 +45,7 @@ export function NavbarCoachNetwork() {
     );
   }
 
-  return (
-    <>
-      <NavDropdown label="Coach Network" items={coachNetworkPublicItems} align="end" />
-      <Link
-        href="/login"
-        className="text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
-      >
-        Sign in
-      </Link>
-    </>
-  );
+  return <NavDropdown label="Coach Network" items={coachNetworkPublicItems} align="end" />;
 }
 
 export function NavbarCoachNetworkMobile({ onNavigate }: { onNavigate: () => void }) {
@@ -86,15 +76,6 @@ export function NavbarCoachNetworkMobile({ onNavigate }: { onNavigate: () => voi
             </span>
           </Link>
         ))}
-        {isLoaded && !isSignedIn ? (
-          <Link
-            href="/login"
-            onClick={onNavigate}
-            className="rounded-2xl border border-primary/30 bg-primary-soft px-4 py-4 text-lg font-extrabold text-primary"
-          >
-            Sign in
-          </Link>
-        ) : null}
       </div>
     </div>
   );
