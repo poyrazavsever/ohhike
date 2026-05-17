@@ -7,7 +7,9 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-card";
 import { formatModelProvider } from "../../../lib/ai-report-display";
+import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import { getAiReportsData } from "../../../lib/workspace";
 import { CreateAiReportForm } from "./_components/create-ai-report-form";
 
@@ -32,6 +34,7 @@ function formatDate(value: string | null) {
 export default async function AiReportsPage() {
   const { workspace, reports, teams, athletes, sessions, totals } =
     await getAiReportsData();
+  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const metricCards = [
     {
@@ -72,8 +75,17 @@ export default async function AiReportsPage() {
         mascotSrc="/maskotlar/basardin.png"
       />
 
+      {!entitlement.ai_reports_enabled ? (
+        <FeatureLockedCard
+          title="AI Reports are not included in the current plan"
+          description="Upgrade the active team to Pro or Pro Plus to create AI reports and generate session analysis."
+        />
+      ) : null}
+
       <div className="mt-4">
-        <CreateAiReportForm teams={teams} athletes={athletes} sessions={sessions} />
+        {entitlement.ai_reports_enabled ? (
+          <CreateAiReportForm teams={teams} athletes={athletes} sessions={sessions} />
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

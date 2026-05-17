@@ -57,6 +57,11 @@ import {
 } from "../../lib/supabase-action";
 import { getAppBaseUrl, buildAppUrl } from "../../lib/app-url";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
+import {
+  getPrimaryTeamEntitlement,
+  getTeamEntitlement,
+  monthStartIso,
+} from "../../lib/billing/entitlements";
 
 const organizationTypes = [
   "club",
@@ -1189,6 +1194,26 @@ export async function createAthlete(
     return {
       ok: false,
       error: "Please select a valid team.",
+    };
+  }
+
+  const entitlement = await getTeamEntitlement(team.id);
+  const { count: currentAthleteCount, error: athleteCountError } = await supabase
+    .from("athletes")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", team.id);
+
+  if (athleteCountError) {
+    return {
+      ok: false,
+      error: athleteCountError.message,
+    };
+  }
+
+  if ((currentAthleteCount ?? 0) >= entitlement.max_team_members) {
+    return {
+      ok: false,
+      error: `This team has reached its ${entitlement.max_team_members}-athlete plan limit.`,
     };
   }
 
@@ -3660,6 +3685,7 @@ export async function createAiReport(
   const teamId = cleanString(input.teamId);
   const athleteId = cleanString(input.athleteId);
   const sessionId = cleanString(input.sessionId);
+  let targetTeamId = teamId;
 
   if (teamId) {
     const { data: team } = await supabase
@@ -3680,7 +3706,7 @@ export async function createAiReport(
   if (athleteId) {
     const { data: athlete } = await supabase
       .from("athletes")
-      .select("id")
+      .select("id, team_id")
       .eq("id", athleteId)
       .eq("organization_id", organization.id)
       .maybeSingle();
@@ -3691,12 +3717,14 @@ export async function createAiReport(
         error: "Please select a valid athlete.",
       };
     }
+
+    targetTeamId ||= athlete.team_id;
   }
 
   if (sessionId) {
     const { data: session } = await supabase
       .from("sessions")
-      .select("id")
+      .select("id, team_id")
       .eq("id", sessionId)
       .eq("organization_id", organization.id)
       .maybeSingle();
@@ -3707,6 +3735,40 @@ export async function createAiReport(
         error: "Please select a valid session.",
       };
     }
+
+    targetTeamId ||= session.team_id;
+  }
+
+  const entitlement = targetTeamId
+    ? await getTeamEntitlement(targetTeamId)
+    : await getPrimaryTeamEntitlement(organization.id);
+
+  if (!entitlement.ai_reports_enabled) {
+    return {
+      ok: false,
+      error: "AI reports are available on Pro and Pro Plus team plans.",
+    };
+  }
+
+  const { count: monthlyReportCount, error: monthlyReportCountError } =
+    await supabase
+      .from("ai_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organization.id)
+      .gte("created_at", monthStartIso());
+
+  if (monthlyReportCountError) {
+    return {
+      ok: false,
+      error: monthlyReportCountError.message,
+    };
+  }
+
+  if ((monthlyReportCount ?? 0) >= entitlement.monthly_ai_report_limit) {
+    return {
+      ok: false,
+      error: `Monthly AI report limit reached for this plan (${entitlement.monthly_ai_report_limit}).`,
+    };
   }
 
   const { error } = await supabase.from("ai_reports").insert({
@@ -3786,6 +3848,36 @@ export async function generateSessionAiReport(
     return {
       ok: false,
       error: "Session could not be found.",
+    };
+  }
+
+  const entitlement = await getTeamEntitlement(session.team_id);
+
+  if (!entitlement.ai_reports_enabled) {
+    return {
+      ok: false,
+      error: "AI reports are available on Pro and Pro Plus team plans.",
+    };
+  }
+
+  const { count: monthlyReportCount, error: monthlyReportCountError } =
+    await supabase
+      .from("ai_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organization.id)
+      .gte("created_at", monthStartIso());
+
+  if (monthlyReportCountError) {
+    return {
+      ok: false,
+      error: monthlyReportCountError.message,
+    };
+  }
+
+  if ((monthlyReportCount ?? 0) >= entitlement.monthly_ai_report_limit) {
+    return {
+      ok: false,
+      error: `Monthly AI report limit reached for this plan (${entitlement.monthly_ai_report_limit}).`,
     };
   }
 
@@ -4075,6 +4167,15 @@ export async function createAthleteObservation(
     };
   }
 
+  const entitlement = await getTeamEntitlement(athlete.team_id);
+
+  if (!entitlement.team_memory_enabled) {
+    return {
+      ok: false,
+      error: "Team Memory is available on Pro and Pro Plus team plans.",
+    };
+  }
+
   const observationCategory = cleanString(input.category);
   const observationSeverity = cleanString(input.severity);
 
@@ -4191,6 +4292,15 @@ export async function createTeamPattern(
     };
   }
 
+  const entitlement = await getTeamEntitlement(team.id);
+
+  if (!entitlement.team_memory_enabled) {
+    return {
+      ok: false,
+      error: "Team Memory is available on Pro and Pro Plus team plans.",
+    };
+  }
+
   const { error } = await supabase.from("team_patterns").insert({
     organization_id: organization.id,
     team_id: team.id,
@@ -4287,6 +4397,17 @@ export async function sendTeamMemoryMessage(
     }
 
     teamName = team.name;
+  }
+
+  const entitlement = teamId
+    ? await getTeamEntitlement(teamId)
+    : await getPrimaryTeamEntitlement(organization.id);
+
+  if (!entitlement.team_memory_enabled) {
+    return {
+      ok: false,
+      error: "Team Memory is available on Pro and Pro Plus team plans.",
+    };
   }
 
   if (athleteId) {

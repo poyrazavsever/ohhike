@@ -6,6 +6,8 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-card";
+import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import {
   sessionFocusAreaLabel,
   sessionPlannedIntensityLabel,
@@ -51,6 +53,7 @@ function completionLabel(session: TrainingPlannerSession) {
 
 export default async function TrainingPlannerPage() {
   const { workspace, sessions, totals } = await getTrainingPlannerData();
+  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const cards = [
     {
@@ -91,13 +94,22 @@ export default async function TrainingPlannerPage() {
         mascotSrc="/maskotlar/harita.png"
       />
 
+      {!entitlement.training_planner_enabled ? (
+        <FeatureLockedCard
+          title="Training Planner is not included in the current plan"
+          description="Upgrade the active team to Pro or Pro Plus to use structured training planning."
+        />
+      ) : null}
+
       <div className="mt-4 flex justify-end">
-        <Link
-          href="/sessions"
-          className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          Manage sessions
-        </Link>
+        {entitlement.training_planner_enabled ? (
+          <Link
+            href="/sessions"
+            className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
+          >
+            Manage sessions
+          </Link>
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

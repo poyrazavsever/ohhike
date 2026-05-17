@@ -75,8 +75,10 @@ Migration dosyaları `docs/supabase/`:
 |--------|--------|
 | `team_billing_entitlements` tablosu + tipler | Clerk Billing checkout |
 | Yeni takımda varsayılan `basic_team` (`workspace.ts` actions) | Billing webhook → entitlement güncelleme |
-| `canCreateOrganization` → Pro / Pro Plus (`lib/workspace.ts`) | Tam feature gate (AI, Team Memory, PDF, limitler) |
-| `/settings/billing` placeholder sayfası | Self-serve upgrade UI |
+| `canCreateOrganization` → Pro / Pro Plus (`lib/workspace.ts`) | PDF export / branded report gate |
+| `lib/billing/plans.ts` + `lib/billing/entitlements.ts` | Self-serve upgrade UI |
+| AI reports, Team Memory, training planner ve atlet limiti için ilk server-side gate paketi | Billing webhook → gerçek plan senkronu |
+| `/settings/billing` plan/limit görünümü | |
 
 Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 
@@ -187,15 +189,15 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 
 | # | İş |
 |---|-----|
-| B2.1 | `lib/billing/plans.ts` (veya benzeri) — plan → entitlement flag / limit haritası |
-| B2.2 | `assertTeamFeature(teamId, 'ai_reports' \| ...)` helper |
-| B2.3 | Gate: AI report oluşturma, Team Memory, training planner, PDF export |
-| B2.4 | Gate: `max_team_members` (davet / roster ekleme) |
-| B2.5 | UI: kilitli özellikte upgrade mesajı (sidebar / CTA) |
+| B2.1 | ✅ `lib/billing/plans.ts` — plan → entitlement flag / limit haritası |
+| B2.2 | ✅ `lib/billing/entitlements.ts` — primary/team entitlement okuma + default fallback |
+| B2.3 | ◐ Gate: AI report oluşturma, Team Memory, training planner tamam; PDF export bekliyor |
+| B2.4 | ◐ Gate: `max_team_members` roster eklemede var; staff invite semantiği netleştirilecek |
+| B2.5 | ◐ UI: AI reports, Team Memory, planner kilit kartları var; sidebar state bekliyor |
 | B2.6 | Pro Plus: `branded_reports_enabled`, `monthly_ai_report_limit` |
 | B2.7 | Yeni takım default `basic_team` (mevcut) — upgrade sonrası flag güncelleme |
 
-**Kodda bugün kısmen var:** `canCreateOrganization` (Pro+), yeni team → `basic_team`; tam AI/PDF/Memory gate yok.
+**Kodda bugün var:** `canCreateOrganization` (Pro+), yeni team → `basic_team`, AI report üretim limiti, Team Memory server-side gate’i, planner görünürlük gate’i ve roster limiti. PDF / branded report / staff invite yorumu henüz açık.
 
 ### FAZ B3 — Canlı stabilizasyon ve gelir sonrası ürün tamamlama
 

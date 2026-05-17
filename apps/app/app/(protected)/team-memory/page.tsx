@@ -2,7 +2,9 @@ import {
   DashboardHero,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-card";
 import { isGeminiConfigured } from "../../../lib/ai/gemini";
+import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import {
   getTeamMemoryAssistantData,
   getTeamMemoryData,
@@ -36,6 +38,7 @@ export default async function TeamMemoryPage({
       getTeamMemoryData(),
       getTeamMemoryAssistantData(threadParam),
     ]);
+  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const activeThreadId = threadParam ?? null;
   const activeMessages = threadParam ? assistant.messages : [];
@@ -81,19 +84,30 @@ export default async function TeamMemoryPage({
         mascotSrc="/maskotlar/gozetleme.png"
       />
 
+      {!entitlement.team_memory_enabled ? (
+        <FeatureLockedCard
+          title="Team Memory is not included in the current plan"
+          description="Upgrade the active team to Pro or Pro Plus to use the assistant and save coaching memory."
+        />
+      ) : null}
+
       <div className="mt-4">
-        <TeamMemoryAssistant
-        threads={assistant.threads}
-        messages={activeMessages}
-        teams={teams}
-        athletes={athletes}
-        initialThreadId={activeThreadId}
-        geminiConfigured={geminiConfigured}
-      />
+        {entitlement.team_memory_enabled ? (
+          <TeamMemoryAssistant
+            threads={assistant.threads}
+            messages={activeMessages}
+            teams={teams}
+            athletes={athletes}
+            initialThreadId={activeThreadId}
+            geminiConfigured={geminiConfigured}
+          />
+        ) : null}
       </div>
 
       <div className="mt-4">
-        <TeamMemoryForms teams={teams} athletes={athletes} />
+        {entitlement.team_memory_enabled ? (
+          <TeamMemoryForms teams={teams} athletes={athletes} />
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
