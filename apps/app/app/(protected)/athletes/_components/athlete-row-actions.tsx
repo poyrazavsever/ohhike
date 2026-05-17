@@ -29,6 +29,7 @@ export function AthleteRowActions({
   const [isPending, startTransition] = useTransition();
   const [invitePending, startInviteTransition] = useTransition();
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
   const [form, setForm] = useState<UpdateAthleteInput>({
     athleteId: athlete.id,
     teamId: athlete.team_id,
@@ -44,11 +45,13 @@ export function AthleteRowActions({
     setError(null);
     setMode(null);
     setInviteUrl(null);
+    setInviteNotice(null);
   }
 
   function openInviteModal() {
     setError(null);
     setInviteUrl(null);
+    setInviteNotice(null);
     setMode("invite");
     startInviteTransition(async () => {
       const result = await createAthleteInvite(athlete.id);
@@ -57,6 +60,7 @@ export function AthleteRowActions({
         return;
       }
       setInviteUrl(result.claimUrl ?? null);
+      setInviteNotice(result.message ?? null);
     });
   }
 
@@ -290,10 +294,11 @@ export function AthleteRowActions({
                         Athlete claim link
                       </p>
                       <p className="mt-1 text-sm font-medium text-muted-foreground">
-                        Email is not sent from CoachOS yet — copy this link and
-                        share it with the athlete (WhatsApp, SMS, or your team
-                        chat). It expires in 14 days. Creating a new link replaces
-                        any pending invite for this profile.
+                        If the athlete has an email address, OhHike sends the
+                        invite automatically. The link below remains available
+                        for WhatsApp, SMS, or team chat. It expires in 14 days.
+                        Creating a new link replaces any pending invite for this
+                        profile.
                       </p>
                     </div>
                   </div>
@@ -336,6 +341,12 @@ export function AthleteRowActions({
                       </button>
                     </div>
                   </div>
+                ) : null}
+
+                {inviteNotice ? (
+                  <p className="mt-4 text-sm font-bold text-primary-700">
+                    {inviteNotice}
+                  </p>
                 ) : null}
 
                 {error ? (

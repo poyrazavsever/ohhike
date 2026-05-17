@@ -28,7 +28,7 @@ Genel yön **doğru**: coach-first kadro modeli, organizasyon → takım → spo
 | Organizasyon oluşturma | Onboarding + settings | Onboarding + ek org | ✓ |
 | Takım oluşturma | Onboarding + Teams CRUD | Çalışıyor | ✓ |
 | Sporcu ekleme | Koç kadrosu | CRUD + onboarding adımı | ✓ |
-| Sporcu davet / claim | Token + profil bağlama | `/invite/athlete/[token]`, claim action | ◐ E-posta yok; claim sonrası athlete onboarding var |
+| Sporcu davet / claim | Token + profil bağlama | `/invite/athlete/[token]`, claim action | ◐ Resend opsiyonel e-posta gönderimi var; claim sonrası athlete onboarding var |
 | Koç dashboard | Metrikler, özet | `/dashboard` maskotlu UI | ◐ AI/risk kartları PRD seviyesinde değil |
 | Sporcu dashboard | Kendi check-in, görevler | `/athlete/home` + athlete route seti | ✓ `/athlete/dashboard` eski coach aggregate olarak ayrıca duruyor |
 | Günlük check-in | Sporcu girer | `/athlete/check-in` + `/readiness` | ✓ Sporcu self-service + staff girişi |

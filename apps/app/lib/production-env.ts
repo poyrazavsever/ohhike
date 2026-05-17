@@ -18,6 +18,8 @@ export const PRODUCTION_ENV_OPTIONAL = [
   "GEMINI_API_KEY",
   "GEMINI_MODEL",
   "GEMINI_EMBEDDING_MODEL",
+  "RESEND_API_KEY",
+  "INVITE_EMAIL_FROM",
 ] as const;
 
 export function getMissingProductionEnvKeys(): string[] {

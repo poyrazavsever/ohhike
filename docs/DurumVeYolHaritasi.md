@@ -209,7 +209,7 @@ Sıra önerisi; ihtiyaca göre kaydırılabilir.
 | 2 | `/reports` liste (PDF yok) | DB özet |
 | 3 | **PDF export** | ✅ İlk AI report PDF endpoint’i + indirme bağlantıları tamam |
 | 4 | **Strava** OAuth + sync | `006_wearables` üzerine |
-| 5 | Davet e-postası (Resend) | |
+| 5 | Davet e-postası (Resend) | ✅ Athlete + staff invite email fallback akışı tamam |
 | 6 | Dashboard metrik kartları | |
 | 7 | Wearable CSV import | |
 | 8 | Session file upload pipeline | |

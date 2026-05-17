@@ -37,6 +37,7 @@ export function StaffInvitePanel({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState<CreateStaffInviteInput>({
@@ -47,6 +48,7 @@ export function StaffInvitePanel({
 
   function submitInvite() {
     setError(null);
+    setNotice(null);
     setInviteUrl(null);
 
     startTransition(async () => {
@@ -62,6 +64,7 @@ export function StaffInvitePanel({
       }
 
       setInviteUrl(result.claimUrl ?? null);
+      setNotice(result.message ?? null);
       router.refresh();
     });
   }
@@ -86,8 +89,8 @@ export function StaffInvitePanel({
       <div className="rounded-3xl border border-border bg-card p-5">
         <p className="text-sm font-extrabold text-foreground">Invite staff</p>
         <p className="mt-1 text-xs font-medium text-muted-foreground">
-          Share the link by email or your team chat. Email delivery is not wired
-          yet — copy the invite URL after creating it.
+          Add an email to send the invite automatically. The generated link
+          remains available for manual sharing when needed.
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -167,6 +170,9 @@ export function StaffInvitePanel({
 
         {error ? (
           <p className="mt-4 text-sm font-bold text-destructive">{error}</p>
+        ) : null}
+        {notice ? (
+          <p className="mt-4 text-sm font-bold text-primary-700">{notice}</p>
         ) : null}
       </div>
 

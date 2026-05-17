@@ -56,6 +56,7 @@ import {
   formatSupabaseActionError,
 } from "../../lib/supabase-action";
 import { getAppBaseUrl, buildAppUrl } from "../../lib/app-url";
+import { sendInviteEmail } from "../../lib/email";
 import { ACTIVE_ORGANIZATION_COOKIE, getCurrentWorkspace } from "../../lib/workspace";
 import {
   getPrimaryTeamEntitlement,
@@ -1483,10 +1484,24 @@ export async function createAthleteInvite(
     await getAppBaseUrl(),
     `/invite/athlete/${token}`,
   );
+  const athleteEmail = cleanString(athlete.email ?? undefined);
+  const emailSent = athleteEmail
+    ? await sendInviteEmail({
+        to: athleteEmail,
+        organizationName: organization.name,
+        claimUrl,
+        kind: "athlete",
+      })
+    : false;
 
   return {
     ok: true,
     claimUrl,
+    message: emailSent
+      ? "Invite email sent."
+      : athleteEmail
+        ? "Invite link created. Email delivery is not configured or failed; copy the link manually."
+        : "Invite link created. Add an athlete email to send invitations automatically.",
   };
 }
 
@@ -1815,10 +1830,23 @@ export async function createStaffInvite(
     await getAppBaseUrl(),
     `/invite/staff/${token}`,
   );
+  const emailSent = email
+    ? await sendInviteEmail({
+        to: email.toLowerCase(),
+        organizationName: organization.name,
+        claimUrl,
+        kind: "staff",
+      })
+    : false;
 
   return {
     ok: true,
     claimUrl,
+    message: emailSent
+      ? "Invite email sent."
+      : email
+        ? "Invite link created. Email delivery is not configured or failed; copy the link manually."
+        : "Invite link created. Add an email to send invitations automatically.",
   };
 }
 

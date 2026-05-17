@@ -10,7 +10,13 @@ const required = [
   "CLERK_WEBHOOK_SIGNING_SECRET",
 ];
 
-const optional = ["GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_EMBEDDING_MODEL"];
+const optional = [
+  "GEMINI_API_KEY",
+  "GEMINI_MODEL",
+  "GEMINI_EMBEDDING_MODEL",
+  "RESEND_API_KEY",
+  "INVITE_EMAIL_FROM",
+];
 
 const missing = required.filter((key) => {
   if (key === "CLERK_WEBHOOK_SIGNING_SECRET") {
