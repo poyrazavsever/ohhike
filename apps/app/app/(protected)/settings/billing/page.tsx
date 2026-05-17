@@ -3,11 +3,13 @@ import {
   DetailStat,
 } from "../../../../components/dashboard/dashboard-cards";
 import { getBillingPlan, billingPlans } from "../../../../lib/billing/plans";
+import { toEffectiveTeamEntitlement } from "../../../../lib/billing/entitlements";
 import { getBillingSettingsData } from "../../../../lib/workspace";
 
 export default async function BillingSettingsPage() {
   const { team, entitlement } = await getBillingSettingsData();
   const currentPlan = getBillingPlan(entitlement?.plan);
+  const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -24,6 +26,25 @@ export default async function BillingSettingsPage() {
         <DetailStat
           label="Member limit"
           value={entitlement?.max_team_members ?? currentPlan.entitlements.maxTeamMembers}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        <DetailStat
+          label="AI report limit"
+          value={effectiveEntitlement.monthly_ai_report_limit}
+        />
+        <DetailStat
+          label="Team Memory"
+          value={effectiveEntitlement.team_memory_enabled ? "Included" : "Locked"}
+        />
+        <DetailStat
+          label="PDF export"
+          value={effectiveEntitlement.pdf_export_enabled ? "Included" : "Locked"}
+        />
+        <DetailStat
+          label="Branded reports"
+          value={effectiveEntitlement.branded_reports_enabled ? "Included" : "Locked"}
         />
       </div>
 

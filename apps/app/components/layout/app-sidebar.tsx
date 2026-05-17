@@ -54,6 +54,7 @@ const navGroups = [
         href: "/training-planner",
         label: "Training Planner",
         icon: "solar:map-arrow-right-bold",
+        feature: "trainingPlanner",
       },
       {
         href: "/drills",
@@ -89,6 +90,7 @@ const navGroups = [
         href: "/wearables",
         label: "Wearables",
         icon: "solar:watch-round-bold",
+        feature: "wearables",
       },
     ],
   },
@@ -99,11 +101,13 @@ const navGroups = [
         href: "/ai-reports",
         label: "AI Reports",
         icon: "solar:document-add-bold",
+        feature: "aiReports",
       },
       {
         href: "/team-memory",
         label: "Team Memory",
         icon: "solar:stars-bold",
+        feature: "teamMemory",
       },
       {
         href: "/reports",
@@ -452,6 +456,10 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
               {group.items.map((item) => {
                 const isActive =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const isLocked =
+                  "feature" in item &&
+                  item.feature &&
+                  !workspace.features[item.feature as keyof typeof workspace.features];
 
                 return (
                   <Link
@@ -465,6 +473,11 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
                   >
                     <Icon icon={item.icon} className="size-4 shrink-0" />
                     <span className="truncate">{item.label}</span>
+                    {isLocked ? (
+                      <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+                        Pro
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

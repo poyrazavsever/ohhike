@@ -3591,7 +3591,7 @@ export async function createWearableConnection(
   const supabase = createSupabaseAdminClient();
   const { data: athlete, error: athleteError } = await supabase
     .from("athletes")
-    .select("id")
+    .select("id, team_id")
     .eq("id", input.athleteId)
     .eq("organization_id", organization.id)
     .maybeSingle();
@@ -3600,6 +3600,15 @@ export async function createWearableConnection(
     return {
       ok: false,
       error: "Please select a valid athlete.",
+    };
+  }
+
+  const entitlement = await getTeamEntitlement(athlete.team_id);
+
+  if (!entitlement.wearable_enabled) {
+    return {
+      ok: false,
+      error: "Wearables are available on Pro and Pro Plus team plans.",
     };
   }
 

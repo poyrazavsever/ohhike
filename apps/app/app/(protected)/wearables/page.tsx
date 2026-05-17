@@ -4,6 +4,8 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-card";
+import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import { getWearablesData } from "../../../lib/workspace";
 import { CreateWearableConnectionForm } from "./_components/create-wearable-connection-form";
 
@@ -27,6 +29,7 @@ function formatDate(value: string | null) {
 
 export default async function WearablesPage() {
   const { workspace, connections, athletes, totals } = await getWearablesData();
+  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const metricCards = [
     {
@@ -67,8 +70,17 @@ export default async function WearablesPage() {
         mascotSrc="/maskotlar/kosu.png"
       />
 
+      {!entitlement.wearable_enabled ? (
+        <FeatureLockedCard
+          title="Wearables are not included in the current plan"
+          description="Upgrade the active team to Pro or Pro Plus to manage wearable connections and imported summaries."
+        />
+      ) : null}
+
       <div className="mt-4">
-        <CreateWearableConnectionForm athletes={athletes} />
+        {entitlement.wearable_enabled ? (
+          <CreateWearableConnectionForm athletes={athletes} />
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

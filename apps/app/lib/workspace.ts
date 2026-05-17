@@ -148,6 +148,13 @@ export type WorkspaceShellData = {
   plan: TeamEntitlement["plan"] | null;
   role: OrganizationMember["role"];
   canCreateOrganization: boolean;
+  features: {
+    aiReports: boolean;
+    teamMemory: boolean;
+    trainingPlanner: boolean;
+    wearables: boolean;
+    pdfExport: boolean;
+  };
   organizations: Array<{
     id: string;
     name: string;
@@ -275,6 +282,13 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
     plan,
     role: workspace.membership.role,
     canCreateOrganization: plan === "pro_team" || plan === "pro_plus_team",
+    features: {
+      aiReports: entitlement?.ai_reports_enabled ?? false,
+      teamMemory: entitlement?.team_memory_enabled ?? false,
+      trainingPlanner: entitlement?.training_planner_enabled ?? false,
+      wearables: entitlement?.wearable_enabled ?? false,
+      pdfExport: entitlement?.pdf_export_enabled ?? false,
+    },
     organizations:
       memberships?.map((membership) => {
         const organization = organizations?.find(

@@ -4,6 +4,8 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import { FeatureLockedCard } from "../../../components/dashboard/feature-locked-card";
+import { getPrimaryTeamEntitlement } from "../../../lib/billing/entitlements";
 import { getReportsData } from "../../../lib/workspace";
 
 function formatReportType(value: string) {
@@ -26,6 +28,7 @@ function formatDate(value: string | null) {
 
 export default async function ReportsPage() {
   const { workspace, aiReports, totals } = await getReportsData();
+  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const metricCards = [
     {
@@ -65,6 +68,13 @@ export default async function ReportsPage() {
         subtitle={`Export and report center for ${workspace.organization.name}.`}
         mascotSrc="/maskotlar/elleIsaretEtme.png"
       />
+
+      {!entitlement.pdf_export_enabled ? (
+        <FeatureLockedCard
+          title="PDF export is not included in the current plan"
+          description="Report records remain visible on every plan. PDF exports will be available to Pro and Pro Plus teams when the export pipeline is released."
+        />
+      ) : null}
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {metricCards.map((card) => (
@@ -138,7 +148,10 @@ export default async function ReportsPage() {
 
           <div className="mt-4 grid gap-2">
             <DetailStat label="Nutrition logs" value={totals.nutritionLogs} />
-            <DetailStat label="Export status" value="Not generated yet" />
+            <DetailStat
+              label="Export access"
+              value={entitlement.pdf_export_enabled ? "Included" : "Not included"}
+            />
             <DetailStat label="Next step" value="Report templates" />
           </div>
         </div>
