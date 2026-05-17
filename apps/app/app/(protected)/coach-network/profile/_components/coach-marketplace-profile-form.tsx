@@ -45,6 +45,10 @@ function labelClassName() {
   return "text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground";
 }
 
+function sectionHeadingClassName() {
+  return "text-sm font-black text-foreground";
+}
+
 function toFormState(
   profile: Tables<"coach_marketplace_profiles"> | null,
   organizationName: string,
@@ -163,6 +167,14 @@ export function CoachMarketplaceProfileForm({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
+            <p className={sectionHeadingClassName()}>Identity</p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              The first information athletes scan before deciding whether to
+              keep reading.
+            </p>
+          </div>
+
+          <div className="md:col-span-2">
             <label className={labelClassName()}>Display name</label>
             <input
               className={fieldClassName()}
@@ -213,6 +225,13 @@ export function CoachMarketplaceProfileForm({
                 setForm((current) => ({ ...current, bio: event.target.value }))
               }
             />
+          </div>
+
+          <div className="md:col-span-2 mt-2 border-t border-border pt-4">
+            <p className={sectionHeadingClassName()}>Positioning</p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              Explain how you coach and what evidence supports the profile.
+            </p>
           </div>
 
           <div className="md:col-span-2">
@@ -281,6 +300,13 @@ export function CoachMarketplaceProfileForm({
                 );
               })}
             </div>
+          </div>
+
+          <div className="md:col-span-2 mt-2 border-t border-border pt-4">
+            <p className={sectionHeadingClassName()}>Service details</p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              Operational details athletes need before applying.
+            </p>
           </div>
 
           <div className="md:col-span-2">
@@ -423,7 +449,7 @@ export function CoachMarketplaceProfileForm({
           </div>
         </div>
 
-        <aside className="space-y-4">
+        <aside className="space-y-4 lg:sticky lg:top-5 lg:self-start">
           <div className="rounded-2xl border border-border bg-background p-4">
             <div className="flex items-end justify-between gap-3">
               <div>

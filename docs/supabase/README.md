@@ -60,6 +60,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `012_coach_network.sql`, Coach Network (find-coach, basvuru, teklif, mesajlasma, remote athlete, program, proof, `coach_reviews`, `coach_reputation_events`) icin tablolari kurar. CN6: sporcu public review (web), koç private rating (`remote_coaching_relationships.metadata`), reputation ledger + profil `average_rating`/`review_count` senkronu.
 - `014_coach_profile_enrichment.sql`, public antrenor profilindeki video/felsefe/sonuc bloklarini besleyen alanlari ekler.
 - `dev_seed_coach_network_profiles.sql`, `/find-coach` demo listesi icin 3 public antrenor profili (en az 1 org + owner gerekir).
+- `dev_seed_mustafa_athlete_portal.sql`, `mustafaoguztargiz@gmail.com` icin ayri org (`ohhike-athlete-portal-mustafa`) — sporcu `/athlete/home` dashboard: 30 gun wellness/nutrition, program, proof, seanslar, wearable. App'te workspace olarak **OhHike Sporcu Portal** sec.
 - `dev_seed_demo_team_full.sql`, tek org + tek takim icin tam demo veri seti (14 sporcu, seanslar, wellness, wearables, AI raporlar, team memory, Pro plan). `poyrazavsever@gmail.com` → **admin**, `mustafaoguztargiz@gmail.com` → **owner** + head coach. Once her iki hesapla Clerk uzerinden bir kez giris yapilmis olmali (`public.users` satiri).
 - `dev_upgrade_team_plan.sql`, mevcut kullanicinin takimini manuel Pro'ya yukseltir (billing canli olana kadar).
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilir (MVP varsayilan).

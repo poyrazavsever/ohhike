@@ -5,7 +5,7 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { switchActiveOrganization } from "../../app/actions/workspace";
 import { isAthleteRole } from "../../lib/org-roles";
@@ -261,9 +261,41 @@ function formatRole(role: WorkspaceShellData["role"]) {
 
 function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   async function handleOrganizationSwitch(organizationId: string) {
     setError(null);
@@ -287,7 +319,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
   }
 
   return (
-    <div className="relative px-3 pb-3">
+    <div ref={containerRef} className="relative px-3 pb-3">
       {isOpen ? (
         <div className="absolute left-3 right-3 top-23 z-50 rounded-2xl border border-border bg-card p-2 shadow-sm">
           <div className="px-3 py-2">
@@ -402,11 +434,43 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
 
 function SidebarUserCard() {
   const { openUserProfile, signOut } = useClerk();
+  const pathname = usePathname();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useUser();
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative border-t border-border p-3">
+    <div ref={containerRef} className="relative border-t border-border p-3">
       {isOpen ? (
         <div className="absolute bottom-19 left-3 right-3 z-50 rounded-3xl border border-border bg-card p-2">
           <div className="px-3 py-2">

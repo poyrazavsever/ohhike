@@ -15,8 +15,6 @@ import {
   getCoachDashboardAttentionData,
   getDashboardData,
 } from "../../../lib/workspace";
-import Image from "next/image";
-import Link from "next/link";
 
 function formatPlan(plan: string | undefined) {
   if (!plan) {
@@ -96,7 +94,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.4fr_0.8fr]">
+      <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(28rem,1.2fr)_minmax(18rem,0.8fr)]">
         <div className="grid gap-3">
           <ProgressCard
             label="Athlete Capacity"
@@ -114,58 +112,30 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-border bg-card p-6 text-center">
-          <div className="relative size-28">
-            <Image
-              src="/maskotlar/hazirlik.png"
-              alt=""
-              fill
-              sizes="112px"
-              className="object-contain"
-            />
-          </div>
-          <h2 className="mt-4 max-w-md text-3xl font-black tracking-tight text-foreground">
-            Discover Today&apos;s Coaching Route
-          </h2>
-          <p className="mt-3 max-w-md text-sm font-semibold leading-6 text-muted-foreground">
-            Review athlete signals, plan training blocks and keep the team
-            memory fresh from one focused workspace.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Link
-              href="/sessions"
-              className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-hover"
-            >
-              Plan Session
-            </Link>
-            <Link
-              href="/readiness"
-              className="inline-flex items-center rounded-xl border border-border px-5 py-2.5 text-sm font-black text-foreground transition-colors hover:border-primary hover:text-primary-700"
-            >
-              Log Wellness
-            </Link>
-          </div>
-        </div>
+        <CoachTodayPanel {...summary} />
 
-        <QuickActions
-          actions={[
-            {
-              label: "Create session",
-              href: "/sessions",
-              icon: "solar:add-circle-bold",
-            },
-            {
-              label: "Log readiness",
-              href: "/readiness",
-              icon: "solar:pulse-2-bold",
-            },
-            {
-              label: "View progress",
-              href: "/load-recovery",
-              icon: "solar:chart-2-bold",
-            },
-          ]}
-        />
+        <div className="grid gap-3">
+          <DashboardMiniCalendar sessions={sessions} />
+          <QuickActions
+            actions={[
+              {
+                label: "Create session",
+                href: "/sessions",
+                icon: "solar:add-circle-bold",
+              },
+              {
+                label: "Log readiness",
+                href: "/readiness",
+                icon: "solar:pulse-2-bold",
+              },
+              {
+                label: "View progress",
+                href: "/load-recovery",
+                icon: "solar:chart-2-bold",
+              },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="mt-4">
@@ -201,13 +171,8 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
-        <DashboardMiniCalendar sessions={sessions} />
-        <DashboardAgenda sessions={sessions} />
-      </div>
-
       <div className="mt-4">
-        <CoachTodayPanel {...summary} />
+        <DashboardAgenda sessions={sessions} />
       </div>
     </section>
   );

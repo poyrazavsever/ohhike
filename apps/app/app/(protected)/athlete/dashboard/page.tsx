@@ -97,53 +97,74 @@ export default async function AthleteDashboardPage() {
       </div>
 
       {summaries.length > 0 ? (
-        <div className="mt-4 grid gap-3 xl:grid-cols-2">
-          {summaries.map((summary) => (
-            <article
-              key={summary.athleteId}
-              className="rounded-2xl border border-border bg-card p-4"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h2 className="text-base font-black text-foreground">
-                    {summary.athleteName}
-                  </h2>
-                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                    {summary.teamName ?? "No team"} ·{" "}
-                    {summary.position ?? "No position"} ·{" "}
-                    {formatStatus(summary.status)}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
-                  {readinessLabel(summary.latestReadiness)}
-                </div>
-              </div>
+        <div className="mt-4">
+          <AthleteAttentionPanel summaries={summaries} />
+        </div>
+      ) : null}
 
-              <div className="mt-4 grid gap-2 md:grid-cols-4">
-                <DetailStat
-                  label="Readiness"
-                  value={summary.latestReadiness ?? "No data"}
-                />
-                <DetailStat
-                  label="Fatigue"
-                  value={summary.latestFatigue ?? "No data"}
-                />
-                <DetailStat
-                  label="Hydration"
-                  value={summary.latestHydration ?? "No data"}
-                />
-                <DetailStat
-                  label="7D Load"
-                  value={formatNumber(summary.sevenDayLoad)}
-                />
-              </div>
+      <div className="mt-4 grid gap-3 xl:grid-cols-[0.8fr_1.2fr]">
+        <DashboardMiniCalendar sessions={sessions} />
+        <DashboardAgenda sessions={sessions} title="Training schedule" />
+      </div>
 
-              <p className="mt-3 text-sm font-semibold text-muted-foreground">
-                {summary.attendanceCount} attendance entries · Meal quality{" "}
-                {summary.latestMealQuality ?? "No data"}
-              </p>
-            </article>
-          ))}
+      {summaries.length > 0 ? (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <p className="text-sm font-black text-foreground">
+              Athlete roster health
+            </p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              Latest readiness, hydration and workload context per athlete.
+            </p>
+          </div>
+          <div className="grid gap-3 p-4 xl:grid-cols-2">
+            {summaries.map((summary) => (
+              <article
+                key={summary.athleteId}
+                className="rounded-2xl border border-border bg-card p-4"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h2 className="text-base font-black text-foreground">
+                      {summary.athleteName}
+                    </h2>
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                      {summary.teamName ?? "No team"} ·{" "}
+                      {summary.position ?? "No position"} ·{" "}
+                      {formatStatus(summary.status)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
+                    {readinessLabel(summary.latestReadiness)}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2 md:grid-cols-4">
+                  <DetailStat
+                    label="Readiness"
+                    value={summary.latestReadiness ?? "No data"}
+                  />
+                  <DetailStat
+                    label="Fatigue"
+                    value={summary.latestFatigue ?? "No data"}
+                  />
+                  <DetailStat
+                    label="Hydration"
+                    value={summary.latestHydration ?? "No data"}
+                  />
+                  <DetailStat
+                    label="7D Load"
+                    value={formatNumber(summary.sevenDayLoad)}
+                  />
+                </div>
+
+                <p className="mt-3 text-sm font-semibold text-muted-foreground">
+                  {summary.attendanceCount} attendance entries · Meal quality{" "}
+                  {summary.latestMealQuality ?? "No data"}
+                </p>
+              </article>
+            ))}
+          </div>
         </div>
       ) : (
         <EmptyStateCard
@@ -152,17 +173,6 @@ export default async function AthleteDashboardPage() {
           icon="solar:user-heart-bold"
         />
       )}
-
-      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
-        <DashboardMiniCalendar sessions={sessions} />
-        <DashboardAgenda sessions={sessions} title="Training schedule" />
-      </div>
-
-      {summaries.length > 0 ? (
-        <div className="mt-4">
-          <AthleteAttentionPanel summaries={summaries} />
-        </div>
-      ) : null}
     </section>
   );
 }
