@@ -4,7 +4,14 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../../components/dashboard/dashboard-cards";
-import { getAthleteDashboardData } from "../../../../lib/workspace";
+import {
+  DashboardAgenda,
+  DashboardMiniCalendar,
+} from "../../../../components/dashboard/dashboard-calendar";
+import {
+  getAthleteDashboardData,
+  getCalendarData,
+} from "../../../../lib/workspace";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en", {
@@ -41,6 +48,7 @@ function readinessLabel(score: number | null) {
 
 export default async function AthleteDashboardPage() {
   const { workspace, summaries, totals } = await getAthleteDashboardData();
+  const { sessions } = await getCalendarData();
 
   const metricCards = [
     {
@@ -143,6 +151,11 @@ export default async function AthleteDashboardPage() {
           icon="solar:user-heart-bold"
         />
       )}
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
+        <DashboardMiniCalendar sessions={sessions} />
+        <DashboardAgenda sessions={sessions} title="Training schedule" />
+      </div>
     </section>
   );
 }

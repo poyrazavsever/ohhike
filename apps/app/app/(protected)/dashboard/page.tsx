@@ -5,7 +5,11 @@ import {
   ProgressCard,
   QuickActions,
 } from "../../../components/dashboard/dashboard-cards";
-import { getDashboardData } from "../../../lib/workspace";
+import {
+  DashboardAgenda,
+  DashboardMiniCalendar,
+} from "../../../components/dashboard/dashboard-calendar";
+import { getCalendarData, getDashboardData } from "../../../lib/workspace";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,6 +27,7 @@ function formatPlan(plan: string | undefined) {
 export default async function DashboardPage() {
   const { organization, membership, teams, athleteCount, entitlements } =
     await getDashboardData();
+  const { sessions } = await getCalendarData();
 
   const primaryTeam = teams[0];
   const primaryEntitlement = primaryTeam
@@ -117,8 +122,8 @@ export default async function DashboardPage() {
             Discover Today&apos;s Coaching Route
           </h2>
           <p className="mt-3 max-w-md text-sm font-semibold leading-6 text-muted-foreground">
-            Review athlete signals, plan training blocks and keep the team memory
-            fresh from one focused workspace.
+            Review athlete signals, plan training blocks and keep the team
+            memory fresh from one focused workspace.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link
@@ -179,13 +184,20 @@ export default async function DashboardPage() {
               tone: "info",
             },
             {
-              label: primaryEntitlement?.ai_reports_enabled ? "AI On" : "AI Off",
+              label: primaryEntitlement?.ai_reports_enabled
+                ? "AI On"
+                : "AI Off",
               helper: "Report access",
               icon: "solar:document-add-bold",
               tone: "warning",
             },
           ]}
         />
+      </div>
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
+        <DashboardMiniCalendar sessions={sessions} />
+        <DashboardAgenda sessions={sessions} />
       </div>
     </section>
   );
