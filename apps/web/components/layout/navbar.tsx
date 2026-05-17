@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { findCoachNavLink } from "../../lib/coach-network/nav";
 import { isCoachNetworkEnabled } from "../../lib/coach-network";
 import { getAppUrl } from "../../lib/site-url";
 import {
@@ -16,11 +17,19 @@ import {
 import { NavDropdown } from "./navbar-nav-dropdown";
 import { NavbarUserMenu, NavbarUserMenuMobile } from "./navbar-user-menu";
 
-const navItems = [
+const baseNavItems = [
   { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
 ];
+
+function marketingNavItems() {
+  if (!isCoachNetworkEnabled()) {
+    return baseNavItems;
+  }
+
+  return [...baseNavItems, findCoachNavLink];
+}
 
 const resourceItems = [
   {
@@ -121,6 +130,7 @@ export function Navbar() {
   }, []);
 
   const closeMenu = () => setIsMenuOpen(false);
+  const navItems = marketingNavItems();
 
   return (
     <header
@@ -308,8 +318,8 @@ export function Navbar() {
             <div className="mt-auto grid gap-3 pt-8">
               {isCoachNetworkEnabled() ? (
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/find-coach" onClick={closeMenu}>
-                    Find a coach
+                  <Link href={findCoachNavLink.href} onClick={closeMenu}>
+                    {findCoachNavLink.label}
                   </Link>
                 </Button>
               ) : (

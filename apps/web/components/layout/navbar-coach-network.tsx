@@ -3,18 +3,27 @@
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
+import { findCoachDropdownItem } from "../../lib/coach-network/nav";
 import { isCoachNetworkEnabled } from "../../lib/coach-network";
 import { NavDropdown } from "./navbar-nav-dropdown";
 
-export const coachNetworkPublicItems = [
+/** Signed-out visitors: athlete portal links (auth required on destination). */
+export const coachNetworkGuestItems = [
+  findCoachDropdownItem,
   {
-    href: "/find-coach",
-    label: "Find a coach",
-    description: "Browse public coaching profiles and packages.",
+    href: "/athlete/applications",
+    label: "My applications",
+    description: "Sign in to track coach applications.",
+  },
+  {
+    href: "/athlete/messages",
+    label: "Messages",
+    description: "Sign in to message your coaches.",
   },
 ];
 
 export const coachNetworkAthleteItems = [
+  findCoachDropdownItem,
   {
     href: "/athlete/applications",
     label: "My applications",
@@ -39,13 +48,13 @@ export function NavbarCoachNetwork() {
     return null;
   }
 
-  if (isLoaded && isSignedIn) {
-    return (
-      <NavDropdown label="Coach Network" items={coachNetworkAthleteItems} align="end" />
-    );
+  if (!isLoaded) {
+    return null;
   }
 
-  return <NavDropdown label="Coach Network" items={coachNetworkPublicItems} align="end" />;
+  const items = isSignedIn ? coachNetworkAthleteItems : coachNetworkGuestItems;
+
+  return <NavDropdown label="Coach Network" items={items} align="end" />;
 }
 
 export function NavbarCoachNetworkMobile({ onNavigate }: { onNavigate: () => void }) {
@@ -55,7 +64,7 @@ export function NavbarCoachNetworkMobile({ onNavigate }: { onNavigate: () => voi
     return null;
   }
 
-  const items = isLoaded && isSignedIn ? coachNetworkAthleteItems : coachNetworkPublicItems;
+  const items = isLoaded && isSignedIn ? coachNetworkAthleteItems : coachNetworkGuestItems;
 
   return (
     <div className="mt-8">
