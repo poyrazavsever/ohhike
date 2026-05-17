@@ -203,7 +203,7 @@ export function NavbarUserMenu() {
         aria-label={isSignedIn ? "Account menu" : "Sign in menu"}
       >
         {avatarSrc ? (
-          <Image
+          <img
             src={avatarSrc}
             alt=""
             width={32}
@@ -246,7 +246,7 @@ export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void })
     <div className="mt-8 rounded-3xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
         {avatarSrc ? (
-          <Image
+          <img
             src={avatarSrc}
             alt=""
             width={44}
