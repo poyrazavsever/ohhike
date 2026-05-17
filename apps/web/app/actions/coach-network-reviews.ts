@@ -14,6 +14,25 @@ import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
+export type CoachProfileReviewState =
+  | { status: "anonymous" }
+  | { status: "not_eligible" }
+  | {
+      status: "eligible";
+      relationshipId: string;
+    }
+  | {
+      status: "already_reviewed";
+      relationshipId: string;
+      review: {
+        id: string;
+        rating: number;
+        title: string | null;
+        body: string | null;
+        createdAt: string | null;
+      };
+    };
+
 function cleanString(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
@@ -70,6 +89,81 @@ export async function listAthleteReviewOpportunities() {
       coachProfile: profileById.get(row.coach_profile_id) ?? null,
       existingReview: reviewByRelationship.get(row.id) ?? null,
     }));
+}
+
+export async function getCoachProfileReviewState(
+  coachProfileId: string,
+): Promise<CoachProfileReviewState> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { status: "anonymous" };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: relationships, error } = await supabase
+    .from("remote_coaching_relationships")
+    .select("id, status, payment_status, created_at")
+    .eq("athlete_user_id", userId)
+    .eq("coach_profile_id", coachProfileId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const eligibleRelationships = (relationships ?? []).filter((relationship) =>
+    canAthleteReviewRelationship(relationship),
+  );
+
+  if (eligibleRelationships.length === 0) {
+    return { status: "not_eligible" };
+  }
+
+  const relationshipIds = eligibleRelationships.map((relationship) => relationship.id);
+  const { data: reviews, error: reviewsError } = await supabase
+    .from("coach_reviews")
+    .select("id, relationship_id, rating, title, body, created_at")
+    .eq("athlete_user_id", userId)
+    .in("relationship_id", relationshipIds);
+
+  if (reviewsError) {
+    throw new Error(reviewsError.message);
+  }
+
+  const reviewByRelationshipId = new Map(
+    (reviews ?? []).map((review) => [review.relationship_id, review]),
+  );
+  const unreviewedRelationship = eligibleRelationships.find(
+    (relationship) => !reviewByRelationshipId.has(relationship.id),
+  );
+
+  if (unreviewedRelationship) {
+    return {
+      status: "eligible",
+      relationshipId: unreviewedRelationship.id,
+    };
+  }
+
+  const latestRelationship = eligibleRelationships[0];
+  const latestReview = latestRelationship
+    ? reviewByRelationshipId.get(latestRelationship.id)
+    : null;
+
+  if (!latestRelationship || !latestReview) {
+    return { status: "not_eligible" };
+  }
+
+  return {
+    status: "already_reviewed",
+    relationshipId: latestRelationship.id,
+    review: {
+      id: latestReview.id,
+      rating: latestReview.rating,
+      title: latestReview.title,
+      body: latestReview.body,
+      createdAt: latestReview.created_at,
+    },
+  };
 }
 
 export async function submitCoachReview(input: {

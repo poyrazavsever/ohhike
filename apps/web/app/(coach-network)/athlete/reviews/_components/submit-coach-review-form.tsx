@@ -12,9 +12,11 @@ function fieldClassName() {
 export function SubmitCoachReviewForm({
   relationshipId,
   coachName,
+  redirectOnSuccess = "/athlete/reviews?submitted=1",
 }: {
   relationshipId: string;
   coachName: string;
+  redirectOnSuccess?: string | null;
 }) {
   const router = useRouter();
   const [rating, setRating] = useState(5);
@@ -44,7 +46,9 @@ export function SubmitCoachReviewForm({
       }
 
       setMessage("Thank you! Your review was submitted.");
-      router.push("/athlete/reviews?submitted=1");
+      if (redirectOnSuccess) {
+        router.push(redirectOnSuccess);
+      }
       router.refresh();
     });
   }
@@ -58,20 +62,32 @@ export function SubmitCoachReviewForm({
         Public reviews appear on the coach&apos;s marketplace profile.
       </p>
 
-      <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        Rating
-        <select
-          className={fieldClassName()}
-          value={rating}
-          onChange={(e) => setRating(Number(e.target.value))}
-        >
-          {[5, 4, 3, 2, 1].map((value) => (
-            <option key={value} value={value}>
-              {value} stars
-            </option>
+      <fieldset className="mt-4">
+        <legend className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          Rating
+        </legend>
+        <div className="mt-2 flex items-center gap-1" aria-label="Rating">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-label={`${value} star${value === 1 ? "" : "s"}`}
+              aria-pressed={rating === value}
+              onClick={() => setRating(value)}
+              className={`text-3xl leading-none transition-colors ${
+                value <= rating
+                  ? "text-primary"
+                  : "text-muted-foreground/30 hover:text-primary/60"
+              }`}
+            >
+              ★
+            </button>
           ))}
-        </select>
-      </label>
+          <span className="ml-2 text-sm font-semibold text-muted-foreground">
+            {rating}/5
+          </span>
+        </div>
+      </fieldset>
 
       <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
         Title

@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getCoachProfileReviewState } from "../../../../../app/actions/coach-network-reviews";
 import { getPublicCoachBySlug } from "../../../../../lib/coach-network/public-queries";
 import { getYouTubeEmbedUrl } from "../../../../../lib/coach-network/youtube";
+import { CoachProfileReviewPanel } from "./_components/coach-profile-review-panel";
 import { CoachPublicReviews } from "./_components/coach-public-reviews";
 
 type CoachProfilePageProps = {
@@ -64,6 +66,7 @@ export default async function CoachPublicProfilePage({
 
   const showApplyHint = apply === "1";
   const { userId } = await auth();
+  const reviewState = await getCoachProfileReviewState(coach.id);
   const applyHref = userId
     ? `/coach-network/apply/${coach.id}`
     : `/login?redirect_url=${encodeURIComponent(`/coach-network/apply/${coach.id}`)}`;
@@ -331,6 +334,11 @@ export default async function CoachPublicProfilePage({
 
         <section className="mt-8">
           <h2 className="text-xl font-extrabold text-foreground">Reviews</h2>
+          <CoachProfileReviewPanel
+            state={reviewState}
+            coachName={coach.displayName}
+            profileHref={`/coach-network/coaches/${coach.slug}`}
+          />
           <CoachPublicReviews reviews={coach.reviews} />
         </section>
       </div>

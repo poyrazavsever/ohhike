@@ -1,8 +1,4 @@
-import {
-  DashboardHero,
-  DetailStat,
-} from "../../../../components/dashboard/dashboard-cards";
-import { toEffectiveTeamEntitlement } from "../../../../lib/billing/entitlements";
+import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
 import { parseEntitlementMetadata } from "../../../../lib/billing/promo-codes";
 import { billingPlans, getBillingPlan } from "../../../../lib/billing/plans";
 import {
@@ -26,7 +22,6 @@ function devPlanOverrideEnabled() {
 export default async function BillingSettingsPage() {
   const { team, entitlement } = await getBillingSettingsData();
   const currentPlan = getBillingPlan(entitlement?.plan);
-  const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
   const showDevPlanSwitcher = devPlanOverrideEnabled();
   const entitlementMeta = parseEntitlementMetadata(
     entitlement?.metadata ?? null,
@@ -49,6 +44,8 @@ export default async function BillingSettingsPage() {
   const revenueCatEnabled = isRevenueCatEnabled();
   const revenueCatApiKey = getRevenueCatPublicApiKey();
   const revenueCatAppUserId = team ? getRevenueCatTeamAppUserId(team.id) : null;
+  const currentMemberLimit =
+    entitlement?.max_team_members ?? currentPlan.entitlements.maxTeamMembers;
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -59,10 +56,87 @@ export default async function BillingSettingsPage() {
         mascotSrc="/maskotlar/harita.png"
       />
 
-      <PromoCodeForm
-        activePromoLabel={activePromoLabel}
-        periodEnd={entitlement?.current_period_end ?? null}
-      />
+      <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
+        <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-muted-foreground">
+                Current plan
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-foreground">
+                {currentPlan.name}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-muted-foreground">
+                {currentPlan.description}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-primary-soft px-4 py-3 text-right">
+              <p className="text-2xl font-black text-primary-700">
+                {currentPlan.priceLabel}
+              </p>
+              <p className="mt-1 text-xs font-bold text-primary-700/80">
+                {team?.name ?? "No team yet"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-xs font-extrabold text-primary-700">
+              {currentMemberLimit} members
+            </span>
+            <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-bold text-foreground">
+              {currentPlan.entitlements.monthlyAiReportLimit} AI reports / month
+            </span>
+            {currentPlan.entitlements.teamMemoryEnabled ? (
+              <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-bold text-foreground">
+                Team Memory
+              </span>
+            ) : null}
+            {currentPlan.entitlements.pdfExportEnabled ? (
+              <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-bold text-foreground">
+                PDF exports
+              </span>
+            ) : null}
+            {currentPlan.entitlements.brandedReportsEnabled ? (
+              <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-bold text-foreground">
+                Branded reports
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-6 border-t border-border pt-5">
+            <p className="text-sm font-black text-foreground">
+              Included in your plan
+            </p>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {currentPlan.features.map((feature) => (
+                <div
+                  key={feature}
+                  className="rounded-xl bg-background px-3 py-2 text-sm font-semibold text-foreground"
+                >
+                  {feature}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-3">
+          <PromoCodeForm
+            activePromoLabel={activePromoLabel}
+            periodEnd={entitlement?.current_period_end ?? null}
+          />
+
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-sm font-black text-foreground">Billing status</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-muted-foreground">
+              RevenueCat Test Store is active for plan testing. Feature access
+              is synced back into Supabase, so provider changes later will not
+              disturb the rest of the app.
+            </p>
+          </section>
+        </div>
+      </div>
 
       {showDevPlanSwitcher ? (
         <DevPlanSwitcher
@@ -81,52 +155,28 @@ export default async function BillingSettingsPage() {
           currentPlan={currentPlan.name}
         />
       ) : null}
-
-      <div className="mt-4 grid gap-2 md:grid-cols-3">
-        <DetailStat label="Team" value={team?.name ?? "No team yet"} />
-        <DetailStat label="Current plan" value={currentPlan.name} />
-        <DetailStat
-          label="Member limit"
-          value={
-            entitlement?.max_team_members ??
-            currentPlan.entitlements.maxTeamMembers
-          }
-        />
+      <div className="mt-6">
+        <div>
+          <p className="text-sm font-black text-foreground">Choose a plan</p>
+          <p className="mt-1 text-sm font-semibold text-muted-foreground">
+            Compare tiers by workflow depth, not by scattered feature counters.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        <DetailStat
-          label="AI report limit"
-          value={effectiveEntitlement.monthly_ai_report_limit}
-        />
-        <DetailStat
-          label="Team Memory"
-          value={
-            effectiveEntitlement.team_memory_enabled ? "Included" : "Locked"
-          }
-        />
-        <DetailStat
-          label="PDF export"
-          value={
-            effectiveEntitlement.pdf_export_enabled ? "Included" : "Locked"
-          }
-        />
-        <DetailStat
-          label="Branded reports"
-          value={
-            effectiveEntitlement.branded_reports_enabled ? "Included" : "Locked"
-          }
-        />
-      </div>
-
-      <div className="mt-6 grid gap-3 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         {billingPlans.map((plan) => {
           const isCurrent = plan.id === currentPlan.id;
+          const isRecommended = plan.id === "pro_team";
 
           return (
             <article
               key={plan.id}
-              className="rounded-xl border border-border bg-background p-4"
+              className={
+                isCurrent
+                  ? "relative rounded-2xl border border-primary/35 bg-card p-5 shadow-[0_10px_25px_-5px_rgba(22,230,140,0.14)]"
+                  : "relative rounded-2xl border border-border bg-card p-5"
+              }
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -141,6 +191,10 @@ export default async function BillingSettingsPage() {
                   <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-extrabold text-white">
                     Current
                   </span>
+                ) : isRecommended ? (
+                  <span className="rounded-full border border-primary/20 bg-primary-soft px-2.5 py-1 text-[11px] font-extrabold text-primary-700">
+                    Popular
+                  </span>
                 ) : null}
               </div>
 
@@ -151,26 +205,19 @@ export default async function BillingSettingsPage() {
                 {plan.memberLimitLabel}
               </p>
 
-              <ul className="mt-4 space-y-2 text-sm text-foreground/90">
+              <ul className="mt-5 space-y-2 text-sm text-foreground/90">
                 {plan.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
+                  <li
+                    key={feature}
+                    className="rounded-xl bg-background px-3 py-2"
+                  >
+                    {feature}
+                  </li>
                 ))}
               </ul>
             </article>
           );
         })}
-      </div>
-
-      <div className="mt-4 rounded-xl border border-border bg-background p-4">
-        <p className="text-sm font-extrabold text-foreground">
-          Billing integration status
-        </p>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          RevenueCat Test Store can drive plan testing without Stripe. Team
-          access still resolves from Supabase after a server-side sync, so the
-          production provider can later move to Stripe without changing feature
-          gates across the app.
-        </p>
       </div>
     </section>
   );

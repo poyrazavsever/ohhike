@@ -26,7 +26,7 @@ export function PromoCodeForm({
     : null;
 
   return (
-    <section className="mt-4 rounded-xl border border-primary/25 bg-primary-soft/40 p-4">
+    <section className="rounded-2xl border border-primary/25 bg-primary-soft/40 p-4">
       <p className="text-sm font-extrabold text-foreground">Promo code</p>
       <p className="mt-1 text-sm text-muted-foreground">
         Redeem a code to unlock Pro features for your team for a limited time.
@@ -54,9 +54,12 @@ export function PromoCodeForm({
             }
 
             setMessage(
-              `${result.label} applied. Pro access until ${new Intl.DateTimeFormat("tr", {
-                dateStyle: "long",
-              }).format(new Date(result.periodEnd))}.`,
+              `${result.label} applied. Pro access until ${new Intl.DateTimeFormat(
+                "tr",
+                {
+                  dateStyle: "long",
+                },
+              ).format(new Date(result.periodEnd))}.`,
             );
             setCode("");
             router.refresh();
@@ -91,7 +94,9 @@ export function PromoCodeForm({
         <p className="mt-2 text-sm font-semibold text-destructive">{error}</p>
       ) : null}
       {message ? (
-        <p className="mt-2 text-sm font-semibold text-success-foreground">{message}</p>
+        <p className="mt-2 text-sm font-semibold text-success-foreground">
+          {message}
+        </p>
       ) : null}
     </section>
   );
