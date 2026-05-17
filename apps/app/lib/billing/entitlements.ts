@@ -1,5 +1,6 @@
 import type { Tables } from "../database.types";
 import { createSupabaseAdminClient } from "../supabase-admin";
+import { expirePromoGrantIfNeeded } from "./promo-codes";
 import { defaultBillingPlan, getBillingPlan } from "./plans";
 
 type TeamEntitlement = Tables<"team_billing_entitlements">;
@@ -57,6 +58,27 @@ export function toEffectiveTeamEntitlement(
   };
 }
 
+async function loadTeamEntitlementRow(
+  teamId: string,
+): Promise<TeamEntitlement | null> {
+  const supabase = createSupabaseAdminClient();
+  const { data: entitlement, error } = await supabase
+    .from("team_billing_entitlements")
+    .select("*")
+    .eq("team_id", teamId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!entitlement) {
+    return null;
+  }
+
+  return expirePromoGrantIfNeeded(supabase, entitlement);
+}
+
 export async function getPrimaryTeamEntitlement(
   organizationId: string,
 ): Promise<EffectiveTeamEntitlement> {
@@ -77,15 +99,7 @@ export async function getPrimaryTeamEntitlement(
     return defaultEntitlements;
   }
 
-  const { data: entitlement, error: entitlementError } = await supabase
-    .from("team_billing_entitlements")
-    .select("*")
-    .eq("team_id", team.id)
-    .maybeSingle();
-
-  if (entitlementError) {
-    throw new Error(entitlementError.message);
-  }
+  const entitlement = await loadTeamEntitlementRow(team.id);
 
   return toEffectiveTeamEntitlement(entitlement);
 }
@@ -93,16 +107,7 @@ export async function getPrimaryTeamEntitlement(
 export async function getTeamEntitlement(
   teamId: string,
 ): Promise<EffectiveTeamEntitlement> {
-  const supabase = createSupabaseAdminClient();
-  const { data: entitlement, error } = await supabase
-    .from("team_billing_entitlements")
-    .select("*")
-    .eq("team_id", teamId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
+  const entitlement = await loadTeamEntitlementRow(teamId);
 
   return toEffectiveTeamEntitlement(entitlement);
 }

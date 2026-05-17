@@ -392,10 +392,16 @@ export async function getBillingSettingsData(): Promise<BillingSettingsData> {
     throw new Error(entitlementError.message);
   }
 
+  let resolvedEntitlement = entitlement;
+  if (team && entitlement) {
+    const { expirePromoGrantIfNeeded } = await import("./billing/promo-codes");
+    resolvedEntitlement = await expirePromoGrantIfNeeded(supabase, entitlement);
+  }
+
   return {
     workspace,
     team,
-    entitlement,
+    entitlement: resolvedEntitlement,
   };
 }
 

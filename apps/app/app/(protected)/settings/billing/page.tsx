@@ -3,9 +3,12 @@ import {
   DetailStat,
 } from "../../../../components/dashboard/dashboard-cards";
 import { toEffectiveTeamEntitlement } from "../../../../lib/billing/entitlements";
+import { parseEntitlementMetadata } from "../../../../lib/billing/promo-codes";
 import { billingPlans, getBillingPlan } from "../../../../lib/billing/plans";
+import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 import { getBillingSettingsData } from "../../../../lib/workspace";
 import { DevPlanSwitcher } from "./_components/dev-plan-switcher";
+import { PromoCodeForm } from "./_components/promo-code-form";
 
 function devPlanOverrideEnabled() {
   return (
@@ -19,6 +22,20 @@ export default async function BillingSettingsPage() {
   const currentPlan = getBillingPlan(entitlement?.plan);
   const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
   const showDevPlanSwitcher = devPlanOverrideEnabled();
+  const entitlementMeta = parseEntitlementMetadata(entitlement?.metadata ?? null);
+  const activePromoCode =
+    typeof entitlementMeta.promo_code === "string" ? entitlementMeta.promo_code : null;
+
+  let activePromoLabel: string | null = null;
+  if (activePromoCode && team) {
+    const supabase = createSupabaseAdminClient();
+    const { data: promo } = await supabase
+      .from("promo_codes")
+      .select("label")
+      .eq("code", activePromoCode)
+      .maybeSingle();
+    activePromoLabel = promo?.label ?? activePromoCode;
+  }
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -27,6 +44,11 @@ export default async function BillingSettingsPage() {
         title="Billing"
         subtitle="Team plans are stored per team and drive the feature gates that will power checkout."
         mascotSrc="/maskotlar/harita.png"
+      />
+
+      <PromoCodeForm
+        activePromoLabel={activePromoLabel}
+        periodEnd={entitlement?.current_period_end ?? null}
       />
 
       {showDevPlanSwitcher ? (

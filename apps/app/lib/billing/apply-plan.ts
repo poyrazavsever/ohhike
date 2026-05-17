@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, TeamPlanTier } from "../database.types";
+import type { Database, Json, TeamPlanTier } from "../database.types";
 import { getBillingPlan } from "./plans";
 
 export function entitlementRowFromPlan(input: {
@@ -33,9 +33,17 @@ export async function applyTeamBillingPlan(
     organizationId: string;
     teamId: string;
     plan: TeamPlanTier;
+    periodStart?: Date | null;
+    periodEnd?: Date | null;
+    metadata?: Json | Record<string, unknown> | null;
   },
 ) {
-  const row = entitlementRowFromPlan(input);
+  const row = {
+    ...entitlementRowFromPlan(input),
+    current_period_start: input.periodStart?.toISOString() ?? null,
+    current_period_end: input.periodEnd?.toISOString() ?? null,
+    metadata: (input.metadata ?? {}) as Json,
+  };
 
   const { error } = await supabase.from("team_billing_entitlements").upsert(row, {
     onConflict: "team_id",
@@ -44,4 +52,30 @@ export async function applyTeamBillingPlan(
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export async function applyPromoPlanToTeam(
+  supabase: SupabaseClient<Database>,
+  input: {
+    organizationId: string;
+    teamId: string;
+    plan: TeamPlanTier;
+    periodStart: Date;
+    periodEnd: Date;
+    promoCode: string;
+    redemptionId: string;
+  },
+) {
+  await applyTeamBillingPlan(supabase, {
+    organizationId: input.organizationId,
+    teamId: input.teamId,
+    plan: input.plan,
+    periodStart: input.periodStart,
+    periodEnd: input.periodEnd,
+    metadata: {
+      promo_code: input.promoCode,
+      redemption_id: input.redemptionId,
+      granted_at: input.periodStart.toISOString(),
+    },
+  });
 }

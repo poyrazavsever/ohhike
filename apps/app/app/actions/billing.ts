@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 import { applyTeamBillingPlan } from "../../lib/billing/apply-plan";
+import { redeemPromoCodeForTeam } from "../../lib/billing/promo-codes";
 import type { TeamPlanTier } from "../../lib/database.types";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 import { getCurrentWorkspace } from "../../lib/workspace";
@@ -89,4 +90,67 @@ export async function setPrimaryTeamPlanAction(plan: string) {
   revalidatePath("/reports");
 
   return { ok: true as const, plan };
+}
+
+export async function redeemPromoCodeAction(code: string) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return { ok: false as const, error: "You must be signed in." };
+  }
+
+  const workspace = await getCurrentWorkspace();
+  const role = workspace.membership.role;
+
+  if (role !== "owner" && role !== "admin" && role !== "head_coach") {
+    return {
+      ok: false as const,
+      error: "Only organization owners, admins, or head coaches can redeem promo codes.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (teamError) {
+    return { ok: false as const, error: teamError.message };
+  }
+
+  if (!team) {
+    return { ok: false as const, error: "Create a team before redeeming a promo code." };
+  }
+
+  const result = await redeemPromoCodeForTeam(supabase, {
+    code,
+    organizationId,
+    teamId: team.id,
+    userId,
+  });
+
+  if (!result.ok) {
+    return result;
+  }
+
+  revalidatePath("/settings/billing");
+  revalidatePath("/wearables");
+  revalidatePath("/team-memory");
+  revalidatePath("/ai-reports");
+  revalidatePath("/training-planner");
+  revalidatePath("/reports");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true as const,
+    label: result.label,
+    plan: result.plan,
+    periodEnd: result.periodEnd,
+  };
 }

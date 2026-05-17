@@ -530,6 +530,87 @@ export type Database = {
         };
         Relationships: [];
       };
+      promo_codes: {
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          plan: TeamPlanTier;
+          duration_days: number;
+          max_redemptions: number | null;
+          is_active: boolean;
+          valid_from: string | null;
+          valid_until: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          plan?: TeamPlanTier;
+          duration_days?: number;
+          max_redemptions?: number | null;
+          is_active?: boolean;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          label?: string;
+          plan?: TeamPlanTier;
+          duration_days?: number;
+          max_redemptions?: number | null;
+          is_active?: boolean;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      promo_code_redemptions: {
+        Row: {
+          id: string;
+          promo_code_id: string;
+          organization_id: string;
+          team_id: string;
+          redeemed_by: string;
+          plan_granted: TeamPlanTier;
+          period_start: string;
+          period_end: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          promo_code_id: string;
+          organization_id: string;
+          team_id: string;
+          redeemed_by: string;
+          plan_granted: TeamPlanTier;
+          period_start: string;
+          period_end: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          promo_code_id?: string;
+          organization_id?: string;
+          team_id?: string;
+          redeemed_by?: string;
+          plan_granted?: TeamPlanTier;
+          period_start?: string;
+          period_end?: string;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       team_billing_entitlements: {
         Row: {
           id: string;
