@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isCoachNetworkEnabled } from "../../../lib/coach-network";
 import {
   getMissingProductionEnvKeys,
   PRODUCTION_ENV_OPTIONAL,
@@ -10,10 +11,14 @@ export async function GET() {
   const optionalMissing = PRODUCTION_ENV_OPTIONAL.filter(
     (key) => !process.env[key]?.trim(),
   );
+  const coachNetworkEnabled = isCoachNetworkEnabled();
 
   return NextResponse.json({
     ok: missing.length === 0,
     service: "ohhike-app",
+    coachNetworkEnabled,
+    coachNetworkEnv: process.env.NEXT_PUBLIC_COACH_NETWORK_ENABLED ?? null,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
     missing,
     optionalMissing,
     hint:

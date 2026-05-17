@@ -36,7 +36,31 @@ Using root = `apps/app` causes `npm i` + `workspace:*` errors.
 | App | Path |
 |-----|------|
 | Coach | `/api/health` |
-| Web | `/` |
+| Web | `/api/health` |
+
+Web health JSON includes `coachNetworkEnabled` — if `false` after deploy, the site will look “old” (no Coaches nav, `/find-coach` 404) even on the latest git commit.
+
+## “Deployed commit is correct but the site looks outdated”
+
+This is usually **not** a stale git deploy. Check in order:
+
+1. **`NEXT_PUBLIC_COACH_NETWORK_ENABLED`**  
+   Must be `true` in Dokploy **Build-time Arguments** and **Environment** for **both** web and app, then **rebuild** (client bundles bake `NEXT_PUBLIC_*` at build time).  
+   Example templates had `false` for web — production then hides Coach Network UI while marketing pages still look “fine”.
+
+2. **Login redirects to `https://0.0.0.0:3000/...`**  
+   Docker sets `HOSTNAME=0.0.0.0` so the app listens on all interfaces; middleware used to copy `req.url` into `redirect_url`.  
+   Fix: set `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_WEB_URL` to public HTTPS origins; redeploy after `request-origin` proxy fix.  
+   Quick test: open a protected URL while logged out — `Location` should use `ohhike.com` / `app.ohhike.com`, not `0.0.0.0`.
+
+3. **Empty coach directory**  
+   `/find-coach` is live but lists zero rows until coaches set `is_public = true` in Supabase (or you run `docs/supabase/dev_seed_coach_network_profiles.sql`).
+
+4. **Wrong Dokploy service / domain**  
+   Two apps from one repo: `Dockerfile` → app domain, `Dockerfile.web` → marketing domain. Rebuild **both** after monorepo changes.
+
+5. **Browser / CDN cache**  
+   Hard refresh; marketing HTML uses `no-store` but assets are hashed — stale JS is rare after a full rebuild.
 
 ## Site does not load (domain valid, 502 / timeout)
 

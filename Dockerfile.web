@@ -12,8 +12,12 @@ RUN pnpm install --frozen-lockfile
 # This is baked into static/client output. Default matches the hosted OhHike app;
 # Dokploy can still override it with a build-time argument for other domains.
 ARG NEXT_PUBLIC_APP_URL=https://app.ohhike.com
+ARG NEXT_PUBLIC_WEB_URL=https://ohhike.com
+ARG NEXT_PUBLIC_COACH_NETWORK_ENABLED=true
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_WEB_URL=$NEXT_PUBLIC_WEB_URL
+ENV NEXT_PUBLIC_COACH_NETWORK_ENABLED=$NEXT_PUBLIC_COACH_NETWORK_ENABLED
 
 RUN node apps/web/scripts/validate-docker-build-env.mjs
 RUN pnpm turbo build --filter=web

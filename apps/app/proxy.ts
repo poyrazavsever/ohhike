@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getClerkMiddlewareKeys } from "./lib/clerk-env";
 import { isCoachNetworkEnabled } from "./lib/coach-network";
+import { getRequestPublicOrigin, getRequestPublicUrl } from "./lib/request-origin";
 
 const isCoachNetworkRoute = createRouteMatcher(["/coach-network(.*)"]);
 
@@ -24,8 +25,8 @@ export default clerkMiddleware(
     const { isAuthenticated } = await auth();
 
     if (!isAuthenticated && !isPublicRoute(req)) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("redirect_url", req.url);
+      const loginUrl = new URL("/login", getRequestPublicOrigin(req));
+      loginUrl.searchParams.set("redirect_url", getRequestPublicUrl(req));
 
       return NextResponse.redirect(loginUrl);
     }
