@@ -132,6 +132,12 @@ const navGroups = [
         feature: "coachMarketplace",
       },
       {
+        href: "/coach-network/messages",
+        label: "Messages",
+        icon: "solar:chat-round-dots-bold",
+        feature: "coachMarketplace",
+      },
+      {
         href: "/coach-network/packages",
         label: "Packages",
         icon: "solar:box-bold",

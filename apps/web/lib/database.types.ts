@@ -143,6 +143,10 @@ export type Database = {
           conversation_type: string;
           organization_id: string | null;
           context_id: string | null;
+          last_message_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;
@@ -167,6 +171,7 @@ export type Database = {
           body: string;
           message_type: string;
           metadata: Json | null;
+          created_at: string | null;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;
