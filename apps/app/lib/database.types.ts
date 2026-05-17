@@ -118,6 +118,64 @@ export type DataSource =
   | "ai"
   | "other";
 
+export type AthleteSource = "roster" | "invite_claim" | "marketplace";
+
+export type CoachNetworkApplicationStatus =
+  | "draft"
+  | "submitted"
+  | "under_review"
+  | "accepted"
+  | "declined"
+  | "withdrawn"
+  | "expired";
+
+export type CoachNetworkOfferStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "declined"
+  | "expired"
+  | "cancelled";
+
+export type RemoteCoachingRelationshipStatus =
+  | "pending_payment"
+  | "active"
+  | "paused"
+  | "completed"
+  | "cancelled";
+
+export type RemoteCoachingPaymentStatus =
+  | "pending_manual"
+  | "confirmed_manual"
+  | "waived_demo";
+
+export type MarketplaceConversationType =
+  | "application"
+  | "offer"
+  | "coaching"
+  | "proof";
+
+export type MarketplaceParticipantRole = "coach" | "athlete" | "system";
+
+export type MarketplaceMessageType = "text" | "system";
+
+export type TrainingProofStatus =
+  | "pending"
+  | "approved"
+  | "needs_revision"
+  | "rejected";
+
+export type CoachingProgramAssignmentStatus =
+  | "active"
+  | "completed"
+  | "cancelled";
+
+export type CoachReputationEventType =
+  | "review"
+  | "completion"
+  | "dispute"
+  | "adjustment";
+
 export type Database = {
   public: {
     Tables: {
@@ -328,6 +386,8 @@ export type Database = {
           weight_kg: number | null;
           dominant_side: string | null;
           status: AthleteStatus | null;
+          source: AthleteSource;
+          marketplace_user_id: string | null;
           notes: string | null;
           metadata: Json | null;
           created_by: string | null;
@@ -351,6 +411,8 @@ export type Database = {
           weight_kg?: number | null;
           dominant_side?: string | null;
           status?: AthleteStatus | null;
+          source?: AthleteSource;
+          marketplace_user_id?: string | null;
           notes?: string | null;
           metadata?: Json | null;
           created_by?: string | null;
@@ -374,6 +436,8 @@ export type Database = {
           weight_kg?: number | null;
           dominant_side?: string | null;
           status?: AthleteStatus | null;
+          source?: AthleteSource;
+          marketplace_user_id?: string | null;
           notes?: string | null;
           metadata?: Json | null;
           created_by?: string | null;
@@ -1447,6 +1511,666 @@ export type Database = {
         };
         Relationships: [];
       };
+      coach_marketplace_profiles: {
+        Row: {
+          id: string;
+          organization_id: string;
+          coach_user_id: string;
+          slug: string;
+          display_name: string;
+          headline: string | null;
+          bio: string | null;
+          photo_url: string | null;
+          specialties: string[] | null;
+          sports: SportType[] | null;
+          coaching_modes: string[] | null;
+          languages: string[] | null;
+          location_country: string | null;
+          location_city: string | null;
+          years_experience: number | null;
+          certifications: Json | null;
+          pricing_display: string | null;
+          capacity: number | null;
+          response_time_avg_hours: number | null;
+          is_public: boolean;
+          is_accepting_clients: boolean;
+          verified_at: string | null;
+          average_rating: number | null;
+          review_count: number;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          coach_user_id: string;
+          slug: string;
+          display_name: string;
+          headline?: string | null;
+          bio?: string | null;
+          photo_url?: string | null;
+          specialties?: string[] | null;
+          sports?: SportType[] | null;
+          coaching_modes?: string[] | null;
+          languages?: string[] | null;
+          location_country?: string | null;
+          location_city?: string | null;
+          years_experience?: number | null;
+          certifications?: Json | null;
+          pricing_display?: string | null;
+          capacity?: number | null;
+          response_time_avg_hours?: number | null;
+          is_public?: boolean;
+          is_accepting_clients?: boolean;
+          verified_at?: string | null;
+          average_rating?: number | null;
+          review_count?: number;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          coach_user_id?: string;
+          slug?: string;
+          display_name?: string;
+          headline?: string | null;
+          bio?: string | null;
+          photo_url?: string | null;
+          specialties?: string[] | null;
+          sports?: SportType[] | null;
+          coaching_modes?: string[] | null;
+          languages?: string[] | null;
+          location_country?: string | null;
+          location_city?: string | null;
+          years_experience?: number | null;
+          certifications?: Json | null;
+          pricing_display?: string | null;
+          capacity?: number | null;
+          response_time_avg_hours?: number | null;
+          is_public?: boolean;
+          is_accepting_clients?: boolean;
+          verified_at?: string | null;
+          average_rating?: number | null;
+          review_count?: number;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      athlete_marketplace_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          display_name: string;
+          bio: string | null;
+          photo_url: string | null;
+          sport_interests: SportType[] | null;
+          goals: string | null;
+          timezone: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          display_name: string;
+          bio?: string | null;
+          photo_url?: string | null;
+          sport_interests?: SportType[] | null;
+          goals?: string | null;
+          timezone?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          display_name?: string;
+          bio?: string | null;
+          photo_url?: string | null;
+          sport_interests?: SportType[] | null;
+          goals?: string | null;
+          timezone?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coaching_packages: {
+        Row: {
+          id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          title: string;
+          description: string | null;
+          duration_weeks: number | null;
+          price_cents: number | null;
+          currency: string;
+          deliverables: Json | null;
+          is_active: boolean;
+          sort_order: number;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          coach_profile_id: string;
+          organization_id: string;
+          title: string;
+          description?: string | null;
+          duration_weeks?: number | null;
+          price_cents?: number | null;
+          currency?: string;
+          deliverables?: Json | null;
+          is_active?: boolean;
+          sort_order?: number;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          coach_profile_id?: string;
+          organization_id?: string;
+          title?: string;
+          description?: string | null;
+          duration_weeks?: number | null;
+          price_cents?: number | null;
+          currency?: string;
+          deliverables?: Json | null;
+          is_active?: boolean;
+          sort_order?: number;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      marketplace_conversations: {
+        Row: {
+          id: string;
+          conversation_type: MarketplaceConversationType;
+          context_id: string | null;
+          organization_id: string | null;
+          last_message_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          conversation_type: MarketplaceConversationType;
+          context_id?: string | null;
+          organization_id?: string | null;
+          last_message_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          conversation_type?: MarketplaceConversationType;
+          context_id?: string | null;
+          organization_id?: string | null;
+          last_message_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coach_network_applications: {
+        Row: {
+          id: string;
+          athlete_user_id: string;
+          athlete_marketplace_profile_id: string | null;
+          coach_profile_id: string;
+          organization_id: string;
+          package_id: string | null;
+          conversation_id: string | null;
+          status: CoachNetworkApplicationStatus;
+          athlete_message: string | null;
+          coach_response: string | null;
+          form_data: Json | null;
+          metadata: Json | null;
+          submitted_at: string | null;
+          resolved_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          athlete_user_id: string;
+          athlete_marketplace_profile_id?: string | null;
+          coach_profile_id: string;
+          organization_id: string;
+          package_id?: string | null;
+          conversation_id?: string | null;
+          status?: CoachNetworkApplicationStatus;
+          athlete_message?: string | null;
+          coach_response?: string | null;
+          form_data?: Json | null;
+          metadata?: Json | null;
+          submitted_at?: string | null;
+          resolved_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          athlete_user_id?: string;
+          athlete_marketplace_profile_id?: string | null;
+          coach_profile_id?: string;
+          organization_id?: string;
+          package_id?: string | null;
+          conversation_id?: string | null;
+          status?: CoachNetworkApplicationStatus;
+          athlete_message?: string | null;
+          coach_response?: string | null;
+          form_data?: Json | null;
+          metadata?: Json | null;
+          submitted_at?: string | null;
+          resolved_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coach_network_offers: {
+        Row: {
+          id: string;
+          application_id: string;
+          organization_id: string;
+          coach_user_id: string;
+          athlete_user_id: string;
+          package_id: string | null;
+          conversation_id: string | null;
+          title: string;
+          description: string | null;
+          terms: string | null;
+          package_snapshot: Json | null;
+          price_cents: number | null;
+          currency: string;
+          status: CoachNetworkOfferStatus;
+          payment_status: RemoteCoachingPaymentStatus;
+          expires_at: string | null;
+          sent_at: string | null;
+          accepted_at: string | null;
+          declined_at: string | null;
+          remote_relationship_id: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          application_id: string;
+          organization_id: string;
+          coach_user_id: string;
+          athlete_user_id: string;
+          package_id?: string | null;
+          conversation_id?: string | null;
+          title: string;
+          description?: string | null;
+          terms?: string | null;
+          package_snapshot?: Json | null;
+          price_cents?: number | null;
+          currency?: string;
+          status?: CoachNetworkOfferStatus;
+          payment_status?: RemoteCoachingPaymentStatus;
+          expires_at?: string | null;
+          sent_at?: string | null;
+          accepted_at?: string | null;
+          declined_at?: string | null;
+          remote_relationship_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          application_id?: string;
+          organization_id?: string;
+          coach_user_id?: string;
+          athlete_user_id?: string;
+          package_id?: string | null;
+          conversation_id?: string | null;
+          title?: string;
+          description?: string | null;
+          terms?: string | null;
+          package_snapshot?: Json | null;
+          price_cents?: number | null;
+          currency?: string;
+          status?: CoachNetworkOfferStatus;
+          payment_status?: RemoteCoachingPaymentStatus;
+          expires_at?: string | null;
+          sent_at?: string | null;
+          accepted_at?: string | null;
+          declined_at?: string | null;
+          remote_relationship_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      remote_coaching_relationships: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string | null;
+          athlete_user_id: string;
+          coach_user_id: string;
+          coach_profile_id: string;
+          application_id: string | null;
+          offer_id: string | null;
+          status: RemoteCoachingRelationshipStatus;
+          payment_status: RemoteCoachingPaymentStatus;
+          started_at: string | null;
+          ended_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          athlete_user_id: string;
+          coach_user_id: string;
+          coach_profile_id: string;
+          application_id?: string | null;
+          offer_id?: string | null;
+          status?: RemoteCoachingRelationshipStatus;
+          payment_status?: RemoteCoachingPaymentStatus;
+          started_at?: string | null;
+          ended_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          team_id?: string | null;
+          athlete_id?: string | null;
+          athlete_user_id?: string;
+          coach_user_id?: string;
+          coach_profile_id?: string;
+          application_id?: string | null;
+          offer_id?: string | null;
+          status?: RemoteCoachingRelationshipStatus;
+          payment_status?: RemoteCoachingPaymentStatus;
+          started_at?: string | null;
+          ended_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      marketplace_conversation_participants: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          user_id: string;
+          participant_role: MarketplaceParticipantRole;
+          last_read_at: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          user_id: string;
+          participant_role: MarketplaceParticipantRole;
+          last_read_at?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          user_id?: string;
+          participant_role?: MarketplaceParticipantRole;
+          last_read_at?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      marketplace_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          organization_id: string | null;
+          sender_user_id: string;
+          body: string;
+          message_type: MarketplaceMessageType;
+          metadata: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          organization_id?: string | null;
+          sender_user_id: string;
+          body: string;
+          message_type?: MarketplaceMessageType;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          organization_id?: string | null;
+          sender_user_id?: string;
+          body?: string;
+          message_type?: MarketplaceMessageType;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coaching_program_assignments: {
+        Row: {
+          id: string;
+          relationship_id: string;
+          organization_id: string;
+          athlete_id: string;
+          assigned_by: string | null;
+          title: string;
+          description: string | null;
+          program_metadata: Json | null;
+          status: CoachingProgramAssignmentStatus;
+          starts_at: string | null;
+          ends_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          relationship_id: string;
+          organization_id: string;
+          athlete_id: string;
+          assigned_by?: string | null;
+          title: string;
+          description?: string | null;
+          program_metadata?: Json | null;
+          status?: CoachingProgramAssignmentStatus;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          relationship_id?: string;
+          organization_id?: string;
+          athlete_id?: string;
+          assigned_by?: string | null;
+          title?: string;
+          description?: string | null;
+          program_metadata?: Json | null;
+          status?: CoachingProgramAssignmentStatus;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      training_proofs: {
+        Row: {
+          id: string;
+          relationship_id: string;
+          assignment_id: string | null;
+          organization_id: string;
+          athlete_id: string;
+          submitted_by: string;
+          title: string;
+          notes: string | null;
+          proof_date: string;
+          storage_paths: Json | null;
+          media_urls: string[] | null;
+          status: TrainingProofStatus;
+          coach_feedback: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          relationship_id: string;
+          assignment_id?: string | null;
+          organization_id: string;
+          athlete_id: string;
+          submitted_by: string;
+          title: string;
+          notes?: string | null;
+          proof_date?: string;
+          storage_paths?: Json | null;
+          media_urls?: string[] | null;
+          status?: TrainingProofStatus;
+          coach_feedback?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          relationship_id?: string;
+          assignment_id?: string | null;
+          organization_id?: string;
+          athlete_id?: string;
+          submitted_by?: string;
+          title?: string;
+          notes?: string | null;
+          proof_date?: string;
+          storage_paths?: Json | null;
+          media_urls?: string[] | null;
+          status?: TrainingProofStatus;
+          coach_feedback?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coach_reviews: {
+        Row: {
+          id: string;
+          relationship_id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          athlete_user_id: string;
+          rating: number;
+          title: string | null;
+          body: string | null;
+          is_public: boolean;
+          moderated_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          relationship_id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          athlete_user_id: string;
+          rating: number;
+          title?: string | null;
+          body?: string | null;
+          is_public?: boolean;
+          moderated_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          relationship_id?: string;
+          coach_profile_id?: string;
+          organization_id?: string;
+          athlete_user_id?: string;
+          rating?: number;
+          title?: string | null;
+          body?: string | null;
+          is_public?: boolean;
+          moderated_at?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      coach_reputation_events: {
+        Row: {
+          id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          event_type: CoachReputationEventType;
+          points_delta: number;
+          reference_id: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          coach_profile_id: string;
+          organization_id: string;
+          event_type: CoachReputationEventType;
+          points_delta?: number;
+          reference_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          coach_profile_id?: string;
+          organization_id?: string;
+          event_type?: CoachReputationEventType;
+          points_delta?: number;
+          reference_id?: string | null;
+          metadata?: Json | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -1536,9 +2260,32 @@ export type Database = {
           similarity: number;
         }[];
       };
+      is_marketplace_conversation_participant: {
+        Args: {
+          conv_id: string;
+        };
+        Returns: boolean;
+      };
+      can_view_coach_marketplace_profile: {
+        Args: {
+          profile_id: string;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       document_type: DocumentType;
+      athlete_source: AthleteSource;
+      coach_network_application_status: CoachNetworkApplicationStatus;
+      coach_network_offer_status: CoachNetworkOfferStatus;
+      remote_coaching_relationship_status: RemoteCoachingRelationshipStatus;
+      remote_coaching_payment_status: RemoteCoachingPaymentStatus;
+      marketplace_conversation_type: MarketplaceConversationType;
+      marketplace_participant_role: MarketplaceParticipantRole;
+      marketplace_message_type: MarketplaceMessageType;
+      training_proof_status: TrainingProofStatus;
+      coaching_program_assignment_status: CoachingProgramAssignmentStatus;
+      coach_reputation_event_type: CoachReputationEventType;
       athlete_status: AthleteStatus;
       organization_role: OrganizationRole;
       organization_type: OrganizationType;
