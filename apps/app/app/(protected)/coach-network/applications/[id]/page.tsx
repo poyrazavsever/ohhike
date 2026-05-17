@@ -2,10 +2,7 @@ import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  getCoachNetworkApplicationDetail,
-  markCoachNetworkApplicationViewed,
-} from "../../../../actions/coach-network";
+import { getCoachNetworkApplicationDetail } from "../../../../actions/coach-network";
 import {
   listCoachingPackagesForWorkspace,
   listOffersForApplication,
@@ -16,6 +13,7 @@ import {
 } from "../../../../../components/dashboard/dashboard-cards";
 import { buildCoachApplicationSummary } from "../../../../../lib/coach-network/application-summary";
 import { ApplicationDetailActions } from "./_components/application-detail-actions";
+import { MarkApplicationViewed } from "./_components/mark-application-viewed";
 import { SendOfferForm } from "./_components/send-offer-form";
 
 type ApplicationDetailPageProps = {
@@ -30,7 +28,6 @@ export default async function CoachNetworkApplicationDetailPage({
   params,
 }: ApplicationDetailPageProps) {
   const { id } = await params;
-  await markCoachNetworkApplicationViewed(id);
 
   const [application, packages, offers] = await Promise.all([
     getCoachNetworkApplicationDetail(id),
@@ -79,6 +76,8 @@ export default async function CoachNetworkApplicationDetailPage({
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <MarkApplicationViewed applicationId={id} status={application.status} />
+
       <Link
         href="/coach-network/applications"
         className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
