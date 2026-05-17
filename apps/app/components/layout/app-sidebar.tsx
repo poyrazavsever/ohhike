@@ -131,6 +131,18 @@ const navGroups = [
         icon: "solar:inbox-bold",
         feature: "coachMarketplace",
       },
+      {
+        href: "/coach-network/packages",
+        label: "Packages",
+        icon: "solar:box-bold",
+        feature: "coachMarketplace",
+      },
+      {
+        href: "/coach-network/remote-athletes",
+        label: "Remote athletes",
+        icon: "solar:users-group-rounded-bold",
+        feature: "coachMarketplace",
+      },
     ],
   },
 ];

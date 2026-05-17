@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { listAthleteApplications } from "../../../actions/coach-network-applications";
+import { listAthleteOffers } from "../../../actions/coach-network-offers";
 
 function formatStatus(status: string) {
   return status.replaceAll("_", " ");
@@ -12,7 +13,7 @@ function formatStatus(status: string) {
 export default async function AthleteApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submitted?: string }>;
+  searchParams: Promise<{ submitted?: string; offerAccepted?: string }>;
 }) {
   const { userId } = await auth();
 
@@ -20,8 +21,11 @@ export default async function AthleteApplicationsPage({
     redirect("/login?redirect_url=/athlete/applications");
   }
 
-  const { submitted } = await searchParams;
-  const applications = await listAthleteApplications();
+  const { submitted, offerAccepted } = await searchParams;
+  const [applications, offers] = await Promise.all([
+    listAthleteApplications(),
+    listAthleteOffers(),
+  ]);
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-16 md:px-8">
@@ -41,6 +45,36 @@ export default async function AthleteApplicationsPage({
         <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
           Application submitted. The coach will review it in their inbox.
         </p>
+      ) : null}
+
+      {offerAccepted ? (
+        <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          Offer accepted. Your coach will confirm payment and add you to their roster.
+        </p>
+      ) : null}
+
+      {offers.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-extrabold text-foreground">Coaching offers</h2>
+          <ul className="mt-4 space-y-3">
+            {offers.map((offer) => (
+              <li key={offer.id}>
+                <Link
+                  href={`/athlete/offers/${offer.id}`}
+                  className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:bg-muted/40"
+                >
+                  <div>
+                    <p className="font-extrabold text-foreground">{offer.title}</p>
+                    <p className="mt-1 text-xs font-bold uppercase text-muted-foreground">
+                      {formatStatus(offer.status)}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">View →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {applications.length === 0 ? (

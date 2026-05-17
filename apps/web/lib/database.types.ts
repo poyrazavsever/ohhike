@@ -172,6 +172,65 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      teams: {
+        Row: { id: string; organization_id: string };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      athletes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string;
+          user_id: string | null;
+          first_name: string;
+          last_name: string | null;
+          display_name: string | null;
+          email: string | null;
+          source: string;
+          marketplace_user_id: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coach_network_offers: {
+        Row: {
+          id: string;
+          application_id: string;
+          organization_id: string;
+          coach_user_id: string;
+          athlete_user_id: string;
+          title: string;
+          description: string | null;
+          terms: string | null;
+          package_snapshot: Json | null;
+          price_cents: number | null;
+          currency: string;
+          status: string;
+          payment_status: string;
+          sent_at: string | null;
+          accepted_at: string | null;
+          declined_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      remote_coaching_relationships: {
+        Row: {
+          id: string;
+          organization_id: string;
+          team_id: string | null;
+          athlete_id: string | null;
+          status: string;
+          payment_status: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       coaching_packages: {
         Row: {
           id: string;

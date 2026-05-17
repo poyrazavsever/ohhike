@@ -5,8 +5,13 @@ import {
   getCoachNetworkApplicationDetail,
   markCoachNetworkApplicationViewed,
 } from "../../../../actions/coach-network";
+import {
+  listCoachingPackagesForWorkspace,
+  listOffersForApplication,
+} from "../../../../actions/coach-network-offers";
 import { buildCoachApplicationSummary } from "../../../../../lib/coach-network/application-summary";
 import { ApplicationDetailActions } from "./_components/application-detail-actions";
+import { SendOfferForm } from "./_components/send-offer-form";
 
 type ApplicationDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -22,7 +27,11 @@ export default async function CoachNetworkApplicationDetailPage({
   const { id } = await params;
   await markCoachNetworkApplicationViewed(id);
 
-  const application = await getCoachNetworkApplicationDetail(id);
+  const [application, packages, offers] = await Promise.all([
+    getCoachNetworkApplicationDetail(id),
+    listCoachingPackagesForWorkspace(),
+    listOffersForApplication(id),
+  ]);
 
   if (!application) {
     notFound();
@@ -119,6 +128,12 @@ export default async function CoachNetworkApplicationDetailPage({
           </p>
         </section>
       ) : null}
+
+      <SendOfferForm
+        applicationId={application.id}
+        packages={packages}
+        existingOffers={offers}
+      />
 
       <ApplicationDetailActions
         applicationId={application.id}
