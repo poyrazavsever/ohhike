@@ -91,6 +91,9 @@ export type Database = {
           display_name: string;
           headline: string | null;
           bio: string | null;
+          intro_video_url: string | null;
+          training_philosophy: string | null;
+          featured_result: string | null;
           photo_url: string | null;
           specialties: string[] | null;
           sports: SportType[] | null;

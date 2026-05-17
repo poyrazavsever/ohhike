@@ -1,8 +1,5 @@
 import type { SportType } from "../database.types";
-import {
-  getCoachReputationScore,
-  parseReviewMetadata,
-} from "./reviews";
+import { getCoachReputationScore, parseReviewMetadata } from "./reviews";
 import { createSupabaseAdminClient } from "../supabase-admin";
 import type {
   PublicCoachCard,
@@ -16,6 +13,9 @@ type CoachProfileRow = {
   display_name: string;
   headline: string | null;
   bio: string | null;
+  intro_video_url: string | null;
+  training_philosophy: string | null;
+  featured_result: string | null;
   photo_url: string | null;
   specialties: string[] | null;
   sports: SportType[] | null;
@@ -148,7 +148,7 @@ export async function getPublicCoachBySlug(
   const { data: profile, error } = await supabase
     .from("coach_marketplace_profiles")
     .select(
-      "id, slug, display_name, headline, bio, photo_url, specialties, sports, coaching_modes, languages, location_country, location_city, years_experience, pricing_display, response_time_avg_hours, average_rating, review_count, is_accepting_clients, created_at",
+      "id, slug, display_name, headline, bio, intro_video_url, training_philosophy, featured_result, photo_url, specialties, sports, coaching_modes, languages, location_country, location_city, years_experience, pricing_display, response_time_avg_hours, average_rating, review_count, is_accepting_clients, created_at",
     )
     .eq("slug", slug)
     .eq("is_public", true)
@@ -164,6 +164,9 @@ export async function getPublicCoachBySlug(
 
   const row = profile as CoachProfileRow & {
     bio: string | null;
+    intro_video_url: string | null;
+    training_philosophy: string | null;
+    featured_result: string | null;
     specialties: string[] | null;
     languages: string[] | null;
     years_experience: number | null;
@@ -214,6 +217,9 @@ export async function getPublicCoachBySlug(
   return {
     ...mapCoachCard(row),
     bio: row.bio,
+    introVideoUrl: row.intro_video_url,
+    trainingPhilosophy: row.training_philosophy,
+    featuredResult: row.featured_result,
     specialties: row.specialties ?? [],
     languages: row.languages ?? [],
     yearsExperience: row.years_experience,

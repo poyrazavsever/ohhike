@@ -17,6 +17,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `011_team_memory_rag.sql`: Team Memory Assistant icin `documents`, `document_embeddings`, `assistant_threads`, `assistant_messages` ve `match_document_embeddings` RPC.
 - `012_coach_network.sql`: Coach Network marketplace — profiller, paketler, basvuru/teklif, remote coaching, mesajlasma (Realtime), proof, review ve `athletes.source`.
 - `013_marketplace_messages_realtime.sql`: CN7-01 — `marketplace_messages` Realtime publication + replica identity.
+- `014_coach_profile_enrichment.sql`: Public antrenor profilini buyutmek icin tanitim videosu, antrenman felsefesi ve one cikan sonuc alanlari.
 
 ## Kapsam
 
@@ -57,6 +58,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `010_organization_staff_invites.sql`, staff davet linkleri icin tabloyu kurar. Staff invite olustururken tablo bulunamadi hatasi aliyorsaniz bu dosyayi Supabase SQL Editor'de calistirin.
 - `011_team_memory_rag.sql`, `/team-memory` assistant sohbeti ve vector arama icin tablolari kurar. Assistant veya embedding hatasi aliyorsaniz bu dosyayi calistirin; `GEMINI_API_KEY` ile embedding + LLM cevaplari acilir.
 - `012_coach_network.sql`, Coach Network (find-coach, basvuru, teklif, mesajlasma, remote athlete, program, proof, `coach_reviews`, `coach_reputation_events`) icin tablolari kurar. CN6: sporcu public review (web), koç private rating (`remote_coaching_relationships.metadata`), reputation ledger + profil `average_rating`/`review_count` senkronu.
+- `014_coach_profile_enrichment.sql`, public antrenor profilindeki video/felsefe/sonuc bloklarini besleyen alanlari ekler.
 - `dev_seed_coach_network_profiles.sql`, `/find-coach` demo listesi icin 3 public antrenor profili (en az 1 org + owner gerekir).
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilir (MVP varsayilan).
 
@@ -77,6 +79,7 @@ Yeni Supabase projesinde **sirayla** SQL Editor'de calistir (her dosya idempoten
 011_team_memory_rag.sql
 012_coach_network.sql
 013_marketplace_messages_realtime.sql
+014_coach_profile_enrichment.sql
 ```
 
 `001_initial_schema.sql` yalnizca sifirdan tam schema kuruyorsan; cogu ortamda `002`–`011` yeterli.
@@ -87,8 +90,8 @@ Deploy sonrasi: `GET /api/health` — eksik env listesini dondurur.
 
 ## App client kullanimi (MVP)
 
-| Client | Dosya | Kullanim |
-|--------|-------|----------|
-| `createSupabaseAdminClient()` | `lib/supabase-admin.ts` | Varsayilan — loader, action, webhook |
-| `createActionSupabase()` | `lib/supabase-action.ts` | MVP alias → admin client |
+| Client                         | Dosya                    | Kullanim                                     |
+| ------------------------------ | ------------------------ | -------------------------------------------- |
+| `createSupabaseAdminClient()`  | `lib/supabase-admin.ts`  | Varsayilan — loader, action, webhook         |
+| `createActionSupabase()`       | `lib/supabase-action.ts` | MVP alias → admin client                     |
 | `createSupabaseServerClient()` | `lib/supabase-server.ts` | Post-MVP RLS icin hazir; su an zorunlu degil |

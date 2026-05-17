@@ -19,6 +19,9 @@ export type CoachMarketplaceProfileInput = {
   slug: string;
   headline?: string;
   bio?: string;
+  introVideoUrl?: string;
+  trainingPhilosophy?: string;
+  featuredResult?: string;
   photoUrl?: string;
   specialties?: string[];
   sports?: SportType[];
@@ -41,6 +44,35 @@ type ActionResult =
 function cleanString(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function normalizeYouTubeUrl(value: string | undefined) {
+  const urlValue = cleanString(value);
+
+  if (!urlValue) {
+    return null;
+  }
+
+  try {
+    const url = new URL(urlValue);
+    const host = url.hostname.replace(/^www\./, "");
+    const videoId =
+      host === "youtu.be"
+        ? url.pathname.split("/").filter(Boolean)[0]
+        : host === "youtube.com" || host === "m.youtube.com"
+          ? (url.searchParams.get("v") ??
+            url.pathname.match(/^\/(?:shorts|embed)\/([^/]+)/)?.[1] ??
+            null)
+          : null;
+
+    if (!videoId) {
+      return null;
+    }
+
+    return `https://www.youtube.com/watch?v=${videoId}`;
+  } catch {
+    return null;
+  }
 }
 
 function cleanStringArray(values: string[] | undefined) {
@@ -102,10 +134,15 @@ export async function upsertCoachMarketplaceProfile(
   const workspace = await getCurrentWorkspace();
 
   if (!isCoachStaffRole(workspace.membership.role)) {
-    return { ok: false, error: "Only coaching staff can manage marketplace profiles." };
+    return {
+      ok: false,
+      error: "Only coaching staff can manage marketplace profiles.",
+    };
   }
 
-  const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
+  const entitlement = await getPrimaryTeamEntitlement(
+    workspace.organization.id,
+  );
   if (entitlement.plan === "basic_team") {
     return {
       ok: false,
@@ -123,7 +160,17 @@ export async function upsertCoachMarketplaceProfile(
   if (!isValidCoachProfileSlug(slug)) {
     return {
       ok: false,
-      error: "Slug must be at least 3 characters and use lowercase letters, numbers, and hyphens.",
+      error:
+        "Slug must be at least 3 characters and use lowercase letters, numbers, and hyphens.",
+    };
+  }
+
+  const introVideoUrl = normalizeYouTubeUrl(input.introVideoUrl);
+
+  if (cleanString(input.introVideoUrl) && !introVideoUrl) {
+    return {
+      ok: false,
+      error: "Intro video must be a valid YouTube URL.",
     };
   }
 
@@ -147,6 +194,9 @@ export async function upsertCoachMarketplaceProfile(
     display_name: displayName,
     headline: cleanString(input.headline),
     bio: cleanString(input.bio),
+    intro_video_url: introVideoUrl,
+    training_philosophy: cleanString(input.trainingPhilosophy),
+    featured_result: cleanString(input.featuredResult),
     photo_url: cleanString(input.photoUrl),
     specialties: cleanStringArray(input.specialties),
     sports: parseSports(input.sports),

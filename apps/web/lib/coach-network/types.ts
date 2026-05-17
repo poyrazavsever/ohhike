@@ -45,6 +45,9 @@ export type PublicCoachReview = {
 
 export type PublicCoachProfile = PublicCoachCard & {
   bio: string | null;
+  introVideoUrl: string | null;
+  trainingPhilosophy: string | null;
+  featuredResult: string | null;
   specialties: string[];
   languages: string[];
   yearsExperience: number | null;
