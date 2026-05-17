@@ -1,7 +1,7 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
-import { Footer } from "../components/layout/footer";
-import { Navbar } from "../components/layout/navbar";
+import { getClerkPublishableKey } from "../lib/clerk-env";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,12 +14,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const publishableKey = getClerkPublishableKey();
+
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        {children}
-        <Footer />
+        <ClerkProvider
+          publishableKey={publishableKey || undefined}
+          signInUrl="/login"
+          signUpUrl="/register"
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );

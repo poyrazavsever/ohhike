@@ -4,15 +4,37 @@ import { NextResponse } from "next/server";
 import { getClerkMiddlewareKeys } from "./lib/clerk-env";
 import { isCoachNetworkEnabled } from "./lib/coach-network";
 
-const isCoachNetworkRoute = createRouteMatcher(["/coach-network(.*)"]);
-
-const isPublicRoute = createRouteMatcher([
-  "/api/health",
-  "/api/webhooks/clerk(.*)",
+const isCoachNetworkRoute = createRouteMatcher([
+  "/find-coach(.*)",
+  "/coach-network(.*)",
+  "/account-type(.*)",
+  "/athlete(.*)",
   "/login(.*)",
   "/register(.*)",
-  "/invite(.*)",
-  "/onboarding(.*)",
+]);
+
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/about(.*)",
+  "/features(.*)",
+  "/pricing(.*)",
+  "/blog(.*)",
+  "/community(.*)",
+  "/contact(.*)",
+  "/privacy(.*)",
+  "/terms(.*)",
+  "/security(.*)",
+  "/self-host(.*)",
+  "/docs(.*)",
+  "/find-coach(.*)",
+  "/coach-network/coaches/(.*)",
+  "/login(.*)",
+  "/register(.*)",
+]);
+
+const isCoachNetworkProtectedRoute = createRouteMatcher([
+  "/account-type(.*)",
+  "/athlete(.*)",
 ]);
 
 export default clerkMiddleware(
@@ -21,18 +43,25 @@ export default clerkMiddleware(
       return new NextResponse(null, { status: 404 });
     }
 
+    if (!isCoachNetworkEnabled()) {
+      return NextResponse.next();
+    }
+
     const { isAuthenticated } = await auth();
 
-    if (!isAuthenticated && !isPublicRoute(req)) {
+    if (isCoachNetworkProtectedRoute(req) && !isAuthenticated) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("redirect_url", req.url);
-
       return NextResponse.redirect(loginUrl);
     }
 
-    const response = NextResponse.next();
-    response.headers.set("x-pathname", req.nextUrl.pathname);
-    return response;
+    if (!isPublicRoute(req) && !isAuthenticated) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect_url", req.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
   },
   () => getClerkMiddlewareKeys(),
 );

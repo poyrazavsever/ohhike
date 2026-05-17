@@ -7,7 +7,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { isCoachNetworkEnabled } from "../../lib/coach-network";
 import { getAppUrl } from "../../lib/site-url";
+import { NavbarCoachNetwork } from "./navbar-coach-network";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -205,6 +207,7 @@ export function Navbar() {
           >
             About Us
           </Link>
+          <NavbarCoachNetwork />
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -230,13 +233,15 @@ export function Navbar() {
             </a>
           </Button>
 
-          <Button
-            size="sm"
-            className="h-9 px-5 text-xs shadow-none"
-            asChild
-          >
-            <Link href={getAppUrl("/")}>Get Started</Link>
-          </Button>
+          {!isCoachNetworkEnabled() && (
+            <Button
+              size="sm"
+              className="h-9 px-5 text-xs shadow-none"
+              asChild
+            >
+              <Link href={getAppUrl("/")}>Get Started</Link>
+            </Button>
+          )}
         </div>
 
         <Button
