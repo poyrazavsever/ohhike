@@ -98,7 +98,7 @@ export default async function ReportsPage() {
               {aiReports.map((report) => (
                 <article
                   key={report.id}
-                  className="grid gap-3 p-4 md:grid-cols-[1.4fr_0.8fr_0.8fr]"
+                  className="grid gap-3 p-4 md:grid-cols-[1.4fr_0.8fr_0.8fr_auto]"
                 >
                   <div>
                     <p className="font-black text-foreground">
@@ -124,6 +124,16 @@ export default async function ReportsPage() {
                     <p className="mt-1 text-sm font-black text-foreground">
                       {report.model_provider ?? "manual"}
                     </p>
+                  </div>
+                  <div className="flex items-center">
+                    {entitlement.pdf_export_enabled ? (
+                      <Link
+                        href={`/api/reports/export?reportId=${report.id}`}
+                        className="inline-flex items-center rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
+                      >
+                        PDF
+                      </Link>
+                    ) : null}
                   </div>
                 </article>
               ))}
@@ -159,3 +169,4 @@ export default async function ReportsPage() {
     </section>
   );
 }
+import Link from "next/link";

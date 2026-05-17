@@ -75,7 +75,7 @@ Migration dosyaları `docs/supabase/`:
 |--------|--------|
 | `team_billing_entitlements` tablosu + tipler | Clerk Billing checkout |
 | Yeni takımda varsayılan `basic_team` (`workspace.ts` actions) | Billing webhook → entitlement güncelleme |
-| `canCreateOrganization` → Pro / Pro Plus (`lib/workspace.ts`) | Gerçek PDF export üretimi |
+| `canCreateOrganization` → Pro / Pro Plus (`lib/workspace.ts`) | Çoklu export şablonları / gelişmiş branded tasarım |
 | `lib/billing/plans.ts` + `lib/billing/entitlements.ts` | Self-serve upgrade UI |
 | AI reports, Team Memory, planner, wearables ve atlet limiti için server-side gate paketi | Billing webhook → gerçek plan senkronu |
 | `/settings/billing` plan/limit görünümü | |
@@ -191,13 +191,13 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 |---|-----|
 | B2.1 | ✅ `lib/billing/plans.ts` — plan → entitlement flag / limit haritası |
 | B2.2 | ✅ `lib/billing/entitlements.ts` — primary/team entitlement okuma + default fallback |
-| B2.3 | ◐ Gate: AI report oluşturma, Team Memory, training planner, wearables tamam; PDF export üretimi bekliyor |
+| B2.3 | ✅ Gate: AI report oluşturma, Team Memory, training planner, wearables, PDF export |
 | B2.4 | ◐ Gate: `max_team_members` roster eklemede var; staff invite semantiği netleştirilecek |
 | B2.5 | ✅ UI: AI reports, Team Memory, planner, wearables kilit kartları + sidebar Pro rozetleri |
-| B2.6 | ◐ Pro Plus: `monthly_ai_report_limit` uygulanıyor; `branded_reports_enabled` ayarda görünür, gerçek branded export bekliyor |
+| B2.6 | ◐ Pro Plus: `monthly_ai_report_limit` uygulanıyor; `branded_reports_enabled` ilk PDF başlığında etkili, tam branded şablon bekliyor |
 | B2.7 | Yeni takım default `basic_team` (mevcut) — upgrade sonrası flag güncelleme |
 
-**Kodda bugün var:** `canCreateOrganization` (Pro+), yeni team → `basic_team`, AI report üretim limiti, Team Memory / planner / wearables gate’leri, sidebar Pro rozetleri ve roster limiti. Gerçek PDF export / branded report üretimi ile staff invite yorumu henüz açık.
+**Kodda bugün var:** `canCreateOrganization` (Pro+), yeni team → `basic_team`, AI report üretim limiti, Team Memory / planner / wearables / PDF export gate’leri, sidebar Pro rozetleri ve roster limiti. Tam branded şablon ile staff invite yorumu henüz açık.
 
 ### FAZ B3 — Canlı stabilizasyon ve gelir sonrası ürün tamamlama
 
@@ -207,7 +207,7 @@ Sıra önerisi; ihtiyaca göre kaydırılabilir.
 |------|---------|--------|
 | 1 | Canlı auth + smoke kapatma | webhook delivery, register → onboarding → dashboard |
 | 2 | `/reports` liste (PDF yok) | DB özet |
-| 3 | **PDF export** | Pro gate ile; şablon + indirme |
+| 3 | **PDF export** | ✅ İlk AI report PDF endpoint’i + indirme bağlantıları tamam |
 | 4 | **Strava** OAuth + sync | `006_wearables` üzerine |
 | 5 | Davet e-postası (Resend) | |
 | 6 | Dashboard metrik kartları | |

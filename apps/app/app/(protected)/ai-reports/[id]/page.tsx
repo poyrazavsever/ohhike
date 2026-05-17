@@ -13,6 +13,7 @@ import {
   parseObservationList,
   parseTrainingPlan,
 } from "../../../../lib/ai-report-display";
+import { getTeamEntitlement, getPrimaryTeamEntitlement } from "../../../../lib/billing/entitlements";
 import { getAiReportDetailData } from "../../../../lib/workspace";
 import { AiReportDetailActions } from "../_components/ai-report-detail-actions";
 import { AiReportObservationSection } from "../_components/ai-report-observation-section";
@@ -48,6 +49,9 @@ export default async function AiReportDetailPage({
   }
 
   const { workspace, report } = data;
+  const entitlement = report.team_id
+    ? await getTeamEntitlement(report.team_id)
+    : await getPrimaryTeamEntitlement(workspace.organization.id);
 
   const tactical = parseObservationList(report.tactical_observations);
   const athleteObs = parseObservationList(report.athlete_observations);
@@ -123,6 +127,15 @@ export default async function AiReportDetailPage({
           <Icon icon="solar:chat-round-dots-bold" className="size-3.5" />
           Ask Team Memory
         </Link>
+        {entitlement.pdf_export_enabled ? (
+          <Link
+            href={`/api/reports/export?reportId=${report.id}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground transition-colors hover:border-primary"
+          >
+            <Icon icon="solar:file-download-bold" className="size-3.5" />
+            Download PDF
+          </Link>
+        ) : null}
       </div>
 
       {report.summary ? (
