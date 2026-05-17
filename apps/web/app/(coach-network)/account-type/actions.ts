@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import type { AccountType } from "../../../lib/account-type";
 import { getAccountTypeFromMetadata } from "../../../lib/account-type";
+import { ensureSupabaseUser } from "../../../lib/ensure-supabase-user";
 import { getAppUrl } from "../../../lib/site-url";
 
 export async function setAccountTypeAction(accountType: AccountType) {
@@ -22,6 +23,8 @@ export async function setAccountTypeAction(accountType: AccountType) {
   if (accountType === "coach") {
     redirect(getAppUrl("/onboarding"));
   }
+
+  await ensureSupabaseUser(userId);
 
   redirect("/athlete/onboarding");
 }

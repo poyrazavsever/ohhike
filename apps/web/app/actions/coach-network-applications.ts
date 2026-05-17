@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { CreateCoachNetworkApplicationInput } from "../../lib/coach-network/application-types";
+import { ensureSupabaseUser } from "../../lib/ensure-supabase-user";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 
 type ActionResult =
@@ -36,6 +37,8 @@ export async function createCoachNetworkApplication(
   ) {
     return { ok: false, error: "All consent checkboxes are required." };
   }
+
+  await ensureSupabaseUser(userId);
 
   const supabase = createSupabaseAdminClient();
 

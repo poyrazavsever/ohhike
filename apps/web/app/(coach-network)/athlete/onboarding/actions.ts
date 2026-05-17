@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import type { SportType } from "../../../../lib/database.types";
+import { ensureSupabaseUser } from "../../../../lib/ensure-supabase-user";
 import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
 
 export type AthleteOnboardingInput = {
@@ -28,6 +29,8 @@ export async function completeAthleteOnboardingAction(
   if (!displayName || !goals) {
     throw new Error("Display name and goals are required.");
   }
+
+  await ensureSupabaseUser(userId);
 
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("athlete_marketplace_profiles").upsert(
