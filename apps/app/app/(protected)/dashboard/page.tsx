@@ -9,7 +9,12 @@ import {
   DashboardAgenda,
   DashboardMiniCalendar,
 } from "../../../components/dashboard/dashboard-calendar";
-import { getCalendarData, getDashboardData } from "../../../lib/workspace";
+import { CoachTodayPanel } from "../../../components/dashboard/dashboard-operations";
+import {
+  getCalendarData,
+  getCoachDashboardAttentionData,
+  getDashboardData,
+} from "../../../lib/workspace";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -28,6 +33,7 @@ export default async function DashboardPage() {
   const { organization, membership, teams, athleteCount, entitlements } =
     await getDashboardData();
   const { sessions } = await getCalendarData();
+  const { summary } = await getCoachDashboardAttentionData();
 
   const primaryTeam = teams[0];
   const primaryEntitlement = primaryTeam
@@ -198,6 +204,10 @@ export default async function DashboardPage() {
       <div className="mt-4 grid gap-3 xl:grid-cols-[0.9fr_1.1fr]">
         <DashboardMiniCalendar sessions={sessions} />
         <DashboardAgenda sessions={sessions} />
+      </div>
+
+      <div className="mt-4">
+        <CoachTodayPanel {...summary} />
       </div>
     </section>
   );

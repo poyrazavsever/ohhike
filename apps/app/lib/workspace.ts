@@ -110,6 +110,13 @@ export type CalendarSession = Session & {
   teamName: string | null;
 };
 
+export type CoachDashboardAttentionData = {
+  todaySessions: CalendarSession[];
+  activeAthletes: number;
+  missingReadinessCount: number;
+  missingNutritionCount: number;
+};
+
 export type TrainingPlannerSession = Session & {
   teamName: string | null;
   trainingBlocks: TrainingBlock[];
@@ -181,7 +188,9 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
 
   const supabase = createSupabaseAdminClient();
   const cookieStore = await cookies();
-  const activeOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
+  const activeOrganizationId = cookieStore.get(
+    ACTIVE_ORGANIZATION_COOKIE,
+  )?.value;
 
   const { data: memberships, error: membershipError } = await supabase
     .from("organization_members")
@@ -429,8 +438,9 @@ export async function getTeamsData(): Promise<{
       return {
         ...team,
         entitlement:
-          entitlements?.find((entitlement) => entitlement.team_id === team.id) ??
-          null,
+          entitlements?.find(
+            (entitlement) => entitlement.team_id === team.id,
+          ) ?? null,
         athleteCount: count ?? 0,
       };
     }),
@@ -472,7 +482,8 @@ export async function getAthletesData(): Promise<{
     workspace,
     athletes: (athletes ?? []).map((athlete) => ({
       ...athlete,
-      teamName: teams?.find((team) => team.id === athlete.team_id)?.name ?? null,
+      teamName:
+        teams?.find((team) => team.id === athlete.team_id)?.name ?? null,
     })),
     teams: teams ?? [],
   };
@@ -482,7 +493,9 @@ export async function getSessionsData(): Promise<{
   workspace: CurrentWorkspace;
   sessions: SessionWithMeta[];
   teams: AthleteTeamOption[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
 }> {
   const workspace = await getCurrentWorkspace();
   const supabase = createSupabaseAdminClient();
@@ -562,7 +575,8 @@ export async function getSessionsData(): Promise<{
 
       return {
         ...session,
-        teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
+        teamName:
+          teams?.find((team) => team.id === session.team_id)?.name ?? null,
         attendanceCount: count ?? 0,
         attendance:
           attendance?.filter((entry) => entry.session_id === session.id) ?? [],
@@ -585,10 +599,17 @@ export async function getSessionDetailData(sessionId: string): Promise<{
   workspace: CurrentWorkspace;
   session: SessionWithMeta;
   teams: AthleteTeamOption[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   latestAiReport: Pick<
     Tables<"ai_reports">,
-    "id" | "title" | "summary" | "confidence_score" | "model_provider" | "created_at"
+    | "id"
+    | "title"
+    | "summary"
+    | "confidence_score"
+    | "model_provider"
+    | "created_at"
   > | null;
 } | null> {
   const workspace = await getCurrentWorkspace();
@@ -627,7 +648,10 @@ export async function getSessionDetailData(sessionId: string): Promise<{
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase.from("session_attendance").select("*").eq("session_id", session.id),
+    supabase
+      .from("session_attendance")
+      .select("*")
+      .eq("session_id", session.id),
     supabase
       .from("training_blocks")
       .select("*")
@@ -635,7 +659,9 @@ export async function getSessionDetailData(sessionId: string): Promise<{
       .order("order_index", { ascending: true }),
     supabase
       .from("ai_reports")
-      .select("id, title, summary, confidence_score, model_provider, created_at")
+      .select(
+        "id, title, summary, confidence_score, model_provider, created_at",
+      )
       .eq("session_id", session.id)
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
@@ -683,7 +709,9 @@ export async function getSessionDetailData(sessionId: string): Promise<{
 export async function getReadinessData(): Promise<{
   workspace: CurrentWorkspace;
   checkins: ReadinessCheckinWithAthlete[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
@@ -732,7 +760,9 @@ export async function getReadinessData(): Promise<{
       const athlete = athletes?.find(
         (currentAthlete) => currentAthlete.id === checkin.athlete_id,
       );
-      const team = teams?.find((currentTeam) => currentTeam.id === checkin.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === checkin.team_id,
+      );
       const athleteName = [
         athlete?.number ? `#${athlete.number}` : null,
         athlete?.first_name,
@@ -755,7 +785,9 @@ export async function getReadinessData(): Promise<{
 export async function getNutritionData(): Promise<{
   workspace: CurrentWorkspace;
   logs: NutritionLogWithAthlete[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
@@ -827,7 +859,9 @@ export async function getNutritionData(): Promise<{
 export async function getPersonalTrainingsData(): Promise<{
   workspace: CurrentWorkspace;
   trainings: PersonalTrainingWithAthlete[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
@@ -876,7 +910,9 @@ export async function getPersonalTrainingsData(): Promise<{
       const athlete = athletes?.find(
         (currentAthlete) => currentAthlete.id === training.athlete_id,
       );
-      const team = teams?.find((currentTeam) => currentTeam.id === training.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === training.team_id,
+      );
       const athleteName = [
         athlete?.number ? `#${athlete.number}` : null,
         athlete?.first_name,
@@ -959,9 +995,7 @@ export async function getStaffSettingsData(): Promise<{
     throw new Error(usersError.message);
   }
 
-  const userMap = new Map(
-    (users ?? []).map((user) => [user.id, user]),
-  );
+  const userMap = new Map((users ?? []).map((user) => [user.id, user]));
 
   return {
     workspace,
@@ -977,8 +1011,7 @@ export async function getStaffSettingsData(): Promise<{
     }),
     pendingInvites: (invites ?? []).map((invite) => ({
       ...invite,
-      teamName:
-        teams?.find((team) => team.id === invite.team_id)?.name ?? null,
+      teamName: teams?.find((team) => team.id === invite.team_id)?.name ?? null,
     })),
   };
 }
@@ -1064,8 +1097,9 @@ export async function getLoadRecoveryData(): Promise<{
           ?.filter((session) => session.team_id === team.id)
           .map((session) => session.id) ?? [];
       const teamAttendance =
-        attendance?.filter((entry) => teamSessionIds.includes(entry.session_id)) ??
-        [];
+        attendance?.filter((entry) =>
+          teamSessionIds.includes(entry.session_id),
+        ) ?? [];
       const rpeValues = teamAttendance
         .map((entry) => entry.rpe)
         .filter((rpe): rpe is number => rpe !== null);
@@ -1104,7 +1138,9 @@ export async function getLoadRecoveryData(): Promise<{
           total + (entry.minutes_played ?? 0) * (entry.rpe ?? 0),
         0,
       );
-      const team = teams?.find((currentTeam) => currentTeam.id === athlete.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === athlete.team_id,
+      );
       const athleteName = [
         athlete.number ? `#${athlete.number}` : null,
         athlete.first_name,
@@ -1126,7 +1162,8 @@ export async function getLoadRecoveryData(): Promise<{
               )
             : null,
         latestFatigue: athleteCheckins[0]?.fatigue ?? null,
-        painReports: athleteCheckins.filter((checkin) => checkin.pain_area).length,
+        painReports: athleteCheckins.filter((checkin) => checkin.pain_area)
+          .length,
       };
     }) ?? [];
 
@@ -1246,7 +1283,9 @@ export async function getAthleteDashboardData(): Promise<{
 
   const summaries =
     athletes?.map((athlete) => {
-      const team = teams?.find((currentTeam) => currentTeam.id === athlete.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === athlete.team_id,
+      );
       const athleteCheckins =
         checkins?.filter((checkin) => checkin.athlete_id === athlete.id) ?? [];
       const athleteNutritionLogs =
@@ -1353,6 +1392,105 @@ export async function getCalendarData(): Promise<{
   };
 }
 
+export async function getCoachDashboardAttentionData(): Promise<{
+  workspace: CurrentWorkspace;
+  summary: CoachDashboardAttentionData;
+}> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+  const organizationId = workspace.organization.id;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayStart = `${today}T00:00:00.000Z`;
+  const tomorrow = new Date(todayStart);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+  const [
+    { data: athletes, error: athletesError },
+    { data: teams, error: teamsError },
+    { data: sessions, error: sessionsError },
+    { data: checkins, error: checkinsError },
+    { data: nutritionLogs, error: nutritionError },
+  ] = await Promise.all([
+    supabase
+      .from("athletes")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("status", "active"),
+    supabase
+      .from("teams")
+      .select("id, name, sport_type")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("sessions")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .gte("scheduled_at", todayStart)
+      .lt("scheduled_at", tomorrow.toISOString())
+      .order("scheduled_at", { ascending: true }),
+    supabase
+      .from("wellness_checkins")
+      .select("athlete_id")
+      .eq("organization_id", organizationId)
+      .eq("checkin_date", today),
+    supabase
+      .from("nutrition_logs")
+      .select("athlete_id")
+      .eq("organization_id", organizationId)
+      .eq("log_date", today),
+  ]);
+
+  if (athletesError) {
+    throw new Error(athletesError.message);
+  }
+  if (teamsError) {
+    throw new Error(teamsError.message);
+  }
+  if (sessionsError) {
+    throw new Error(sessionsError.message);
+  }
+  if (checkinsError) {
+    throw new Error(checkinsError.message);
+  }
+  if (nutritionError) {
+    throw new Error(nutritionError.message);
+  }
+
+  const activeAthleteIds = new Set(
+    (athletes ?? []).map((athlete) => athlete.id),
+  );
+  const readinessAthleteIds = new Set(
+    (checkins ?? [])
+      .map((checkin) => checkin.athlete_id)
+      .filter((athleteId) => activeAthleteIds.has(athleteId)),
+  );
+  const nutritionAthleteIds = new Set(
+    (nutritionLogs ?? [])
+      .map((log) => log.athlete_id)
+      .filter((athleteId) => activeAthleteIds.has(athleteId)),
+  );
+
+  return {
+    workspace,
+    summary: {
+      todaySessions:
+        sessions?.map((session) => ({
+          ...session,
+          teamName:
+            teams?.find((team) => team.id === session.team_id)?.name ?? null,
+        })) ?? [],
+      activeAthletes: activeAthleteIds.size,
+      missingReadinessCount: Math.max(
+        activeAthleteIds.size - readinessAthleteIds.size,
+        0,
+      ),
+      missingNutritionCount: Math.max(
+        activeAthleteIds.size - nutritionAthleteIds.size,
+        0,
+      ),
+    },
+  };
+}
+
 export async function getTrainingPlannerData(): Promise<{
   workspace: CurrentWorkspace;
   sessions: TrainingPlannerSession[];
@@ -1409,9 +1547,11 @@ export async function getTrainingPlannerData(): Promise<{
   const plannerSessions =
     sessions?.map((session) => ({
       ...session,
-      teamName: teams?.find((team) => team.id === session.team_id)?.name ?? null,
+      teamName:
+        teams?.find((team) => team.id === session.team_id)?.name ?? null,
       trainingBlocks:
-        trainingBlocks?.filter((block) => block.session_id === session.id) ?? [],
+        trainingBlocks?.filter((block) => block.session_id === session.id) ??
+        [],
     })) ?? [];
 
   return {
@@ -1451,7 +1591,10 @@ export async function getDrillsData(): Promise<{
         .select("*")
         .or(`organization_id.eq.${organizationId},is_system_drill.eq.true`)
         .order("created_at", { ascending: false }),
-      supabase.from("training_blocks").select("drill_id").not("drill_id", "is", null),
+      supabase
+        .from("training_blocks")
+        .select("drill_id")
+        .not("drill_id", "is", null),
     ]);
 
   if (drillsError) {
@@ -1482,7 +1625,9 @@ export async function getDrillsData(): Promise<{
 export async function getWearablesData(): Promise<{
   workspace: CurrentWorkspace;
   connections: WearableConnectionWithAthlete[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   totals: {
     connections: number;
     activeConnections: number;
@@ -1552,7 +1697,9 @@ export async function getWearablesData(): Promise<{
         const athlete = athletes?.find(
           (currentAthlete) => currentAthlete.id === connection.athlete_id,
         );
-        const team = teams?.find((currentTeam) => currentTeam.id === athlete?.team_id);
+        const team = teams?.find(
+          (currentTeam) => currentTeam.id === athlete?.team_id,
+        );
         const athleteName = [
           athlete?.number ? `#${athlete.number}` : null,
           athlete?.first_name,
@@ -1582,7 +1729,9 @@ export async function getAiReportsData(): Promise<{
   workspace: CurrentWorkspace;
   reports: AiReportWithMeta[];
   teams: AthleteTeamOption[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   sessions: Array<Pick<Session, "id" | "team_id" | "title">>;
   totals: {
     reports: number;
@@ -1641,7 +1790,9 @@ export async function getAiReportsData(): Promise<{
 
   const reportsWithMeta =
     reports?.map((report) => {
-      const team = teams?.find((currentTeam) => currentTeam.id === report.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === report.team_id,
+      );
       const athlete = athletes?.find(
         (currentAthlete) => currentAthlete.id === report.athlete_id,
       );
@@ -1681,9 +1832,7 @@ export async function getAiReportsData(): Promise<{
   };
 }
 
-export async function getAiReportDetailData(
-  reportId: string,
-): Promise<{
+export async function getAiReportDetailData(reportId: string): Promise<{
   workspace: CurrentWorkspace;
   report: AiReportWithMeta;
 } | null> {
@@ -1706,33 +1855,30 @@ export async function getAiReportDetailData(
     return null;
   }
 
-  const [
-    { data: team },
-    { data: athlete },
-    { data: session },
-  ] = await Promise.all([
-    report.team_id
-      ? supabase
-          .from("teams")
-          .select("id, name")
-          .eq("id", report.team_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    report.athlete_id
-      ? supabase
-          .from("athletes")
-          .select("id, first_name, last_name, number")
-          .eq("id", report.athlete_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    report.session_id
-      ? supabase
-          .from("sessions")
-          .select("id, title")
-          .eq("id", report.session_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
+  const [{ data: team }, { data: athlete }, { data: session }] =
+    await Promise.all([
+      report.team_id
+        ? supabase
+            .from("teams")
+            .select("id, name")
+            .eq("id", report.team_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      report.athlete_id
+        ? supabase
+            .from("athletes")
+            .select("id, first_name, last_name, number")
+            .eq("id", report.athlete_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      report.session_id
+        ? supabase
+            .from("sessions")
+            .select("id, title")
+            .eq("id", report.session_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
 
   const athleteName = athlete
     ? [
@@ -1760,7 +1906,9 @@ export async function getTeamMemoryData(): Promise<{
   observations: AthleteObservationWithMeta[];
   patterns: TeamPatternWithMeta[];
   teams: AthleteTeamOption[];
-  athletes: Array<Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">>;
+  athletes: Array<
+    Pick<Athlete, "id" | "team_id" | "first_name" | "last_name" | "number">
+  >;
   totals: {
     observations: number;
     patterns: number;
@@ -1820,7 +1968,9 @@ export async function getTeamMemoryData(): Promise<{
       const athlete = athletes?.find(
         (currentAthlete) => currentAthlete.id === observation.athlete_id,
       );
-      const team = teams?.find((currentTeam) => currentTeam.id === observation.team_id);
+      const team = teams?.find(
+        (currentTeam) => currentTeam.id === observation.team_id,
+      );
       const athleteName = [
         athlete?.number ? `#${athlete.number}` : null,
         athlete?.first_name,
@@ -1839,7 +1989,8 @@ export async function getTeamMemoryData(): Promise<{
   const patternsWithMeta =
     patterns?.map((pattern) => ({
       ...pattern,
-      teamName: teams?.find((team) => team.id === pattern.team_id)?.name ?? null,
+      teamName:
+        teams?.find((team) => team.id === pattern.team_id)?.name ?? null,
     })) ?? [];
 
   return {

@@ -8,6 +8,7 @@ import {
   DashboardAgenda,
   DashboardMiniCalendar,
 } from "../../../../components/dashboard/dashboard-calendar";
+import { AthleteAttentionPanel } from "../../../../components/dashboard/dashboard-operations";
 import {
   getAthleteDashboardData,
   getCalendarData,
@@ -156,6 +157,12 @@ export default async function AthleteDashboardPage() {
         <DashboardMiniCalendar sessions={sessions} />
         <DashboardAgenda sessions={sessions} title="Training schedule" />
       </div>
+
+      {summaries.length > 0 ? (
+        <div className="mt-4">
+          <AthleteAttentionPanel summaries={summaries} />
+        </div>
+      ) : null}
     </section>
   );
 }
