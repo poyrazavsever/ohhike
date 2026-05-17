@@ -55,7 +55,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `009_daily_data_schema_align.sql`, `001` sonrasi `004` calistirildiginda eksik kalan daily data kolonlarini tamamlar. Check-in hatasi (`created_by` schema cache) goruluyorsa bu dosyayi Supabase SQL Editor'de calistirin.
 - `010_organization_staff_invites.sql`, staff davet linkleri icin tabloyu kurar. Staff invite olustururken tablo bulunamadi hatasi aliyorsaniz bu dosyayi Supabase SQL Editor'de calistirin.
 - `011_team_memory_rag.sql`, `/team-memory` assistant sohbeti ve vector arama icin tablolari kurar. Assistant veya embedding hatasi aliyorsaniz bu dosyayi calistirin; `GEMINI_API_KEY` ile embedding + LLM cevaplari acilir.
-- `012_coach_network.sql`, Coach Network (find-coach, basvuru, teklif, mesajlasma, remote athlete, `coaching_program_assignments`, `training_proofs`, `coaching-proofs` storage bucket, review) icin tablolari kurar. Coach Network ozellikleri acilmadan once Supabase SQL Editor'de calistirin. CN4 program atama `coaching_program_assignments` kullanir; CN5 proof yukleme `training_proofs` + private bucket `coaching-proofs` (signed URL).
+- `012_coach_network.sql`, Coach Network (find-coach, basvuru, teklif, mesajlasma, remote athlete, program, proof, `coach_reviews`, `coach_reputation_events`) icin tablolari kurar. CN6: sporcu public review (web), koç private rating (`remote_coaching_relationships.metadata`), reputation ledger + profil `average_rating`/`review_count` senkronu.
 - `dev_seed_coach_network_profiles.sql`, `/find-coach` demo listesi icin 3 public antrenor profili (en az 1 org + owner gerekir).
 - Ilk organization/member bootstrap islemleri service role veya server-side admin client ile yapilir (MVP varsayilan).
 

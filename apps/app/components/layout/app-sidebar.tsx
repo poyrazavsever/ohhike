@@ -149,6 +149,12 @@ const navGroups = [
         icon: "solar:camera-bold",
         feature: "coachMarketplace",
       },
+      {
+        href: "/coach-network/reviews",
+        label: "Reviews",
+        icon: "solar:star-bold",
+        feature: "coachMarketplace",
+      },
     ],
   },
 ];

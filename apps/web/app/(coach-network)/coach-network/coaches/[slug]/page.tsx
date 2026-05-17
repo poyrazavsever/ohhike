@@ -5,11 +5,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getPublicCoachBySlug } from "../../../../../lib/coach-network/public-queries";
+import { CoachPublicReviews } from "./_components/coach-public-reviews";
 
 type CoachProfilePageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ apply?: string }>;
 };
+
+function formatRating(rating: number | null, reviewCount: number) {
+  if (rating === null || reviewCount === 0) {
+    return "New coach";
+  }
+  return `${rating.toFixed(1)} · ${reviewCount} review${reviewCount === 1 ? "" : "s"}`;
+}
 
 function formatPrice(cents: number | null, currency: string) {
   if (cents === null) {
@@ -89,6 +97,12 @@ export default async function CoachPublicProfilePage({
             {coach.headline ? (
               <p className="mt-2 text-base text-muted-foreground">{coach.headline}</p>
             ) : null}
+            <p className="mt-2 text-sm font-bold text-primary">
+              {formatRating(coach.averageRating, coach.reviewCount)}
+              {coach.reputationScore !== 0
+                ? ` · Reputation ${coach.reputationScore > 0 ? "+" : ""}${coach.reputationScore}`
+                : ""}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-muted-foreground">
               {coach.sports.map((sport) => (
                 <span
@@ -197,6 +211,11 @@ export default async function CoachPublicProfilePage({
           </div>
         </section>
       ) : null}
+
+      <section className="mt-8">
+        <h2 className="text-xl font-extrabold text-foreground">Reviews</h2>
+        <CoachPublicReviews reviews={coach.reviews} />
+      </section>
     </main>
   );
 }

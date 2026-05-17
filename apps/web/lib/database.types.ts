@@ -224,8 +224,48 @@ export type Database = {
           organization_id: string;
           team_id: string | null;
           athlete_id: string | null;
+          athlete_user_id: string;
+          coach_user_id: string;
+          coach_profile_id: string;
           status: string;
           payment_status: string;
+          metadata: Json | null;
+          created_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coach_reviews: {
+        Row: {
+          id: string;
+          relationship_id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          athlete_user_id: string;
+          rating: number;
+          title: string | null;
+          body: string | null;
+          is_public: boolean;
+          moderated_at: string | null;
+          metadata: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coach_reputation_events: {
+        Row: {
+          id: string;
+          coach_profile_id: string;
+          organization_id: string;
+          event_type: string;
+          points_delta: number;
+          reference_id: string | null;
+          metadata: Json | null;
+          created_at: string | null;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;

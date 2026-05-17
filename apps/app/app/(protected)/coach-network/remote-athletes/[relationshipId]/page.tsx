@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getRemoteCoachingRelationshipDetail } from "../../../../actions/coach-network-programs";
+import { parseRelationshipCoachMetadata } from "../../../../../lib/coach-network/reviews";
 import { AssignCoachingProgramForm } from "./_components/assign-coaching-program-form";
+import { PrivateAthleteRatingForm } from "./_components/private-athlete-rating-form";
 
 type RemoteAthleteDetailPageProps = {
   params: Promise<{ relationshipId: string }>;
@@ -39,6 +41,8 @@ export default async function RemoteAthleteDetailPage({
   const canAssignProgram =
     relationship.status === "active" &&
     relationship.payment_status !== "pending_manual";
+
+  const coachMetadata = parseRelationshipCoachMetadata(relationship.metadata);
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-8 md:px-8">
@@ -99,6 +103,12 @@ export default async function RemoteAthleteDetailPage({
           Confirm payment before assigning a program to this athlete.
         </p>
       )}
+
+      <PrivateAthleteRatingForm
+        relationshipId={relationship.id}
+        initialRating={coachMetadata.private_athlete_rating}
+        initialNote={coachMetadata.private_athlete_rating_note}
+      />
     </main>
   );
 }

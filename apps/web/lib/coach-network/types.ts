@@ -34,11 +34,22 @@ export type PublicCoachPackage = {
   currency: string;
 };
 
+export type PublicCoachReview = {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  createdAt: string | null;
+  athleteDisplayName: string;
+};
+
 export type PublicCoachProfile = PublicCoachCard & {
   bio: string | null;
   specialties: string[];
   languages: string[];
   yearsExperience: number | null;
   responseTimeAvgHours: number | null;
+  reputationScore: number;
   packages: PublicCoachPackage[];
+  reviews: PublicCoachReview[];
 };

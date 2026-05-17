@@ -1,4 +1,8 @@
 import type { SportType } from "../database.types";
+import {
+  getCoachReputationScore,
+  parseReviewMetadata,
+} from "./reviews";
 import { createSupabaseAdminClient } from "../supabase-admin";
 import type {
   PublicCoachCard,
@@ -177,6 +181,36 @@ export async function getPublicCoachBySlug(
     throw new Error(packagesError.message);
   }
 
+  const [{ data: reviewRows }, reputationScore] = await Promise.all([
+    supabase
+      .from("coach_reviews")
+      .select("id, rating, title, body, created_at, athlete_user_id, metadata")
+      .eq("coach_profile_id", row.id)
+      .eq("is_public", true)
+      .not("moderated_at", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(12),
+    getCoachReputationScore(supabase, row.id),
+  ]);
+
+  const visibleReviews = (reviewRows ?? []).filter(
+    (review) => !parseReviewMetadata(review.metadata).reported,
+  );
+
+  const athleteUserIds = [
+    ...new Set(visibleReviews.map((review) => review.athlete_user_id)),
+  ];
+
+  const { data: athletes } =
+    athleteUserIds.length > 0
+      ? await supabase
+          .from("users")
+          .select("id, display_name, email")
+          .in("id", athleteUserIds)
+      : { data: [] };
+
+  const userById = new Map((athletes ?? []).map((user) => [user.id, user]));
+
   return {
     ...mapCoachCard(row),
     bio: row.bio,
@@ -184,6 +218,19 @@ export async function getPublicCoachBySlug(
     languages: row.languages ?? [],
     yearsExperience: row.years_experience,
     responseTimeAvgHours: row.response_time_avg_hours,
+    reputationScore,
+    reviews: visibleReviews.map((review) => {
+      const user = userById.get(review.athlete_user_id);
+      return {
+        id: review.id,
+        rating: review.rating,
+        title: review.title,
+        body: review.body,
+        createdAt: review.created_at,
+        athleteDisplayName:
+          user?.display_name ?? user?.email?.split("@")[0] ?? "Athlete",
+      };
+    }),
     packages: (packages ?? []).map((pkg) => ({
       id: pkg.id,
       title: pkg.title,

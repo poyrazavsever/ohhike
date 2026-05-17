@@ -36,9 +36,14 @@ export default async function AthleteApplicationsPage({
             Track coach responses and next steps for your remote coaching requests.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/find-coach">Find a coach</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/athlete/reviews">Coach reviews</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/find-coach">Find a coach</Link>
+          </Button>
+        </div>
       </div>
 
       {submitted ? (
