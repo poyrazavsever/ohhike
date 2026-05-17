@@ -4,6 +4,10 @@ import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import {
+  computeProgramAdherence,
+  getTodayProgramView,
+} from "./coach-network/program-assignments";
 import type { Tables } from "./database.types";
 import { isAthleteRole } from "./org-roles";
 import {
@@ -215,14 +219,29 @@ export async function getAthleteHomeData(): Promise<{
     teamName: string | null;
   }>;
   sevenDayLoad: number;
+  todayProgram: {
+    assignmentId: string;
+    title: string;
+    focus: string | null;
+    completedToday: boolean;
+    inWindow: boolean;
+    adherencePercent: number | null;
+    completedDays: number;
+    totalDays: number;
+  } | null;
 }> {
   const portal = await getAthletePortalContext();
   const supabase = createSupabaseAdminClient();
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
-  const [{ data: checkins }, { data: nutritionLogs }, { data: sessions }, { data: recentAttendance }] =
-    await Promise.all([
+  const [
+    { data: checkins },
+    { data: nutritionLogs },
+    { data: sessions },
+    { data: recentAttendance },
+    activeProgramResult,
+  ] = await Promise.all([
     supabase
       .from("wellness_checkins")
       .select("*")
@@ -247,7 +266,34 @@ export async function getAthleteHomeData(): Promise<{
       .select("minutes_played, rpe, created_at")
       .eq("athlete_id", portal.athlete.id)
       .gte("created_at", since.toISOString()),
+    supabase
+      .from("coaching_program_assignments")
+      .select("*")
+      .eq("athlete_id", portal.athlete.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const activeProgram = activeProgramResult.data;
+
+  const todayProgram = activeProgram
+    ? (() => {
+        const today = getTodayProgramView(activeProgram);
+        const adherence = computeProgramAdherence(activeProgram);
+        return {
+          assignmentId: activeProgram.id,
+          title: activeProgram.title,
+          focus: today.focus,
+          completedToday: today.completedToday,
+          inWindow: today.inWindow,
+          adherencePercent: adherence.percent,
+          completedDays: adherence.completedDays,
+          totalDays: adherence.totalDays,
+        };
+      })()
+    : null;
 
   const recentLoad = (recentAttendance ?? []).reduce(
     (total, entry) => total + (entry.minutes_played ?? 0) * (entry.rpe ?? 0),
@@ -266,6 +312,7 @@ export async function getAthleteHomeData(): Promise<{
       teamName: portal.teamName,
     })),
     sevenDayLoad: recentLoad,
+    todayProgram,
   };
 }
 

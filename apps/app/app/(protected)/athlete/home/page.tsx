@@ -6,6 +6,7 @@ import {
   MetricCard,
 } from "../../../../components/dashboard/dashboard-cards";
 import { getAthleteHomeData } from "../../../../lib/athlete-portal";
+import { TodayProgramCard } from "./_components/today-program-card";
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -31,6 +32,7 @@ export default async function AthleteHomePage() {
     latestNutrition,
     upcomingSessions,
     sevenDayLoad,
+    todayProgram,
   } = await getAthleteHomeData();
 
   const displayName =
@@ -88,6 +90,12 @@ export default async function AthleteHomePage() {
           <MetricCard key={card.label} {...card} />
         ))}
       </div>
+
+      {todayProgram ? (
+        <div className="mt-6">
+          <TodayProgramCard {...todayProgram} />
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-3xl border border-border bg-card p-5">
