@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -9,6 +10,10 @@ import {
   listCoachingPackagesForWorkspace,
   listOffersForApplication,
 } from "../../../../actions/coach-network-offers";
+import {
+  DashboardHero,
+  DetailStat,
+} from "../../../../../components/dashboard/dashboard-cards";
 import { buildCoachApplicationSummary } from "../../../../../lib/coach-network/application-summary";
 import { ApplicationDetailActions } from "./_components/application-detail-actions";
 import { SendOfferForm } from "./_components/send-offer-form";
@@ -66,29 +71,45 @@ export default async function CoachNetworkApplicationDetailPage({
       ? (formData.consents as Record<string, unknown>)
       : null;
 
+  const athleteName =
+    athleteProfile?.display_name ??
+    user?.display_name ??
+    user?.email ??
+    "Athlete application";
+
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8 md:px-8">
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
       <Link
         href="/coach-network/applications"
-        className="text-sm font-semibold text-primary hover:text-primary-hover"
+        className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
       >
-        ← Back to applications
+        <Icon icon="solar:arrow-left-linear" className="size-4" />
+        Back to applications
       </Link>
 
-      <header className="mt-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {formatStatus(application.status)}
-        </p>
-        <h1 className="mt-1 text-2xl font-extrabold text-foreground">
-          {athleteProfile?.display_name ??
-            user?.display_name ??
-            user?.email ??
-            "Athlete application"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{user?.email}</p>
-      </header>
+      <div className="mt-4">
+        <DashboardHero
+          eyebrow="Coach Network"
+          title={athleteName}
+          subtitle={`Application status: ${formatStatus(application.status)}`}
+          mascotSrc="/maskotlar/gozetleme.png"
+        />
+      </div>
 
-      <section className="mt-6 rounded-3xl border border-border bg-primary-soft/40 p-5">
+      <div className="mt-4 grid gap-2 md:grid-cols-3">
+        <DetailStat label="Email" value={user?.email ?? "Not provided"} />
+        <DetailStat
+          label="Submitted"
+          value={
+            application.submitted_at
+              ? new Date(application.submitted_at).toLocaleDateString()
+              : "Not submitted"
+          }
+        />
+        <DetailStat label="Status" value={formatStatus(application.status)} />
+      </div>
+
+      <section className="mt-4 rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
           Application summary
         </h2>
@@ -98,8 +119,10 @@ export default async function CoachNetworkApplicationDetailPage({
       </section>
 
       {application.athlete_message ? (
-        <section className="mt-6 rounded-3xl border border-border bg-card p-5">
-          <h2 className="text-sm font-extrabold text-foreground">Athlete message</h2>
+        <section className="mt-4 rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-sm font-extrabold text-foreground">
+            Athlete message
+          </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {application.athlete_message}
           </p>
@@ -107,8 +130,10 @@ export default async function CoachNetworkApplicationDetailPage({
       ) : null}
 
       {consents ? (
-        <section className="mt-6 rounded-3xl border border-border bg-card p-5">
-          <h2 className="text-sm font-extrabold text-foreground">Shared consents</h2>
+        <section className="mt-4 rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-sm font-extrabold text-foreground">
+            Shared consents
+          </h2>
           <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
             {Object.entries(consents).map(([key, value]) => (
               <li key={key}>
@@ -121,8 +146,10 @@ export default async function CoachNetworkApplicationDetailPage({
       ) : null}
 
       {application.coach_response ? (
-        <section className="mt-6 rounded-3xl border border-border bg-muted/50 p-5">
-          <h2 className="text-sm font-extrabold text-foreground">Your last response</h2>
+        <section className="mt-4 rounded-2xl border border-border bg-background p-5">
+          <h2 className="text-sm font-extrabold text-foreground">
+            Your last response
+          </h2>
           <p className="mt-2 text-sm leading-6 text-foreground">
             {application.coach_response}
           </p>
@@ -139,6 +166,6 @@ export default async function CoachNetworkApplicationDetailPage({
         applicationId={application.id}
         status={application.status}
       />
-    </main>
+    </section>
   );
 }

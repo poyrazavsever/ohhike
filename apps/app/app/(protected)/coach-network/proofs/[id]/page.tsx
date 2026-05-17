@@ -1,8 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
+import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { getTrainingProofDetail } from "../../../../actions/coach-network-proofs";
+import {
+  DashboardHero,
+  DetailStat,
+} from "../../../../../components/dashboard/dashboard-cards";
 import { ProofReviewActions } from "../_components/proof-review-actions";
 import { ProofThreadPanel } from "../../../athlete/proofs/_components/proof-thread-panel";
 
@@ -14,12 +19,14 @@ function formatStatus(status: string) {
   return status.replaceAll("_", " ");
 }
 
-function athleteLabel(athlete: {
-  display_name: string | null;
-  first_name: string;
-  last_name: string | null;
-  email: string | null;
-} | null) {
+function athleteLabel(
+  athlete: {
+    display_name: string | null;
+    first_name: string;
+    last_name: string | null;
+    email: string | null;
+  } | null,
+) {
   if (!athlete) {
     return "Athlete";
   }
@@ -49,32 +56,38 @@ export default async function CoachProofDetailPage({
   const { proof, athlete, media, messages } = detail;
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8 md:px-8">
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
       <Link
         href="/coach-network/proofs"
-        className="text-sm font-semibold text-primary hover:text-primary-hover"
+        className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
       >
-        ← Proof reviews
+        <Icon icon="solar:arrow-left-linear" className="size-4" />
+        Proof reviews
       </Link>
 
-      <header className="mt-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {formatStatus(proof.status)}
-        </p>
-        <h1 className="mt-1 text-2xl font-extrabold text-foreground">{proof.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {athleteLabel(athlete)} · {proof.proof_date}
-        </p>
-      </header>
+      <div className="mt-4">
+        <DashboardHero
+          eyebrow="Coach Network"
+          title={proof.title}
+          subtitle="Review athlete proof media, leave feedback and update adherence with one decision."
+          mascotSrc="/maskotlar/gozetleme.png"
+        />
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-3">
+        <DetailStat label="Athlete" value={athleteLabel(athlete)} />
+        <DetailStat label="Date" value={proof.proof_date} />
+        <DetailStat label="Status" value={formatStatus(proof.status)} />
+      </div>
 
       {proof.notes ? (
-        <p className="mt-4 rounded-2xl border border-border bg-card p-4 text-sm leading-6 text-muted-foreground">
+        <p className="mt-4 rounded-2xl border border-border bg-card p-4 text-sm font-semibold leading-6 text-muted-foreground">
           {proof.notes}
         </p>
       ) : null}
 
       {media.length > 0 ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {media.map((item) => {
             const isVideo = item.path.match(/\.(mp4|mov|webm)$/i);
             return (
@@ -86,7 +99,11 @@ export default async function CoachProofDetailPage({
                 className="block overflow-hidden rounded-2xl border border-border bg-card"
               >
                 {isVideo ? (
-                  <video src={item.url} controls className="h-48 w-full bg-black" />
+                  <video
+                    src={item.url}
+                    controls
+                    className="h-48 w-full bg-black"
+                  />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -108,6 +125,6 @@ export default async function CoachProofDetailPage({
         messages={messages}
         currentUserId={userId}
       />
-    </main>
+    </section>
   );
 }

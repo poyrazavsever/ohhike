@@ -10,7 +10,7 @@ import {
 import type { Tables } from "../../../../../../lib/database.types";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function SendOfferForm({
@@ -77,7 +77,7 @@ export function SendOfferForm({
 
   if (hasSentOffer) {
     return (
-      <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+      <section className="mt-4 rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
           Offers
         </h2>
@@ -85,7 +85,7 @@ export function SendOfferForm({
           {existingOffers.map((offer) => (
             <li
               key={offer.id}
-              className="rounded-xl border border-border px-4 py-3 text-sm"
+              className="rounded-xl border border-border bg-background px-4 py-3 text-sm"
             >
               <p className="font-extrabold text-foreground">{offer.title}</p>
               <p className="mt-1 text-xs font-bold uppercase text-muted-foreground">
@@ -102,7 +102,7 @@ export function SendOfferForm({
   }
 
   return (
-    <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+    <section className="mt-4 rounded-2xl border border-border bg-card p-5">
       <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
         Send coaching offer
       </h2>
@@ -179,14 +179,22 @@ export function SendOfferForm({
           type="button"
           disabled={isPending}
           onClick={() => submit(true)}
-          className="rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+          className="rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {isPending ? "Sending…" : "Send offer"}
         </button>
       </div>
 
-      {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
 
       {existingOffers.length > 0 ? (
         <ul className="mt-6 space-y-2 border-t border-border pt-4">

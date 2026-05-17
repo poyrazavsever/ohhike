@@ -98,9 +98,11 @@ export default async function AthleteHomePage() {
       ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-3xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-extrabold text-foreground">Quick actions</p>
+            <p className="text-sm font-extrabold text-foreground">
+              Quick actions
+            </p>
           </div>
           <div className="mt-4 grid gap-2">
             <Link
@@ -130,8 +132,10 @@ export default async function AthleteHomePage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-5">
-          <p className="text-sm font-extrabold text-foreground">Upcoming sessions</p>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <p className="text-sm font-extrabold text-foreground">
+            Upcoming sessions
+          </p>
           {upcomingSessions.length === 0 ? (
             <EmptyStateCard
               title="No sessions scheduled"

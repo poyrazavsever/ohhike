@@ -21,7 +21,7 @@ const sportOptions: { value: SportType; label: string }[] = [
 ];
 
 function fieldClassName() {
-  return "h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground shadow-none outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+  return "h-12 w-full rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground shadow-none outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/20";
 }
 
 function labelClassName() {
@@ -69,13 +69,17 @@ export function AthleteOnboardingForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-6 py-10">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-6">
       <div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary">
+          Athlete onboarding
+        </p>
         <h1 className="text-3xl font-extrabold text-foreground">
           Athlete profile
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Tell coaches about your goals so they can respond to your applications.
+          Tell coaches about your goals so they can respond to your
+          applications.
         </p>
       </div>
 
@@ -143,11 +147,13 @@ export function AthleteOnboardingForm() {
       </div>
 
       {error && (
-        <p className="text-sm font-semibold text-destructive">{error}</p>
+        <p className="rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-semibold text-destructive-foreground">
+          {error}
+        </p>
       )}
 
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Saving…" : "Continue to find a coach"}
+        {isPending ? "Saving..." : "Continue to find a coach"}
       </Button>
     </form>
   );

@@ -24,7 +24,7 @@ export default async function AthleteMessagesPage() {
   const conversations = await listMarketplaceConversationsForUser();
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-16 md:px-8">
+    <main className="mx-auto max-w-4xl px-5 py-12 md:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Messages</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Conversations with coaches from applications, offers, and proof reviews.
@@ -40,20 +40,22 @@ export default async function AthleteMessagesPage() {
             href="/find-coach"
             className="mt-4 inline-flex text-sm font-bold text-primary"
           >
-            Find a coach →
+            Find a coach
           </Link>
         </div>
       ) : (
-        <ul className="mt-8 space-y-3">
+        <ul className="mt-8 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           {conversations.map((conversation) => (
             <li key={conversation.id}>
               <Link
                 href={`/athlete/messages/${conversation.id}`}
-                className="block rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:bg-muted/40"
+                className="block px-5 py-4 transition-colors hover:bg-background"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-extrabold text-foreground">{conversation.label}</p>
+                    <p className="font-extrabold text-foreground">
+                      {conversation.label}
+                    </p>
                     {conversation.preview ? (
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                         {conversation.preview}

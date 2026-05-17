@@ -7,7 +7,7 @@ import { reviewTrainingProof } from "../../../../actions/coach-network-proofs";
 import type { TrainingProofStatus } from "../../../../../lib/database.types";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function ProofReviewActions({
@@ -26,7 +26,10 @@ export function ProofReviewActions({
   const awaitingReview = currentStatus === "pending";
 
   function review(
-    status: Extract<TrainingProofStatus, "approved" | "needs_revision" | "rejected">,
+    status: Extract<
+      TrainingProofStatus,
+      "approved" | "needs_revision" | "rejected"
+    >,
   ) {
     setError(null);
     setMessage(null);
@@ -54,14 +57,14 @@ export function ProofReviewActions({
 
   if (!awaitingReview) {
     return (
-      <p className="mt-4 text-sm font-semibold text-muted-foreground">
+      <p className="mt-4 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground">
         Review complete: {currentStatus.replaceAll("_", " ")}.
       </p>
     );
   }
 
   return (
-    <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+    <section className="mt-4 rounded-2xl border border-border bg-card p-5">
       <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
         Review proof
       </h2>
@@ -76,7 +79,7 @@ export function ProofReviewActions({
           type="button"
           disabled={isPending}
           onClick={() => review("approved")}
-          className="rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+          className="rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           Approve
         </button>
@@ -84,7 +87,7 @@ export function ProofReviewActions({
           type="button"
           disabled={isPending}
           onClick={() => review("needs_revision")}
-          className="rounded-full border border-border px-4 py-2 text-xs font-extrabold hover:bg-muted disabled:opacity-60"
+          className="rounded-xl border border-border px-4 py-2.5 text-xs font-extrabold transition-colors hover:bg-background disabled:opacity-60"
         >
           Needs revision
         </button>
@@ -92,13 +95,21 @@ export function ProofReviewActions({
           type="button"
           disabled={isPending}
           onClick={() => review("rejected")}
-          className="rounded-full bg-destructive px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+          className="rounded-xl bg-destructive px-4 py-2.5 text-xs font-extrabold text-destructive-foreground disabled:opacity-60"
         >
           Reject
         </button>
       </div>
-      {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }

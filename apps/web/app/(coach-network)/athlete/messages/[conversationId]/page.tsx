@@ -30,8 +30,8 @@ export default async function AthleteConversationPage({
   const messages = await getMarketplaceConversationMessages(conversationId);
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-16 md:px-8">
-      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+    <main className="mx-auto max-w-4xl px-5 py-12 md:px-8">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
         {conversation.label}
       </p>
       <ConversationThread

@@ -19,7 +19,7 @@ export function CoachCard({ coach }: { coach: PublicCoachCard }) {
   const profileHref = `/coach-network/coaches/${coach.slug}`;
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-border bg-card p-5 transition-colors hover:border-primary/35">
+    <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/35">
       <div className="flex items-start gap-4">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
           {coach.photoUrl ? (
@@ -52,7 +52,9 @@ export function CoachCard({ coach }: { coach: PublicCoachCard }) {
         </div>
         <div className="flex items-center gap-2">
           <Icon icon="solar:map-point-bold" className="size-4" />
-          <span>{formatLocation(coach.locationCity, coach.locationCountry)}</span>
+          <span>
+            {formatLocation(coach.locationCity, coach.locationCountry)}
+          </span>
         </div>
         {coach.pricingDisplay ? (
           <div className="flex items-center gap-2">
@@ -78,13 +80,13 @@ export function CoachCard({ coach }: { coach: PublicCoachCard }) {
       <div className="mt-auto flex flex-wrap gap-2 pt-6">
         <Link
           href={profileHref}
-          className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-primary px-4 text-xs font-extrabold text-white hover:bg-primary-hover"
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-xl bg-primary px-4 text-xs font-extrabold text-primary-foreground hover:bg-primary-hover"
         >
           View profile
         </Link>
         <Link
           href={`/coach-network/apply/${coach.id}`}
-          className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-border px-4 text-xs font-extrabold text-foreground hover:border-primary/40 hover:bg-primary-soft"
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-border px-4 text-xs font-extrabold text-foreground hover:border-primary/40 hover:bg-primary-soft"
         >
           Apply
         </Link>

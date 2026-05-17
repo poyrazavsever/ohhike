@@ -1,18 +1,51 @@
 import { listRemoteAthletesWithProgramAdherence } from "../../../actions/coach-network-programs";
+import {
+  DashboardHero,
+  MetricCard,
+} from "../../../../components/dashboard/dashboard-cards";
 import { RemoteAthletesList } from "./_components/remote-athletes-list";
 
 export default async function CoachNetworkRemoteAthletesPage() {
   const rows = await listRemoteAthletesWithProgramAdherence();
+  const activeCount = rows.filter((row) => row.status === "active").length;
+  const pendingPaymentCount = rows.filter(
+    (row) => row.payment_status === "pending_manual",
+  ).length;
+  const assignedCount = rows.filter((row) => row.activeAssignment).length;
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-8 md:px-8">
-      <h1 className="text-2xl font-extrabold text-foreground">Remote athletes</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Athletes who accepted your coaching offers. Confirm payment, assign programs,
-        and track adherence (completed days ÷ elapsed program days).
-      </p>
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
+        eyebrow="Coach Network"
+        title="Remote athletes"
+        subtitle="Confirm payments, assign programs and track adherence for athletes who accepted your offers."
+        mascotSrc="/maskotlar/hazirlik.png"
+      />
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <MetricCard
+          label="Remote athletes"
+          value={rows.length.toString()}
+          helper={`${activeCount} active relationships`}
+          icon="solar:users-group-rounded-bold"
+        />
+        <MetricCard
+          label="Pending payment"
+          value={pendingPaymentCount.toString()}
+          helper="Need manual confirmation"
+          icon="solar:wallet-money-bold"
+          tone="warning"
+        />
+        <MetricCard
+          label="Programs"
+          value={assignedCount.toString()}
+          helper="Currently assigned"
+          icon="solar:calendar-bold"
+          tone="secondary"
+        />
+      </div>
 
       <RemoteAthletesList rows={rows} />
-    </main>
+    </section>
   );
 }

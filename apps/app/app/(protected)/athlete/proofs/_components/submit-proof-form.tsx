@@ -6,7 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { submitTrainingProof } from "../../../../actions/coach-network-proofs";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function SubmitProofForm() {
@@ -40,13 +40,14 @@ export function SubmitProofForm() {
     <form
       ref={formRef}
       onSubmit={submit}
-      className="rounded-3xl border border-border bg-card p-5"
+      className="rounded-2xl border border-border bg-card p-5"
     >
       <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
         Submit training proof
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload photos or short videos from today&apos;s session (max 5 files, 25 MB each).
+        Upload photos or short videos from today&apos;s session (max 5 files, 25
+        MB each).
       </p>
 
       <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -55,7 +56,7 @@ export function SubmitProofForm() {
           name="title"
           required
           className={fieldClassName()}
-          placeholder="e.g. Tempo run — 8 km"
+          placeholder="e.g. Tempo run - 8 km"
         />
       </label>
 
@@ -74,7 +75,7 @@ export function SubmitProofForm() {
         <textarea
           name="notes"
           className={`${fieldClassName()} min-h-20`}
-          placeholder="RPE, how it felt, anything your coach should know…"
+          placeholder="RPE, how it felt, anything your coach should know..."
         />
       </label>
 
@@ -93,13 +94,21 @@ export function SubmitProofForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="mt-4 rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+        className="mt-4 rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
-        {isPending ? "Uploading…" : "Submit proof"}
+        {isPending ? "Uploading..." : "Submit proof"}
       </button>
 
-      {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

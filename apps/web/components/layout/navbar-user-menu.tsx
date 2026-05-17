@@ -122,7 +122,10 @@ function SignedInMenuItems({ onNavigate }: { onNavigate?: () => void }) {
         }}
         className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted"
       >
-        <Icon icon="solar:user-check-rounded-bold" className="size-4 text-primary" />
+        <Icon
+          icon="solar:user-check-rounded-bold"
+          className="size-4 text-primary"
+        />
         Manage account
       </button>
 
@@ -190,7 +193,8 @@ export function NavbarUserMenu() {
 
   const close = () => setIsOpen(false);
   const avatarSrc = user?.imageUrl ?? null;
-  const label = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "Account";
+  const label =
+    user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "Account";
 
   return (
     <div ref={containerRef} className="relative hidden lg:block">
@@ -233,7 +237,11 @@ export function NavbarUserMenu() {
   );
 }
 
-export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void }) {
+export function NavbarUserMenuMobile({
+  onNavigate,
+}: {
+  onNavigate: () => void;
+}) {
   const { isLoaded, isSignedIn, user } = useUser();
 
   if (!isCoachNetworkEnabled()) {
@@ -243,7 +251,10 @@ export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void })
   const avatarSrc = user?.imageUrl ?? null;
 
   return (
-    <div className="mt-8 rounded-3xl border border-border bg-card p-4">
+    <section>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        Account
+      </p>
       <div className="flex items-center gap-3">
         {avatarSrc ? (
           <img
@@ -260,9 +271,7 @@ export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void })
         )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-extrabold text-foreground">
-            {isLoaded && isSignedIn
-              ? (user?.fullName ?? "Account")
-              : "Welcome"}
+            {isLoaded && isSignedIn ? (user?.fullName ?? "Account") : "Welcome"}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {isLoaded && isSignedIn
@@ -272,7 +281,7 @@ export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void })
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1 border-t border-border pt-3">
         {!isLoaded ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : isSignedIn ? (
@@ -281,6 +290,6 @@ export function NavbarUserMenuMobile({ onNavigate }: { onNavigate: () => void })
           <GuestMenuItems onNavigate={onNavigate} />
         )}
       </div>
-    </div>
+    </section>
   );
 }

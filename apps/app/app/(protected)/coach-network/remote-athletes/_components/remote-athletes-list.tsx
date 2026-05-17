@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { confirmRemoteCoachingPayment } from "../../../../actions/coach-network-offers";
+import { EmptyStateCard } from "../../../../../components/dashboard/dashboard-cards";
 
 type RemoteAthleteRow = {
   id: string;
@@ -57,69 +58,90 @@ export function RemoteAthletesList({ rows }: { rows: RemoteAthleteRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="mt-8 rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm font-semibold text-muted-foreground">
-        No remote athletes yet. When an athlete accepts your offer, they appear here
-        for payment confirmation and roster provisioning.
-      </div>
+      <EmptyStateCard
+        title="No remote athletes yet"
+        description="When an athlete accepts your offer, they appear here for payment confirmation and roster provisioning."
+        icon="solar:users-group-rounded-bold"
+      />
     );
   }
 
   return (
     <>
-      <ul className="mt-8 divide-y divide-border rounded-3xl border border-border bg-card">
-        {rows.map((row) => (
-          <li
-            key={row.id}
-            className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-          >
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/coach-network/remote-athletes/${row.id}`}
-                className="font-extrabold text-foreground hover:text-primary"
-              >
-                {athleteLabel(row.athlete)}
-              </Link>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {row.status.replaceAll("_", " ")} · payment:{" "}
-                {row.payment_status.replaceAll("_", " ")}
-              </p>
-              {row.activeAssignment ? (
-                <p className="mt-1 text-xs font-semibold text-foreground">
-                  Program: {row.activeAssignment.title}
-                  {row.adherence?.percent != null
-                    ? ` · ${row.adherence.percent}% adherence`
-                    : ""}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">No program assigned</p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href={`/coach-network/remote-athletes/${row.id}`}
-                className="rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-muted/50"
-              >
-                Manage
-              </Link>
-              {row.payment_status === "pending_manual" ? (
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => confirm(row.id)}
-                  className="rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="hidden grid-cols-[1.3fr_1fr_1fr_auto] gap-4 border-b border-border px-4 py-3 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground md:grid">
+          <span>Athlete</span>
+          <span>Status</span>
+          <span>Program</span>
+          <span>Actions</span>
+        </div>
+        <ul className="divide-y divide-border">
+          {rows.map((row) => (
+            <li
+              key={row.id}
+              className="grid gap-3 px-4 py-3 md:grid-cols-[1.3fr_1fr_1fr_auto] md:items-center md:gap-4"
+            >
+              <div className="min-w-0">
+                <Link
+                  href={`/coach-network/remote-athletes/${row.id}`}
+                  className="text-sm font-black text-foreground transition-colors hover:text-primary"
                 >
-                  Confirm payment
-                </button>
-              ) : (
-                <span className="text-xs font-bold uppercase text-emerald-700">
-                  Payment confirmed
-                </span>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+                  {athleteLabel(row.athlete)}
+                </Link>
+              </div>
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-primary-700">
+                  {row.status.replaceAll("_", " ")}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  Payment: {row.payment_status.replaceAll("_", " ")}
+                </p>
+              </div>
+              <div>
+                {row.activeAssignment ? (
+                  <p className="text-xs font-semibold text-foreground">
+                    {row.activeAssignment.title}
+                    {row.adherence?.percent != null
+                      ? ` · ${row.adherence.percent}% adherence`
+                      : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    No program assigned
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/coach-network/remote-athletes/${row.id}`}
+                  className="rounded-xl border border-border px-3 py-2 text-xs font-bold transition-colors hover:bg-background"
+                >
+                  Manage
+                </Link>
+                {row.payment_status === "pending_manual" ? (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => confirm(row.id)}
+                    className="rounded-xl bg-primary px-4 py-2 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+                  >
+                    Confirm payment
+                  </button>
+                ) : (
+                  <span className="text-xs font-extrabold uppercase tracking-[0.14em] text-success-foreground">
+                    Payment confirmed
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
     </>
   );
 }

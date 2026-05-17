@@ -11,7 +11,7 @@ import {
 import type { Tables } from "../../../../../lib/database.types";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 const emptyForm: CoachingPackageInput = {
@@ -85,8 +85,8 @@ export function CoachingPackagesManager({
   }
 
   return (
-    <div className="mt-6 grid gap-6 lg:grid-cols-2">
-      <div className="rounded-3xl border border-border bg-card p-5">
+    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-border bg-card p-5">
         <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
           {editingId ? "Edit package" : "New package"}
         </h2>
@@ -135,9 +135,9 @@ export function CoachingPackagesManager({
             type="button"
             disabled={isPending}
             onClick={save}
-            className="rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+            className="rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
-            {isPending ? "Saving…" : editingId ? "Update" : "Add package"}
+            {isPending ? "Saving..." : editingId ? "Update" : "Add package"}
           </button>
           {editingId ? (
             <button
@@ -149,18 +149,31 @@ export function CoachingPackagesManager({
             </button>
           ) : null}
         </div>
-        {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+        {message ? (
+          <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       <ul className="space-y-3">
         {initialPackages.map((pkg) => (
-          <li key={pkg.id} className="rounded-2xl border border-border bg-card p-4">
+          <li
+            key={pkg.id}
+            className="rounded-2xl border border-border bg-card p-4"
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-extrabold text-foreground">{pkg.title}</p>
                 {pkg.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{pkg.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {pkg.description}
+                  </p>
                 ) : null}
                 <p className="mt-2 text-xs text-muted-foreground">
                   {pkg.is_active ? "Active" : "Inactive"}

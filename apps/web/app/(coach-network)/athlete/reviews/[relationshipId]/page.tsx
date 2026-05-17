@@ -19,19 +19,21 @@ export default async function AthleteReviewWritePage({
 
   const { relationshipId } = await params;
   const opportunities = await listAthleteReviewOpportunities();
-  const match = opportunities.find((item) => item.relationshipId === relationshipId);
+  const match = opportunities.find(
+    (item) => item.relationshipId === relationshipId,
+  );
 
   if (!match || match.existingReview) {
     notFound();
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-16 md:px-8">
+    <main className="mx-auto max-w-3xl px-5 py-12 md:px-8">
       <Link
         href="/athlete/reviews"
-        className="text-sm font-semibold text-primary hover:underline"
+        className="text-sm font-semibold text-primary hover:text-primary-hover"
       >
-        ← Coach reviews
+        Coach reviews
       </Link>
 
       <div className="mt-6">

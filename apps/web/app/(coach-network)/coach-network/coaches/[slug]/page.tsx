@@ -73,10 +73,10 @@ export default async function CoachPublicProfilePage({
         href="/find-coach"
         className="text-sm font-semibold text-primary hover:text-primary-hover"
       >
-        ← Back to find a coach
+        Back to find a coach
       </Link>
 
-      <header className="mt-6 rounded-3xl border border-border bg-card p-6 md:p-8">
+      <header className="mt-6 rounded-2xl border border-border bg-card p-6 md:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
           <div className="flex size-20 shrink-0 items-center justify-center rounded-3xl bg-primary-soft text-primary">
             {coach.photoUrl ? (
@@ -95,7 +95,9 @@ export default async function CoachPublicProfilePage({
               {coach.displayName}
             </h1>
             {coach.headline ? (
-              <p className="mt-2 text-base text-muted-foreground">{coach.headline}</p>
+              <p className="mt-2 text-base text-muted-foreground">
+                {coach.headline}
+              </p>
             ) : null}
             <p className="mt-2 text-sm font-bold text-primary">
               {formatRating(coach.averageRating, coach.reviewCount)}
@@ -134,7 +136,9 @@ export default async function CoachPublicProfilePage({
           {coach.pricingDisplay ? (
             <div>
               <dt className="font-bold text-muted-foreground">Pricing</dt>
-              <dd className="font-semibold text-foreground">{coach.pricingDisplay}</dd>
+              <dd className="font-semibold text-foreground">
+                {coach.pricingDisplay}
+              </dd>
             </div>
           ) : null}
           {coach.yearsExperience !== null ? (
@@ -147,7 +151,9 @@ export default async function CoachPublicProfilePage({
           ) : null}
           {coach.responseTimeAvgHours !== null ? (
             <div>
-              <dt className="font-bold text-muted-foreground">Typical response</dt>
+              <dt className="font-bold text-muted-foreground">
+                Typical response
+              </dt>
               <dd className="font-semibold text-foreground">
                 ~{coach.responseTimeAvgHours}h
               </dd>
@@ -159,7 +165,7 @@ export default async function CoachPublicProfilePage({
           {coach.isAcceptingClients ? (
             <Link
               href={applyHref}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-extrabold text-white hover:bg-primary-hover"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-6 text-sm font-extrabold text-primary-foreground hover:bg-primary-hover"
             >
               {userId
                 ? showApplyHint
@@ -168,7 +174,7 @@ export default async function CoachPublicProfilePage({
                 : "Sign in to apply"}
             </Link>
           ) : (
-            <span className="inline-flex h-11 items-center rounded-full bg-muted px-6 text-sm font-extrabold text-muted-foreground">
+            <span className="inline-flex h-11 items-center rounded-xl bg-muted px-6 text-sm font-extrabold text-muted-foreground">
               Not accepting clients
             </span>
           )}

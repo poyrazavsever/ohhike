@@ -1,7 +1,13 @@
+import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getRemoteCoachingRelationshipDetail } from "../../../../actions/coach-network-programs";
+import {
+  DashboardHero,
+  DetailStat,
+  EmptyStateCard,
+} from "../../../../../components/dashboard/dashboard-cards";
 import { parseRelationshipCoachMetadata } from "../../../../../lib/coach-network/reviews";
 import { AssignCoachingProgramForm } from "./_components/assign-coaching-program-form";
 import { PrivateAthleteRatingForm } from "./_components/private-athlete-rating-form";
@@ -10,12 +16,14 @@ type RemoteAthleteDetailPageProps = {
   params: Promise<{ relationshipId: string }>;
 };
 
-function athleteLabel(athlete: {
-  display_name: string | null;
-  first_name: string;
-  last_name: string | null;
-  email: string | null;
-} | null) {
+function athleteLabel(
+  athlete: {
+    display_name: string | null;
+    first_name: string;
+    last_name: string | null;
+    email: string | null;
+  } | null,
+) {
   if (!athlete) {
     return "Athlete";
   }
@@ -43,28 +51,46 @@ export default async function RemoteAthleteDetailPage({
     relationship.payment_status !== "pending_manual";
 
   const coachMetadata = parseRelationshipCoachMetadata(relationship.metadata);
+  const displayName = athleteLabel(athlete);
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8 md:px-8">
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
       <Link
         href="/coach-network/remote-athletes"
-        className="text-sm font-semibold text-primary hover:text-primary-hover"
+        className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
       >
-        ← Remote athletes
+        <Icon icon="solar:arrow-left-linear" className="size-4" />
+        Remote athletes
       </Link>
 
-      <header className="mt-4">
-        <h1 className="text-2xl font-extrabold text-foreground">
-          {athleteLabel(athlete)}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {relationship.status.replaceAll("_", " ")} · payment:{" "}
-          {relationship.payment_status.replaceAll("_", " ")}
-        </p>
-      </header>
+      <div className="mt-4">
+        <DashboardHero
+          eyebrow="Coach Network"
+          title={displayName}
+          subtitle="Manage the active remote coaching relationship, program assignment and internal athlete assessment."
+          mascotSrc="/maskotlar/hazirlik.png"
+        />
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-3">
+        <DetailStat
+          label="Relationship"
+          value={relationship.status.replaceAll("_", " ")}
+        />
+        <DetailStat
+          label="Payment"
+          value={relationship.payment_status.replaceAll("_", " ")}
+        />
+        <DetailStat
+          label="Adherence"
+          value={
+            adherence?.percent != null ? `${adherence.percent}%` : "Pending"
+          }
+        />
+      </div>
 
       {activeAssignment ? (
-        <section className="mt-6 rounded-3xl border border-border bg-primary-soft/40 p-5">
+        <section className="mt-4 rounded-2xl border border-border bg-card p-5">
           <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
             Active program
           </h2>
@@ -77,7 +103,7 @@ export default async function RemoteAthleteDetailPage({
             </p>
           ) : null}
           <p className="mt-3 text-sm text-muted-foreground">
-            {activeAssignment.starts_at} → {activeAssignment.ends_at}
+            {activeAssignment.starts_at} to {activeAssignment.ends_at}
           </p>
           {adherence && adherence.percent !== null ? (
             <p className="mt-3 text-sm font-bold text-foreground">
@@ -91,15 +117,17 @@ export default async function RemoteAthleteDetailPage({
           )}
         </section>
       ) : (
-        <p className="mt-6 rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-          No active program assigned yet.
-        </p>
+        <EmptyStateCard
+          title="No active program assigned"
+          description="Assign a program after payment confirmation to start adherence tracking."
+          icon="solar:calendar-bold"
+        />
       )}
 
       {canAssignProgram ? (
         <AssignCoachingProgramForm relationshipId={relationship.id} />
       ) : (
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-4 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground">
           Confirm payment before assigning a program to this athlete.
         </p>
       )}
@@ -109,6 +137,6 @@ export default async function RemoteAthleteDetailPage({
         initialRating={coachMetadata.private_athlete_rating}
         initialNote={coachMetadata.private_athlete_rating_note}
       />
-    </main>
+    </section>
   );
 }

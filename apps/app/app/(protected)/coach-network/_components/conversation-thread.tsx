@@ -14,7 +14,7 @@ import {
 } from "../../../../lib/coach-network/marketplace-messages";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function ConversationThread({
@@ -73,12 +73,12 @@ export function ConversationThread({
     <>
       <Link
         href={backHref}
-        className="mb-4 inline-block text-sm font-semibold text-primary hover:text-primary-hover"
+        className="mb-4 mt-4 inline-block text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
       >
-        ← Messages
+        Back to messages
       </Link>
 
-      <div className="flex min-h-[28rem] flex-col rounded-3xl border border-border bg-card">
+      <div className="flex min-h-[28rem] flex-col rounded-2xl border border-border bg-card">
         <div className="px-5 pt-4">
           <MarketplaceRealtimeIndicator
             status={realtimeStatus}
@@ -87,7 +87,9 @@ export function ConversationThread({
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-5">
           {sortedMessages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No messages yet. Say hello.</p>
+            <p className="text-sm text-muted-foreground">
+              No messages yet. Say hello.
+            </p>
           ) : (
             sortedMessages.map((message) => {
               const isMine = message.senderUserId === userId;
@@ -117,7 +119,7 @@ export function ConversationThread({
             value={draft}
             maxLength={MARKETPLACE_MESSAGE_MAX_LENGTH}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Write a message…"
+            placeholder="Write a message..."
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -133,12 +135,16 @@ export function ConversationThread({
               type="button"
               disabled={isPending || !draft.trim()}
               onClick={submit}
-              className="rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+              className="rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
-              {isPending ? "Sending…" : "Send"}
+              {isPending ? "Sending..." : "Send"}
             </button>
           </div>
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+          {error ? (
+            <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+              {error}
+            </p>
+          ) : null}
         </div>
       </div>
     </>

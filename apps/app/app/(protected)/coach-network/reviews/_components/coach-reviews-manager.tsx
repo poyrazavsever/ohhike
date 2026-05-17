@@ -25,14 +25,20 @@ type ReviewRow = {
 export function CoachReviewsManager({ reviews }: { reviews: ReviewRow[] }) {
   if (reviews.length === 0) {
     return (
-      <p className="mt-8 rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-        No athlete reviews yet.
-      </p>
+      <div className="mt-4 rounded-2xl border border-dashed border-border bg-card p-6 text-center">
+        <p className="text-sm font-black text-foreground">
+          No athlete reviews yet
+        </p>
+        <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-muted-foreground">
+          Public reviews will appear here after completed remote coaching
+          relationships.
+        </p>
+      </div>
     );
   }
 
   return (
-    <ul className="mt-8 space-y-4">
+    <ul className="mt-4 space-y-3">
       {reviews.map((review) => (
         <ReviewRowActions key={review.id} review={review} />
       ))}
@@ -62,7 +68,9 @@ function ReviewRowActions({ review }: { review: ReviewRow }) {
         return;
       }
 
-      setMessage(isPublic ? "Review published." : "Review hidden from public profile.");
+      setMessage(
+        isPublic ? "Review published." : "Review hidden from public profile.",
+      );
       router.refresh();
     });
   }
@@ -101,7 +109,7 @@ function ReviewRowActions({ review }: { review: ReviewRow }) {
             type="button"
             disabled={isPending}
             onClick={() => moderate(true, true)}
-            className="rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white"
+            className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
             Publish
           </button>
@@ -109,7 +117,7 @@ function ReviewRowActions({ review }: { review: ReviewRow }) {
             type="button"
             disabled={isPending}
             onClick={() => moderate(false)}
-            className="rounded-full border border-border px-3 py-1.5 text-xs font-bold"
+            className="rounded-xl border border-border px-3 py-2 text-xs font-bold transition-colors hover:bg-background"
           >
             Hide
           </button>
@@ -118,7 +126,7 @@ function ReviewRowActions({ review }: { review: ReviewRow }) {
               type="button"
               disabled={isPending}
               onClick={report}
-              className="rounded-full border border-destructive/30 px-3 py-1.5 text-xs font-bold text-destructive"
+              className="rounded-xl border border-destructive/30 px-3 py-2 text-xs font-bold text-destructive"
             >
               Flag
             </button>
@@ -126,15 +134,25 @@ function ReviewRowActions({ review }: { review: ReviewRow }) {
         </div>
       </div>
       {review.body ? (
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">{review.body}</p>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          {review.body}
+        </p>
       ) : null}
       {review.metadataParsed.report_reason ? (
-        <p className="mt-2 text-xs text-amber-700">
+        <p className="mt-2 text-xs font-semibold text-warning-foreground">
           Report reason: {review.metadataParsed.report_reason}
         </p>
       ) : null}
-      {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
     </li>
   );
 }

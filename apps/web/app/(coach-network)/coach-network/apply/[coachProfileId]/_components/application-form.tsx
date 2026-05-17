@@ -15,7 +15,7 @@ type PackageOption = {
 };
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 function labelClassName() {
@@ -84,7 +84,8 @@ export function CoachApplicationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Applying to <span className="font-bold text-foreground">{coachName}</span>
+        Applying to{" "}
+        <span className="font-bold text-foreground">{coachName}</span>
       </p>
 
       <div>
@@ -171,12 +172,24 @@ export function CoachApplicationForm({
         {(
           [
             ["shareProfile", "Share my marketplace profile with this coach"],
-            ["shareGoals", "Share my goals and sport interests from onboarding"],
-            ["shareContact", "Allow this coach to contact me about this application"],
-            ["acceptedTerms", "I understand this is not medical advice and coaching is at the coach's discretion"],
+            [
+              "shareGoals",
+              "Share my goals and sport interests from onboarding",
+            ],
+            [
+              "shareContact",
+              "Allow this coach to contact me about this application",
+            ],
+            [
+              "acceptedTerms",
+              "I understand this is not medical advice and coaching is at the coach's discretion",
+            ],
           ] as const
         ).map(([key, label]) => (
-          <label key={key} className="flex items-start gap-3 text-sm font-medium">
+          <label
+            key={key}
+            className="flex items-start gap-3 text-sm font-medium"
+          >
             <input
               type="checkbox"
               className="mt-1 size-4 rounded border-border"
@@ -194,12 +207,14 @@ export function CoachApplicationForm({
       </fieldset>
 
       {error ? (
-        <p className="text-sm font-semibold text-destructive">{error}</p>
+        <p className="rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-semibold text-destructive-foreground">
+          {error}
+        </p>
       ) : null}
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Submitting…" : "Submit application"}
+          {isPending ? "Submitting..." : "Submit application"}
         </Button>
         <Button variant="outline" asChild>
           <Link href="/find-coach">Cancel</Link>

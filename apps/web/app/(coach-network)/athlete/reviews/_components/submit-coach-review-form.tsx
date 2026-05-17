@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { submitCoachReview } from "../../../../actions/coach-network-reviews";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function SubmitCoachReviewForm({
@@ -50,8 +50,10 @@ export function SubmitCoachReviewForm({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-5">
-      <h2 className="text-lg font-extrabold text-foreground">Review {coachName}</h2>
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <h2 className="text-lg font-extrabold text-foreground">
+        Review {coachName}
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Public reviews appear on the coach&apos;s marketplace profile.
       </p>
@@ -104,13 +106,21 @@ export function SubmitCoachReviewForm({
         type="button"
         disabled={isPending}
         onClick={submit}
-        className="mt-4 rounded-full bg-primary px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-60"
+        className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
-        {isPending ? "Submitting…" : "Submit review"}
+        {isPending ? "Submitting..." : "Submit review"}
       </button>
 
-      {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { switchActiveOrganization } from "../../app/actions/workspace";
 import { isAthleteRole } from "../../lib/org-roles";
@@ -295,7 +295,8 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
               {workspace.organizationName}
             </p>
             <p className="mt-1 truncate text-[11px] font-medium text-muted-foreground">
-              {workspace.teamName ?? "No active team"} · {formatRole(workspace.role)}
+              {workspace.teamName ?? "No active team"} ·{" "}
+              {formatRole(workspace.role)}
             </p>
           </div>
 
@@ -382,7 +383,8 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
             {workspace.organizationName}
           </p>
           <p className="truncate text-[11px] font-medium text-muted-foreground">
-            {workspace.teamName ?? "No active team"} · {formatPlan(workspace.plan)}
+            {workspace.teamName ?? "No active team"} ·{" "}
+            {formatPlan(workspace.plan)}
           </p>
         </div>
         <Icon
@@ -469,7 +471,9 @@ function SidebarUserCard() {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">
-            {user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "Coach"}
+            {user?.fullName ??
+              user?.primaryEmailAddress?.emailAddress ??
+              "Coach"}
           </p>
           <p className="truncate text-[11px] font-medium text-muted-foreground">
             Account & admin
@@ -494,51 +498,278 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
   const groups = isAthlete ? athleteNavGroups : navGroups;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-card lg:flex lg:flex-col">
-      <div className="h-3" />
-      <WorkspaceCard workspace={workspace} />
+    <>
+      <MobileAppNavigation
+        groups={groups}
+        pathname={pathname}
+        workspace={workspace}
+        isAthlete={isAthlete}
+      />
 
-      <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
-        {groups.map((group) => (
-          <div key={group.label} className="mt-4">
-            <div className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              {group.label}
-            </div>
-            <div className="mt-2 grid gap-1">
-              {group.items.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(`${item.href}/`);
-                const isLocked =
-                  "feature" in item &&
-                  item.feature &&
-                  !workspace.features[item.feature as keyof typeof workspace.features];
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-border bg-card lg:flex lg:flex-col">
+        <div className="h-3" />
+        <WorkspaceCard workspace={workspace} />
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={
-                      isActive
-                        ? "flex items-center gap-2.5 rounded-2xl bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-700"
-                        : "flex items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    }
-                  >
-                    <Icon icon={item.icon} className="size-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                    {isLocked ? (
-                      <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
-                        Pro
-                      </span>
-                    ) : null}
-                  </Link>
-                );
-              })}
+        <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
+          {groups.map((group) => (
+            <div key={group.label} className="mt-4">
+              <div className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {group.label}
+              </div>
+              <div className="mt-2 grid gap-1">
+                {group.items.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
+                  const isLocked =
+                    "feature" in item &&
+                    item.feature &&
+                    !workspace.features[
+                      item.feature as keyof typeof workspace.features
+                    ];
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={
+                        isActive
+                          ? "flex items-center gap-2.5 rounded-2xl bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-700"
+                          : "flex items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      }
+                    >
+                      <Icon icon={item.icon} className="size-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                      {isLocked ? (
+                        <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+                          Pro
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
+          ))}
+        </nav>
+
+        <SidebarUserCard />
+      </aside>
+    </>
+  );
+}
+
+function MobileAppNavigation({
+  groups,
+  pathname,
+  workspace,
+  isAthlete,
+}: {
+  groups: typeof navGroups | typeof athleteNavGroups;
+  pathname: string;
+  workspace: WorkspaceShellData;
+  isAthlete: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const currentGroup = groups.find((group) => group.label === activeGroup);
+
+  function close() {
+    setIsOpen(false);
+    setActiveGroup(null);
+  }
+
+  return (
+    <>
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur lg:hidden">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image
+            src="/logo/logoWtextBlack.png"
+            alt="OhHike"
+            width={122}
+            height={32}
+            className="h-7 w-auto object-contain"
+          />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="inline-flex size-10 items-center justify-center rounded-xl border border-border text-foreground"
+          aria-label="Open navigation"
+        >
+          <Icon icon="solar:hamburger-menu-linear" className="size-5" />
+        </button>
+      </header>
+
+      <div
+        className={
+          isOpen
+            ? "fixed inset-0 z-60 translate-x-0 bg-background transition-transform duration-300 lg:hidden"
+            : "fixed inset-0 z-60 -translate-x-full bg-background transition-transform duration-300 lg:hidden"
+        }
+      >
+        <div className="flex h-full flex-col">
+          <div className="flex h-16 items-center justify-between border-b border-border px-5">
+            {currentGroup ? (
+              <button
+                type="button"
+                onClick={() => setActiveGroup(null)}
+                className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground"
+              >
+                <Icon icon="solar:arrow-left-linear" className="size-4" />
+                Back
+              </button>
+            ) : (
+              <div>
+                <p className="text-sm font-black text-foreground">
+                  {workspace.organizationName}
+                </p>
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {workspace.teamName ?? "No active team"}
+                </p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={close}
+              className="inline-flex size-10 items-center justify-center rounded-xl text-foreground"
+              aria-label="Close navigation"
+            >
+              <Icon icon="solar:close-circle-linear" className="size-6" />
+            </button>
           </div>
-        ))}
-      </nav>
 
-      <SidebarUserCard />
-    </aside>
+          <nav className="flex-1 overflow-y-auto px-5 py-6">
+            {!currentGroup ? (
+              <div className="grid">
+                {groups.map((group) => (
+                  <button
+                    key={group.label}
+                    type="button"
+                    onClick={() => setActiveGroup(group.label)}
+                    className="flex items-center justify-between border-b border-border py-4 text-left text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                  >
+                    {group.label}
+                    <Icon
+                      icon="solar:alt-arrow-right-linear"
+                      className="size-4 text-muted-foreground"
+                    />
+                  </button>
+                ))}
+                {!isAthlete ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveGroup("__account")}
+                    className="flex items-center justify-between border-b border-border py-4 text-left text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                  >
+                    Account
+                    <Icon
+                      icon="solar:alt-arrow-right-linear"
+                      className="size-4 text-muted-foreground"
+                    />
+                  </button>
+                ) : null}
+              </div>
+            ) : activeGroup === "__account" ? (
+              <MobileAccountLinks onNavigate={close} />
+            ) : (
+              <section>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  {currentGroup.label}
+                </p>
+                <div className="mt-4 grid">
+                  {currentGroup.items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`);
+                    const isLocked =
+                      "feature" in item &&
+                      item.feature &&
+                      !workspace.features[
+                        item.feature as keyof typeof workspace.features
+                      ];
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={close}
+                        className="flex items-center justify-between border-b border-border py-4"
+                      >
+                        <span
+                          className={
+                            isActive
+                              ? "text-lg font-extrabold text-primary-700"
+                              : "text-lg font-extrabold text-foreground"
+                          }
+                        >
+                          {item.label}
+                        </span>
+                        {isLocked ? (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+                            Pro
+                          </span>
+                        ) : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </nav>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MobileAccountLinks({ onNavigate }: { onNavigate: () => void }) {
+  const { openUserProfile, signOut } = useClerk();
+
+  return (
+    <section>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        Account
+      </p>
+      <div className="mt-4 grid">
+        {adminItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className="border-b border-border py-4 text-lg font-extrabold text-foreground"
+          >
+            {item.label}
+          </Link>
+        ))}
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate();
+            openUserProfile();
+          }}
+          className="border-b border-border py-4 text-left text-lg font-extrabold text-foreground"
+        >
+          Manage account
+        </button>
+        <button
+          type="button"
+          onClick={() => signOut({ redirectUrl: "/login" })}
+          className="border-b border-border py-4 text-left text-lg font-extrabold text-foreground"
+        >
+          Sign out
+        </button>
+      </div>
+    </section>
   );
 }

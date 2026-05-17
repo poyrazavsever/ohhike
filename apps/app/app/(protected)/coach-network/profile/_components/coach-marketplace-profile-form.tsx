@@ -23,7 +23,7 @@ const sportOptions: SportType[] = [
 const modeOptions = ["remote", "hybrid", "in_person"];
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 function labelClassName() {
@@ -128,197 +128,242 @@ export function CoachMarketplaceProfileForm({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-5 md:p-6">
+    <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
       {!canPublish ? (
-        <p className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <p className="mb-4 rounded-2xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm font-bold text-warning-foreground">
           Pro plan required to publish your marketplace profile.
         </p>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <label className={labelClassName()}>Display name</label>
-          <input
-            className={fieldClassName()}
-            value={form.displayName}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                displayName: event.target.value,
-              }))
-            }
-          />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <label className={labelClassName()}>Display name</label>
+            <input
+              className={fieldClassName()}
+              value={form.displayName}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  displayName: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label className={labelClassName()}>Profile URL slug</label>
+            <input
+              className={fieldClassName()}
+              value={form.slug}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, slug: event.target.value }))
+              }
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Public URL: /coach-network/coaches/{slugPreview}
+            </p>
+          </div>
+
+          <div>
+            <label className={labelClassName()}>Headline</label>
+            <input
+              className={fieldClassName()}
+              value={form.headline ?? ""}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  headline: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClassName()}>Bio</label>
+            <textarea
+              className={`${fieldClassName()} min-h-28`}
+              value={form.bio ?? ""}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, bio: event.target.value }))
+              }
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <span className={labelClassName()}>Sports</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {sportOptions.map((sport) => {
+                const active = (form.sports ?? []).includes(sport);
+                return (
+                  <button
+                    key={sport}
+                    type="button"
+                    onClick={() => toggleSport(sport)}
+                    className={
+                      active
+                        ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
+                        : "rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground"
+                    }
+                  >
+                    {sport}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <span className={labelClassName()}>Coaching modes</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {modeOptions.map((mode) => {
+                const active = (form.coachingModes ?? []).includes(mode);
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => toggleMode(mode)}
+                    className={
+                      active
+                        ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
+                        : "rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground"
+                    }
+                  >
+                    {mode}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClassName()}>Pricing display</label>
+            <input
+              className={fieldClassName()}
+              value={form.pricingDisplay ?? ""}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  pricingDisplay: event.target.value,
+                }))
+              }
+              placeholder="From $120 / month"
+            />
+          </div>
+
+          <div>
+            <label className={labelClassName()}>City</label>
+            <input
+              className={fieldClassName()}
+              value={form.locationCity ?? ""}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  locationCity: event.target.value,
+                }))
+              }
+            />
+          </div>
         </div>
 
-        <div>
-          <label className={labelClassName()}>Profile URL slug</label>
-          <input
-            className={fieldClassName()}
-            value={form.slug}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, slug: event.target.value }))
-            }
-          />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Public URL: /coach-network/coaches/{slugPreview}
+        <aside className="rounded-2xl border border-border bg-background p-4">
+          <p className="text-sm font-black text-foreground">Publication</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-muted-foreground">
+            Control how your profile appears in the public marketplace and
+            whether athletes can send new applications.
           </p>
-        </div>
 
-        <div>
-          <label className={labelClassName()}>Headline</label>
-          <input
-            className={fieldClassName()}
-            value={form.headline ?? ""}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, headline: event.target.value }))
-            }
-          />
-        </div>
+          <div className="mt-4 grid gap-3">
+            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm font-semibold text-foreground">
+              <input
+                type="checkbox"
+                checked={form.isPublic}
+                disabled={!canPublish}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    isPublic: event.target.checked,
+                  }))
+                }
+                className="mt-0.5"
+              />
+              <span>
+                Publish on Find a coach
+                <span className="mt-1 block text-xs font-semibold leading-5 text-muted-foreground">
+                  Makes the profile discoverable on the public directory.
+                </span>
+              </span>
+            </label>
 
-        <div className="md:col-span-2">
-          <label className={labelClassName()}>Bio</label>
-          <textarea
-            className={`${fieldClassName()} min-h-28`}
-            value={form.bio ?? ""}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, bio: event.target.value }))
-            }
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <span className={labelClassName()}>Sports</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {sportOptions.map((sport) => {
-              const active = (form.sports ?? []).includes(sport);
-              return (
-                <button
-                  key={sport}
-                  type="button"
-                  onClick={() => toggleSport(sport)}
-                  className={
-                    active
-                      ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
-                      : "rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground"
-                  }
-                >
-                  {sport}
-                </button>
-              );
-            })}
+            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm font-semibold text-foreground">
+              <input
+                type="checkbox"
+                checked={form.isAcceptingClients}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    isAcceptingClients: event.target.checked,
+                  }))
+                }
+                className="mt-0.5"
+              />
+              <span>
+                Accepting new clients
+                <span className="mt-1 block text-xs font-semibold leading-5 text-muted-foreground">
+                  Controls whether athletes can submit applications.
+                </span>
+              </span>
+            </label>
           </div>
-        </div>
 
-        <div className="md:col-span-2">
-          <span className={labelClassName()}>Coaching modes</span>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {modeOptions.map((mode) => {
-              const active = (form.coachingModes ?? []).includes(mode);
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => toggleMode(mode)}
-                  className={
-                    active
-                      ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
-                      : "rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground"
-                  }
-                >
-                  {mode}
-                </button>
-              );
-            })}
+          <div className="mt-4 rounded-xl bg-card p-3">
+            <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
+              Public route
+            </p>
+            <p className="mt-1 break-all text-sm font-black text-foreground">
+              /coach-network/coaches/{slugPreview}
+            </p>
           </div>
-        </div>
-
-        <div>
-          <label className={labelClassName()}>Pricing display</label>
-          <input
-            className={fieldClassName()}
-            value={form.pricingDisplay ?? ""}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                pricingDisplay: event.target.value,
-              }))
-            }
-            placeholder="From $120 / month"
-          />
-        </div>
-
-        <div>
-          <label className={labelClassName()}>City</label>
-          <input
-            className={fieldClassName()}
-            value={form.locationCity ?? ""}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                locationCity: event.target.value,
-              }))
-            }
-          />
-        </div>
+        </aside>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-6">
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.isPublic}
-            disabled={!canPublish}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                isPublic: event.target.checked,
-              }))
-            }
-          />
-          Publish on Find a coach
-        </label>
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={form.isAcceptingClients}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                isAcceptingClients: event.target.checked,
-              }))
-            }
-          />
-          Accepting new clients
-        </label>
-      </div>
+      {error ? (
+        <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
+          {error}
+        </div>
+      ) : null}
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={submit}
-          className="rounded-full bg-primary px-5 py-2.5 text-sm font-extrabold text-white hover:bg-primary-hover disabled:opacity-60"
-        >
-          {isPending ? "Saving…" : "Save profile"}
-        </button>
+      {message ? (
+        <div className="mt-5 rounded-2xl border border-success/30 bg-success-soft p-4 text-sm font-bold text-success-foreground">
+          {message}
+        </div>
+      ) : null}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         {publicProfileUrl && initialProfile?.is_public ? (
           <a
             href={publicProfileUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-semibold text-primary hover:text-primary-hover"
+            className="text-sm font-bold text-primary-700 transition-colors hover:text-primary-hover"
           >
             View public profile
           </a>
-        ) : null}
-      </div>
+        ) : (
+          <p className="text-sm font-semibold text-muted-foreground">
+            Save a public profile to generate a shareable link.
+          </p>
+        )}
 
-      {message ? (
-        <p className="mt-3 text-sm font-semibold text-emerald-700">{message}</p>
-      ) : null}
-      {error ? (
-        <p className="mt-3 text-sm font-semibold text-destructive">{error}</p>
-      ) : null}
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={submit}
+          className="rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+        >
+          {isPending ? "Saving..." : "Save profile"}
+        </button>
+      </div>
     </div>
   );
 }

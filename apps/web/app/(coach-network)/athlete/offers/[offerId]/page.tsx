@@ -9,7 +9,9 @@ type AthleteOfferPageProps = {
   params: Promise<{ offerId: string }>;
 };
 
-export default async function AthleteOfferPage({ params }: AthleteOfferPageProps) {
+export default async function AthleteOfferPage({
+  params,
+}: AthleteOfferPageProps) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/login?redirect_url=/athlete/applications");
@@ -23,19 +25,21 @@ export default async function AthleteOfferPage({ params }: AthleteOfferPageProps
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-16 md:px-8">
+    <main className="mx-auto max-w-3xl px-5 py-12 md:px-8">
       <Link
         href="/athlete/applications"
-        className="text-sm font-semibold text-primary hover:underline"
+        className="text-sm font-semibold text-primary hover:text-primary-hover"
       >
-        ← My applications
+        My applications
       </Link>
 
-      <header className="mt-6">
+      <header className="mt-6 rounded-2xl border border-border bg-card p-5">
         <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Coaching offer · {offer.status.replaceAll("_", " ")}
         </p>
-        <h1 className="mt-2 text-3xl font-extrabold text-foreground">{offer.title}</h1>
+        <h1 className="mt-2 text-3xl font-extrabold text-foreground">
+          {offer.title}
+        </h1>
         {offer.price_cents ? (
           <p className="mt-2 text-lg font-bold text-foreground">
             {(offer.price_cents / 100).toFixed(2)} {offer.currency}
@@ -45,7 +49,9 @@ export default async function AthleteOfferPage({ params }: AthleteOfferPageProps
 
       {offer.description ? (
         <section className="mt-8 rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-sm font-extrabold text-foreground">Description</h2>
+          <h2 className="text-sm font-extrabold text-foreground">
+            Description
+          </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {offer.description}
           </p>

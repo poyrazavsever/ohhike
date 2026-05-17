@@ -18,25 +18,26 @@ export default async function AthleteReviewsPage({
   const opportunities = await listAthleteReviewOpportunities();
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-16 md:px-8">
+    <main className="mx-auto max-w-4xl px-5 py-12 md:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Coach reviews</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Share feedback for coaches you worked with through OhHike remote coaching.
+        Share feedback for coaches you worked with through OhHike remote
+        coaching.
       </p>
 
       {submitted ? (
-        <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+        <p className="mt-6 rounded-2xl border border-success/30 bg-success-soft px-4 py-3 text-sm font-semibold text-success-foreground">
           Review submitted. Thank you for helping other athletes choose a coach.
         </p>
       ) : null}
 
       {opportunities.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground">
-          No coaches ready for review yet. Complete onboarding with a coach and confirm
-          payment first.
+          No coaches ready for review yet. Complete onboarding with a coach and
+          confirm payment first.
         </p>
       ) : (
-        <ul className="mt-8 space-y-4">
+        <ul className="mt-8 space-y-3">
           {opportunities.map((item) => (
             <li
               key={item.relationshipId}
@@ -51,8 +52,10 @@ export default async function AthleteReviewsPage({
                     <p className="mt-1 text-sm text-muted-foreground">
                       You rated {item.existingReview.rating}/5 on{" "}
                       {item.existingReview.created_at
-                        ? new Date(item.existingReview.created_at).toLocaleDateString()
-                        : "—"}
+                        ? new Date(
+                            item.existingReview.created_at,
+                          ).toLocaleDateString()
+                        : "-"}
                     </p>
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -72,7 +75,7 @@ export default async function AthleteReviewsPage({
               {!item.existingReview ? (
                 <Link
                   href={`/athlete/reviews/${item.relationshipId}`}
-                  className="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-white"
+                  className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover"
                 >
                   Write review
                 </Link>

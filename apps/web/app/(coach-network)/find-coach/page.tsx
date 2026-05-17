@@ -45,7 +45,9 @@ function parseSort(value: string | undefined): PublicCoachSort {
   return "rating";
 }
 
-export default async function FindCoachPage({ searchParams }: FindCoachPageProps) {
+export default async function FindCoachPage({
+  searchParams,
+}: FindCoachPageProps) {
   const params = await searchParams;
   const coaches = await listPublicCoaches({
     q: params.q,
@@ -57,10 +59,13 @@ export default async function FindCoachPage({ searchParams }: FindCoachPageProps
   return (
     <main className="mx-auto max-w-6xl px-5 py-12 md:px-8">
       <div className="max-w-2xl">
-        <h1 className="text-4xl font-extrabold text-foreground">Find a coach</h1>
+        <h1 className="text-4xl font-extrabold text-foreground">
+          Find a coach
+        </h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Live directory of coaches who published a public marketplace profile in
-          CoachOS. Browse profiles, compare packages, and apply when you are ready.
+          Live directory of coaches who published a public marketplace profile
+          in CoachOS. Browse profiles, compare packages, and apply when you are
+          ready.
         </p>
         {coaches.length > 0 ? (
           <p className="mt-2 text-sm font-semibold text-foreground">
@@ -70,20 +75,22 @@ export default async function FindCoachPage({ searchParams }: FindCoachPageProps
       </div>
 
       <div className="mt-8">
-        <Suspense fallback={<div className="h-32 rounded-3xl bg-muted" />}>
+        <Suspense fallback={<div className="h-32 rounded-2xl bg-muted" />}>
           <FindCoachFilters />
         </Suspense>
       </div>
 
       {coaches.length === 0 ? (
-        <div className="mt-10 rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center">
+        <div className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center">
           <p className="text-sm font-semibold text-foreground">
             No coaches match your filters
           </p>
           <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
             Listings come from Supabase (
-            <code className="rounded bg-muted px-1">coach_marketplace_profiles</code>
-            {" "}with <code className="rounded bg-muted px-1">is_public = true</code>
+            <code className="rounded bg-muted px-1">
+              coach_marketplace_profiles
+            </code>{" "}
+            with <code className="rounded bg-muted px-1">is_public = true</code>
             ). Coaches appear when they publish from CoachOS → Coach Network →
             Marketplace profile.
           </p>

@@ -9,7 +9,7 @@ import {
 } from "../../../../../actions/coach-network";
 
 function fieldClassName() {
-  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "mt-2 w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
 }
 
 export function ApplicationDetailActions({
@@ -57,7 +57,7 @@ export function ApplicationDetailActions({
   }
 
   return (
-    <div className="mt-6 rounded-3xl border border-border bg-card p-5">
+    <div className="mt-4 rounded-2xl border border-border bg-card p-5">
       <h2 className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
         Coach actions
       </h2>
@@ -75,7 +75,7 @@ export function ApplicationDetailActions({
           type="button"
           disabled={isPending}
           onClick={() => runAction("request_info")}
-          className="rounded-full border border-border px-4 py-2 text-xs font-extrabold hover:border-primary/40 hover:bg-primary-soft disabled:opacity-60"
+          className="rounded-xl border border-border px-4 py-2.5 text-xs font-extrabold transition-colors hover:border-primary/40 hover:bg-primary-soft disabled:opacity-60"
         >
           Request info
         </button>
@@ -83,16 +83,20 @@ export function ApplicationDetailActions({
           type="button"
           disabled={isPending}
           onClick={() => runAction("reject")}
-          className="rounded-full bg-destructive px-4 py-2 text-xs font-extrabold text-white disabled:opacity-60"
+          className="rounded-xl bg-destructive px-4 py-2.5 text-xs font-extrabold text-destructive-foreground disabled:opacity-60"
         >
           Decline
         </button>
       </div>
       {feedback ? (
-        <p className="mt-3 text-sm font-semibold text-emerald-700">{feedback}</p>
+        <p className="mt-3 rounded-xl border border-success/30 bg-success-soft px-3 py-2 text-sm font-bold text-success-foreground">
+          {feedback}
+        </p>
       ) : null}
       {error ? (
-        <p className="mt-3 text-sm font-semibold text-destructive">{error}</p>
+        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm font-bold text-destructive-foreground">
+          {error}
+        </p>
       ) : null}
     </div>
   );

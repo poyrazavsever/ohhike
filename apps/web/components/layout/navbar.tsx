@@ -5,14 +5,16 @@ import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
 import { findCoachNavLink } from "../../lib/coach-network/nav";
 import { isCoachNetworkEnabled } from "../../lib/coach-network";
 import { getAppUrl } from "../../lib/site-url";
 import {
+  coachNetworkAthleteItems,
+  coachNetworkGuestItems,
   NavbarCoachNetwork,
-  NavbarCoachNetworkMobile,
 } from "./navbar-coach-network";
 import { NavDropdown } from "./navbar-nav-dropdown";
 import { NavbarUserMenu, NavbarUserMenuMobile } from "./navbar-user-menu";
@@ -55,8 +57,12 @@ const resourceItems = [
 ];
 
 export function Navbar() {
+  const { isLoaded, isSignedIn } = useUser();
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<
+    "root" | "resources" | "coach-network" | "account"
+  >("root");
   const [starCount, setStarCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -129,8 +135,13 @@ export function Navbar() {
     };
   }, []);
 
-  const closeMenu = () => setIsMenuOpen(false);
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+    setMobileView("root");
+  };
   const navItems = marketingNavItems();
+  const coachNetworkItems =
+    isLoaded && isSignedIn ? coachNetworkAthleteItems : coachNetworkGuestItems;
 
   return (
     <header
@@ -200,11 +211,7 @@ export function Navbar() {
           </Button>
 
           {!isCoachNetworkEnabled() ? (
-            <Button
-              size="sm"
-              className="h-9 px-5 text-xs shadow-none"
-              asChild
-            >
+            <Button size="sm" className="h-9 px-5 text-xs shadow-none" asChild>
               <Link href={getAppUrl("/")}>Get Started</Link>
             </Button>
           ) : (
@@ -261,59 +268,106 @@ export function Navbar() {
             </Button>
           </div>
 
-          <nav className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
-            <div className="flex flex-col gap-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="flex items-center justify-between rounded-2xl border border-transparent px-4 py-4 text-2xl font-extrabold text-foreground transition-colors hover:border-primary/25 hover:bg-primary-soft focus-visible:border-primary/30 focus-visible:bg-primary-soft focus-visible:outline-none"
-                >
-                  {item.label}
-                  <Icon
-                    icon="solar:arrow-right-up-linear"
-                    className="size-5 text-primary"
-                  />
-                </Link>
-              ))}
-            </div>
+          <nav className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
+            {mobileView !== "root" ? (
+              <button
+                type="button"
+                onClick={() => setMobileView("root")}
+                className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground transition-colors hover:text-primary"
+              >
+                <Icon icon="solar:arrow-left-linear" className="size-4" />
+                Back
+              </button>
+            ) : null}
 
-            <div className="mt-8">
-              <div className="px-4 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Resources
-              </div>
-              <div className="mt-3 flex flex-col gap-2">
-                {resourceItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="rounded-2xl border border-border bg-card px-4 py-4 transition-colors hover:border-primary/35 hover:bg-primary-soft focus-visible:border-primary/35 focus-visible:bg-primary-soft focus-visible:outline-none"
-                  >
-                    <span className="block text-lg font-extrabold text-foreground">
+            {mobileView === "root" ? (
+              <>
+                <div className="grid">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={closeMenu}
+                      className="flex items-center justify-between border-b border-border py-4 text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                    >
                       {item.label}
-                    </span>
-                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-                      {item.description}
-                    </span>
+                      <Icon
+                        icon="solar:arrow-right-up-linear"
+                        className="size-4 text-muted-foreground"
+                      />
+                    </Link>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setMobileView("resources")}
+                    className="flex items-center justify-between border-b border-border py-4 text-left text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                  >
+                    Resources
+                    <Icon
+                      icon="solar:alt-arrow-right-linear"
+                      className="size-4 text-muted-foreground"
+                    />
+                  </button>
+                  {isCoachNetworkEnabled() ? (
+                    <button
+                      type="button"
+                      onClick={() => setMobileView("coach-network")}
+                      className="flex items-center justify-between border-b border-border py-4 text-left text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                    >
+                      Coach Network
+                      <Icon
+                        icon="solar:alt-arrow-right-linear"
+                        className="size-4 text-muted-foreground"
+                      />
+                    </button>
+                  ) : null}
+                  <Link
+                    href="/about"
+                    onClick={closeMenu}
+                    className="flex items-center justify-between border-b border-border py-4 text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                  >
+                    About Us
+                    <Icon
+                      icon="solar:arrow-right-up-linear"
+                      className="size-4 text-muted-foreground"
+                    />
                   </Link>
-                ))}
-              </div>
-            </div>
+                  {isCoachNetworkEnabled() ? (
+                    <button
+                      type="button"
+                      onClick={() => setMobileView("account")}
+                      className="flex items-center justify-between border-b border-border py-4 text-left text-xl font-extrabold text-foreground transition-colors hover:text-primary"
+                    >
+                      Account
+                      <Icon
+                        icon="solar:alt-arrow-right-linear"
+                        className="size-4 text-muted-foreground"
+                      />
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
 
-            <Link
-              href="/about"
-              onClick={closeMenu}
-              className="mt-8 flex items-center justify-between rounded-2xl border border-transparent px-4 py-4 text-2xl font-extrabold text-foreground transition-colors hover:border-primary/25 hover:bg-primary-soft focus-visible:border-primary/30 focus-visible:bg-primary-soft focus-visible:outline-none"
-            >
-              About Us
-              <Icon icon="solar:arrow-right-up-linear" className="size-5 text-primary" />
-            </Link>
+            {mobileView === "resources" ? (
+              <MobileSubmenu
+                title="Resources"
+                items={resourceItems}
+                onNavigate={closeMenu}
+              />
+            ) : null}
 
-            <NavbarCoachNetworkMobile onNavigate={closeMenu} />
+            {mobileView === "coach-network" ? (
+              <MobileSubmenu
+                title="Coach Network"
+                items={coachNetworkItems}
+                onNavigate={closeMenu}
+              />
+            ) : null}
 
-            <NavbarUserMenuMobile onNavigate={closeMenu} />
+            {mobileView === "account" ? (
+              <NavbarUserMenuMobile onNavigate={closeMenu} />
+            ) : null}
 
             <div className="mt-auto grid gap-3 pt-8">
               {isCoachNetworkEnabled() ? (
@@ -345,5 +399,42 @@ export function Navbar() {
         </div>
       </div>
     </header>
+  );
+}
+
+function MobileSubmenu({
+  title,
+  items,
+  onNavigate,
+}: {
+  title: string;
+  items: Array<{ href: string; label: string; description?: string }>;
+  onNavigate: () => void;
+}) {
+  return (
+    <section>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        {title}
+      </p>
+      <div className="mt-4 grid">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className="border-b border-border py-4 transition-colors hover:text-primary"
+          >
+            <span className="block text-xl font-extrabold text-foreground">
+              {item.label}
+            </span>
+            {item.description ? (
+              <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                {item.description}
+              </span>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

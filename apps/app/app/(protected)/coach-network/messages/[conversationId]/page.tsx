@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ConversationThread } from "../../_components/conversation-thread";
+import { DashboardHero } from "../../../../../components/dashboard/dashboard-cards";
 import {
   getMarketplaceConversationMessages,
   listMarketplaceConversationsForUser,
@@ -24,15 +25,18 @@ export default async function CoachConversationPage({
   const messages = await getMarketplaceConversationMessages(conversationId);
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8 md:px-8">
-      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {conversation.label}
-      </p>
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
+        eyebrow="Coach Network"
+        title={conversation.label}
+        subtitle="Follow the full marketplace conversation history in one place."
+        mascotSrc="/maskotlar/hazirlik.png"
+      />
       <ConversationThread
         conversationId={conversationId}
         initialMessages={messages}
         backHref="/coach-network/messages"
       />
-    </main>
+    </section>
   );
 }

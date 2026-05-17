@@ -27,8 +27,10 @@ export default async function AthleteOnboardingPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 md:px-8">
-      <AthleteOnboardingForm />
+    <main className="mx-auto w-full max-w-3xl px-5 py-12 md:px-8">
+      <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
+        <AthleteOnboardingForm />
+      </div>
     </main>
   );
 }

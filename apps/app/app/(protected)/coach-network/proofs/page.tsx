@@ -1,17 +1,24 @@
 import Link from "next/link";
 
 import { listTrainingProofsForWorkspace } from "../../../actions/coach-network-proofs";
+import {
+  DashboardHero,
+  EmptyStateCard,
+  MetricCard,
+} from "../../../../components/dashboard/dashboard-cards";
 
 function formatStatus(status: string) {
   return status.replaceAll("_", " ");
 }
 
-function athleteLabel(athlete: {
-  display_name: string | null;
-  first_name: string;
-  last_name: string | null;
-  email: string | null;
-} | null) {
+function athleteLabel(
+  athlete: {
+    display_name: string | null;
+    first_name: string;
+    last_name: string | null;
+    email: string | null;
+  } | null,
+) {
   if (!athlete) {
     return "Athlete";
   }
@@ -26,48 +33,86 @@ function athleteLabel(athlete: {
 export default async function CoachNetworkProofsPage() {
   const proofs = await listTrainingProofsForWorkspace();
   const pendingCount = proofs.filter((p) => p.status === "pending").length;
+  const approvedCount = proofs.filter((p) => p.status === "approved").length;
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-8 md:px-8">
-      <h1 className="text-2xl font-extrabold text-foreground">Proof reviews</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Review remote athlete session media. Approving a proof marks that program day
-        complete for adherence.
-        {pendingCount > 0 ? ` ${pendingCount} pending.` : ""}
-      </p>
+    <section className="bg-primary-50 px-5 py-6 md:px-8">
+      <DashboardHero
+        eyebrow="Coach Network"
+        title="Proof reviews"
+        subtitle="Review remote athlete session media and convert approved proof into adherence progress."
+        mascotSrc="/maskotlar/gozetleme.png"
+      />
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <MetricCard
+          label="Proofs"
+          value={proofs.length.toString()}
+          helper="Submitted overall"
+          icon="solar:gallery-bold"
+        />
+        <MetricCard
+          label="Pending"
+          value={pendingCount.toString()}
+          helper="Need review"
+          icon="solar:inbox-bold"
+          tone="warning"
+        />
+        <MetricCard
+          label="Approved"
+          value={approvedCount.toString()}
+          helper="Counted for adherence"
+          icon="solar:check-circle-bold"
+          tone="secondary"
+        />
+      </div>
 
       {proofs.length === 0 ? (
-        <div className="mt-8 rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm font-semibold text-muted-foreground">
-          No proofs submitted yet.
-        </div>
+        <EmptyStateCard
+          title="No proofs submitted yet"
+          description="Approved proof submissions will appear here once remote athletes start reporting sessions."
+          icon="solar:gallery-bold"
+        />
       ) : (
-        <ul className="mt-8 divide-y divide-border rounded-3xl border border-border bg-card">
-          {proofs.map((proof) => (
-            <li key={proof.id}>
-              <Link
-                href={`/coach-network/proofs/${proof.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-muted/40"
-              >
-                <div>
-                  <p className="font-extrabold text-foreground">{proof.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {athleteLabel(proof.athlete)} · {proof.proof_date}
-                  </p>
-                </div>
-                <p
-                  className={
-                    proof.status === "pending"
-                      ? "text-xs font-bold uppercase text-amber-700"
-                      : "text-xs font-bold uppercase text-muted-foreground"
-                  }
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="hidden grid-cols-[1.35fr_1fr_auto] gap-4 border-b border-border px-4 py-3 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground md:grid">
+            <span>Proof</span>
+            <span>Athlete</span>
+            <span>Status</span>
+          </div>
+          <ul className="divide-y divide-border">
+            {proofs.map((proof) => (
+              <li key={proof.id}>
+                <Link
+                  href={`/coach-network/proofs/${proof.id}`}
+                  className="grid gap-3 px-4 py-3 transition-colors hover:bg-background md:grid-cols-[1.35fr_1fr_auto] md:items-center md:gap-4"
                 >
-                  {formatStatus(proof.status)}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <div>
+                    <p className="text-sm font-black text-foreground">
+                      {proof.title}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                      {proof.proof_date}
+                    </p>
+                  </div>
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {athleteLabel(proof.athlete)}
+                  </p>
+                  <p
+                    className={
+                      proof.status === "pending"
+                        ? "text-xs font-extrabold uppercase tracking-[0.14em] text-warning-foreground"
+                        : "text-xs font-extrabold uppercase tracking-[0.14em] text-muted-foreground"
+                    }
+                  >
+                    {formatStatus(proof.status)}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-    </main>
+    </section>
   );
 }
