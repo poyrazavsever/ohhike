@@ -67,7 +67,7 @@ const plans: Plan[] = [
   {
     name: "Pro Plus Team",
     meta: "50+ team members",
-    price: "$79/mo",
+    price: "$59/mo",
     description:
       "For larger teams and academies that need advanced collaboration, reporting, and data ownership controls.",
     cta: "Choose Pro Plus",
