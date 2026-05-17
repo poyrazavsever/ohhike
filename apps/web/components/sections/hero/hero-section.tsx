@@ -124,7 +124,7 @@ function HeroContent() {
 
         <IconSlideButton
           as="a"
-          href="https://github.com"
+          href="https://github.com/poyrazavsever/ohhike"
           target="_blank"
           rel="noreferrer"
           variant="outline"
