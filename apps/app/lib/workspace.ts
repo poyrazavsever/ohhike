@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { toEffectiveTeamEntitlement } from "./billing/entitlements";
 import type { OrganizationRole, Tables } from "./database.types";
 import { canManageStaffInvites } from "./org-roles";
 import { createSupabaseAdminClient } from "./supabase-admin";
@@ -248,7 +249,8 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
     throw new Error(entitlementError.message);
   }
 
-  const plan = entitlement?.plan ?? "basic_team";
+  const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
+  const plan = effectiveEntitlement.plan;
   const { data: memberships, error: membershipsError } = await supabase
     .from("organization_members")
     .select("*")
@@ -283,11 +285,11 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
     role: workspace.membership.role,
     canCreateOrganization: plan === "pro_team" || plan === "pro_plus_team",
     features: {
-      aiReports: entitlement?.ai_reports_enabled ?? false,
-      teamMemory: entitlement?.team_memory_enabled ?? false,
-      trainingPlanner: entitlement?.training_planner_enabled ?? false,
-      wearables: entitlement?.wearable_enabled ?? false,
-      pdfExport: entitlement?.pdf_export_enabled ?? false,
+      aiReports: effectiveEntitlement.ai_reports_enabled,
+      teamMemory: effectiveEntitlement.team_memory_enabled,
+      trainingPlanner: effectiveEntitlement.training_planner_enabled,
+      wearables: effectiveEntitlement.wearable_enabled,
+      pdfExport: effectiveEntitlement.pdf_export_enabled,
     },
     organizations:
       memberships?.map((membership) => {

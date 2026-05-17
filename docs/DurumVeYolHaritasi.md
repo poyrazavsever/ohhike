@@ -46,7 +46,7 @@ OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, org
 | AI session reports | ✅ | Liste + detay; Gemini opsiyonel, rules fallback |
 | Team Memory Assistant | ✅ | RAG tabloları `011`, UI `/team-memory` |
 | AI reports detay sayfası | ✅ | `/ai-reports/[id]` |
-| Wearables sayfası | ✅ | Manuel kayıt (OAuth yok) |
+| Wearables + Strava OAuth | ◐ | `/wearables`, connect/callback/sync; Pro plan gate; env `STRAVA_CLIENT_ID/SECRET` |
 | Health API | ✅ | `GET /api/health` — eksik env listesi |
 | Prod URL davetleri | ✅ | `lib/app-url.ts` → `NEXT_PUBLIC_APP_URL` |
 
@@ -208,7 +208,7 @@ Sıra önerisi; ihtiyaca göre kaydırılabilir.
 | 1 | Canlı auth + smoke kapatma | webhook delivery, register → onboarding → dashboard |
 | 2 | `/reports` liste (PDF yok) | DB özet |
 | 3 | **PDF export** | ✅ İlk AI report PDF endpoint’i + indirme bağlantıları tamam |
-| 4 | **Strava** OAuth + sync | ◐ OAuth connect + manuel activity sync tamam; webhook / auto sync bekliyor |
+| 4 | **Strava** OAuth + sync | ◐ OAuth connect + manuel sync tamam; plan flag’leri `plans.ts` kaynağından; sporcu yoksa “unavailable”; webhook / auto sync bekliyor |
 | 5 | Davet e-postası (Resend) | ✅ Athlete + staff invite email fallback akışı tamam |
 | 6 | Dashboard metrik kartları | |
 | 7 | Wearable CSV import | |

@@ -1,6 +1,6 @@
 import type { Tables } from "../database.types";
 import { createSupabaseAdminClient } from "../supabase-admin";
-import { defaultBillingPlan } from "./plans";
+import { defaultBillingPlan, getBillingPlan } from "./plans";
 
 type TeamEntitlement = Tables<"team_billing_entitlements">;
 
@@ -38,17 +38,22 @@ export function toEffectiveTeamEntitlement(
     return defaultEntitlements;
   }
 
+  const planDefinition = getBillingPlan(entitlement.plan);
+  const planFlags = planDefinition.entitlements;
+
+  // Plan tier is the source of truth for feature flags (avoids stale DB booleans).
   return {
     plan: entitlement.plan,
-    max_team_members: entitlement.max_team_members,
-    ai_features_enabled: entitlement.ai_features_enabled,
-    ai_reports_enabled: entitlement.ai_reports_enabled,
-    team_memory_enabled: entitlement.team_memory_enabled,
-    training_planner_enabled: entitlement.training_planner_enabled,
-    wearable_enabled: entitlement.wearable_enabled,
-    pdf_export_enabled: entitlement.pdf_export_enabled,
-    branded_reports_enabled: entitlement.branded_reports_enabled,
-    monthly_ai_report_limit: entitlement.monthly_ai_report_limit,
+    max_team_members: entitlement.max_team_members ?? planFlags.maxTeamMembers,
+    ai_features_enabled: planFlags.aiFeaturesEnabled,
+    ai_reports_enabled: planFlags.aiReportsEnabled,
+    team_memory_enabled: planFlags.teamMemoryEnabled,
+    training_planner_enabled: planFlags.trainingPlannerEnabled,
+    wearable_enabled: planFlags.wearableEnabled,
+    pdf_export_enabled: planFlags.pdfExportEnabled,
+    branded_reports_enabled: planFlags.brandedReportsEnabled,
+    monthly_ai_report_limit:
+      entitlement.monthly_ai_report_limit ?? planFlags.monthlyAiReportLimit,
   };
 }
 

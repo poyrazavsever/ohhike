@@ -88,11 +88,13 @@ export function CreateWearableConnectionForm({
     });
   }
 
+  const hasAthletes = athletes.length > 0;
+
   return (
-    <div className="mt-6 flex justify-end">
+    <div className="mt-6 flex flex-col items-end gap-1">
       <button
         type="button"
-        disabled={athletes.length === 0}
+        disabled={!hasAthletes}
         onClick={() => {
           setForm(emptyForm(athletes[0]?.id ?? ""));
           setIsOpen(true);
@@ -100,8 +102,13 @@ export function CreateWearableConnectionForm({
         className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Icon icon="solar:watch-round-bold" className="size-4" />
-        Add connection
+        {hasAthletes ? "Add connection" : "Add connection unavailable"}
       </button>
+      {!hasAthletes ? (
+        <p className="text-xs font-semibold text-muted-foreground">
+          Add a roster athlete first.
+        </p>
+      ) : null}
 
       {isOpen ? (
         <div

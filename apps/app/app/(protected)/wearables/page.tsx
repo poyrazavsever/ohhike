@@ -10,6 +10,11 @@ import { getWearablesData } from "../../../lib/workspace";
 import { CreateWearableConnectionForm } from "./_components/create-wearable-connection-form";
 import { StravaConnectForm } from "./_components/strava-connect-form";
 import { StravaSyncButton } from "./_components/strava-sync-button";
+import { WearablesStatusBanners } from "./_components/wearables-status-banners";
+
+type WearablesPageProps = {
+  searchParams?: Promise<{ strava?: string }>;
+};
 
 function formatProvider(value: string) {
   return value
@@ -29,7 +34,8 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-export default async function WearablesPage() {
+export default async function WearablesPage({ searchParams }: WearablesPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const { workspace, connections, athletes, totals } = await getWearablesData();
   const entitlement = await getPrimaryTeamEntitlement(workspace.organization.id);
 
@@ -70,6 +76,12 @@ export default async function WearablesPage() {
         title="Wearables"
         subtitle={`Wearable provider connections for ${workspace.organization.name}.`}
         mascotSrc="/maskotlar/kosu.png"
+      />
+
+      <WearablesStatusBanners
+        entitlement={entitlement}
+        stravaStatus={resolvedSearchParams.strava}
+        athleteCount={athletes.length}
       />
 
       {!entitlement.wearable_enabled ? (
