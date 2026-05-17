@@ -1,10 +1,17 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { MarketplaceMessageView } from "../lib/coach-network/marketplace-messages";
 import { createAuthenticatedBrowserSupabase } from "../lib/supabase-browser";
+
+export type MarketplaceRealtimeStatus =
+  | "idle"
+  | "connecting"
+  | "subscribed"
+  | "error"
+  | "unavailable";
 
 function mapRow(row: Record<string, unknown>): MarketplaceMessageView | null {
   if (typeof row.id !== "string" || typeof row.conversation_id !== "string") {
@@ -26,8 +33,10 @@ export function useMarketplaceConversationRealtime(
   conversationId: string,
   onMessage: (message: MarketplaceMessageView) => void,
 ) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const onMessageRef = useRef(onMessage);
+  const [status, setStatus] = useState<MarketplaceRealtimeStatus>("idle");
+  const [statusDetail, setStatusDetail] = useState<string | null>(null);
 
   useEffect(() => {
     onMessageRef.current = onMessage;
@@ -35,6 +44,19 @@ export function useMarketplaceConversationRealtime(
 
   useEffect(() => {
     if (!conversationId) {
+      setStatus("idle");
+      setStatusDetail(null);
+      return;
+    }
+
+    if (!isLoaded) {
+      setStatus("connecting");
+      return;
+    }
+
+    if (!isSignedIn) {
+      setStatus("unavailable");
+      setStatusDetail("Sign in to receive live messages.");
       return;
     }
 
@@ -44,12 +66,23 @@ export function useMarketplaceConversationRealtime(
     let cancelled = false;
 
     async function subscribe() {
+      setStatus("connecting");
+      setStatusDetail(null);
+
       try {
-        const { client } = await createAuthenticatedBrowserSupabase(() =>
+        const { client, token } = await createAuthenticatedBrowserSupabase(() =>
           getToken({ template: "supabase" }),
         );
 
         if (cancelled) {
+          return;
+        }
+
+        if (!token) {
+          setStatus("error");
+          setStatusDetail(
+            'Missing Clerk JWT. Add a "supabase" JWT template (see docs/supabase/CN7-realtime-setup.md).',
+          );
           return;
         }
 
@@ -70,9 +103,37 @@ export function useMarketplaceConversationRealtime(
               }
             },
           )
-          .subscribe();
-      } catch {
-        // Realtime optional — send still refreshes via server actions.
+          .subscribe((subscribeStatus, err) => {
+            if (cancelled) {
+              return;
+            }
+
+            if (subscribeStatus === "SUBSCRIBED") {
+              setStatus("subscribed");
+              setStatusDetail(null);
+              return;
+            }
+
+            if (
+              subscribeStatus === "CHANNEL_ERROR" ||
+              subscribeStatus === "TIMED_OUT"
+            ) {
+              setStatus("error");
+              setStatusDetail(
+                err?.message ??
+                  "Realtime channel error. Run docs/supabase/013_marketplace_messages_realtime.sql and check Supabase publication.",
+              );
+            }
+          });
+      } catch (error) {
+        if (!cancelled) {
+          setStatus("error");
+          setStatusDetail(
+            error instanceof Error
+              ? error.message
+              : "Could not connect to Supabase Realtime.",
+          );
+        }
       }
     }
 
@@ -84,5 +145,7 @@ export function useMarketplaceConversationRealtime(
         void channel.unsubscribe();
       }
     };
-  }, [conversationId, getToken]);
+  }, [conversationId, getToken, isLoaded, isSignedIn]);
+
+  return { status, statusDetail };
 }

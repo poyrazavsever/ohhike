@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 
 import { sendMarketplaceMessage } from "../../actions/coach-network-messages";
+import { MarketplaceRealtimeIndicator } from "./marketplace-realtime-indicator";
 import { useMarketplaceConversationRealtime } from "../../../hooks/use-marketplace-conversation-realtime";
 import {
   MARKETPLACE_MESSAGE_MAX_LENGTH,
@@ -41,7 +42,8 @@ export function ConversationThread({
     });
   }, []);
 
-  useMarketplaceConversationRealtime(conversationId, mergeMessage);
+  const { status: realtimeStatus, statusDetail: realtimeDetail } =
+    useMarketplaceConversationRealtime(conversationId, mergeMessage);
 
   const sortedMessages = useMemo(
     () =>
@@ -61,6 +63,7 @@ export function ConversationThread({
         setError(result.error);
         return;
       }
+      mergeMessage(result.message);
       setDraft("");
       router.refresh();
     });
@@ -76,7 +79,13 @@ export function ConversationThread({
       </Link>
 
       <div className="flex min-h-[28rem] flex-col rounded-3xl border border-border bg-card">
-        <div className="flex-1 space-y-3 overflow-y-auto p-5">
+        <div className="px-5 pt-4">
+          <MarketplaceRealtimeIndicator
+            status={realtimeStatus}
+            statusDetail={realtimeDetail}
+          />
+        </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-5">
           {sortedMessages.length === 0 ? (
             <p className="text-sm text-muted-foreground">No messages yet. Say hello.</p>
           ) : (

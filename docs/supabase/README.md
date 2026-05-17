@@ -16,6 +16,7 @@ Bu klasor, OhHike CoachOS Supabase tarafinin guncel SQL referansini tutar.
 - `010_organization_staff_invites.sql`: Settings → Staff ve `/invite/staff/[token]` icin `organization_staff_invites` tablosu ve RLS policy'leri.
 - `011_team_memory_rag.sql`: Team Memory Assistant icin `documents`, `document_embeddings`, `assistant_threads`, `assistant_messages` ve `match_document_embeddings` RPC.
 - `012_coach_network.sql`: Coach Network marketplace — profiller, paketler, basvuru/teklif, remote coaching, mesajlasma (Realtime), proof, review ve `athletes.source`.
+- `013_marketplace_messages_realtime.sql`: CN7-01 — `marketplace_messages` Realtime publication + replica identity.
 
 ## Kapsam
 
@@ -75,9 +76,12 @@ Yeni Supabase projesinde **sirayla** SQL Editor'de calistir (her dosya idempoten
 010_organization_staff_invites.sql
 011_team_memory_rag.sql
 012_coach_network.sql
+013_marketplace_messages_realtime.sql
 ```
 
 `001_initial_schema.sql` yalnizca sifirdan tam schema kuruyorsan; cogu ortamda `002`–`011` yeterli.
+
+Mesajlasma Realtime: `docs/supabase/CN7-realtime-setup.md`
 
 Deploy sonrasi: `GET /api/health` — eksik env listesini dondurur.
 

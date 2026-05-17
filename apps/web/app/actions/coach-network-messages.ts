@@ -12,7 +12,9 @@ import {
 } from "../../lib/coach-network/marketplace-messages";
 import { createSupabaseAdminClient } from "../../lib/supabase-admin";
 
-type ActionResult = { ok: true } | { ok: false; error: string };
+type ActionResult =
+  | { ok: true; message: MarketplaceMessageView }
+  | { ok: false; error: string };
 
 function cleanBody(value: string) {
   return value.trim();
@@ -173,16 +175,20 @@ export async function sendMarketplaceMessage(
       .eq("id", conversationId)
       .maybeSingle();
 
-    const { error: insertError } = await supabase.from("marketplace_messages").insert({
-      conversation_id: conversationId,
-      organization_id: conversation?.organization_id ?? null,
-      sender_user_id: userId,
-      body: trimmed,
-      message_type: "text",
-    });
+    const { data: inserted, error: insertError } = await supabase
+      .from("marketplace_messages")
+      .insert({
+        conversation_id: conversationId,
+        organization_id: conversation?.organization_id ?? null,
+        sender_user_id: userId,
+        body: trimmed,
+        message_type: "text",
+      })
+      .select("id, conversation_id, sender_user_id, body, message_type, created_at")
+      .single();
 
-    if (insertError) {
-      return { ok: false, error: insertError.message };
+    if (insertError || !inserted) {
+      return { ok: false, error: insertError?.message ?? "Could not send message." };
     }
 
     await supabase
@@ -195,7 +201,17 @@ export async function sendMarketplaceMessage(
     revalidatePath("/coach-network/messages");
     revalidatePath(`/coach-network/messages/${conversationId}`);
 
-    return { ok: true };
+    return {
+      ok: true,
+      message: {
+        id: inserted.id,
+        conversationId: inserted.conversation_id,
+        senderUserId: inserted.sender_user_id,
+        body: inserted.body,
+        messageType: inserted.message_type,
+        createdAt: inserted.created_at,
+      },
+    };
   } catch (error) {
     return {
       ok: false,
