@@ -143,6 +143,12 @@ const navGroups = [
         icon: "solar:users-group-rounded-bold",
         feature: "coachMarketplace",
       },
+      {
+        href: "/coach-network/proofs",
+        label: "Proof reviews",
+        icon: "solar:camera-bold",
+        feature: "coachMarketplace",
+      },
     ],
   },
 ];
@@ -170,6 +176,11 @@ const athleteNavGroups = [
         href: "/athlete/training",
         label: "Personal training",
         icon: "solar:running-bold",
+      },
+      {
+        href: "/athlete/proofs",
+        label: "Training proofs",
+        icon: "solar:camera-bold",
       },
       {
         href: "/athlete/profile",

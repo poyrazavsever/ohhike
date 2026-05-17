@@ -1,4 +1,6 @@
-import type { Json, Tables } from "../database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database, Json, Tables } from "../database.types";
 
 export type CoachingProgramMetadata = {
   completed_dates?: string[];
@@ -103,6 +105,55 @@ export function computeProgramAdherence(
     totalDays > 0 ? Math.min(100, Math.round((completedDays / totalDays) * 100)) : null;
 
   return { completedDays, totalDays, percent };
+}
+
+export async function addCompletedDateToAssignment(
+  supabase: SupabaseClient<Database>,
+  assignmentId: string,
+  targetDate: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("coaching_program_assignments")
+    .select("*")
+    .eq("id", assignmentId)
+    .maybeSingle();
+
+  if (assignmentError || !assignment) {
+    return { ok: false, error: "Program not found." };
+  }
+
+  if (assignment.status !== "active") {
+    return { ok: false, error: "Program is not active." };
+  }
+
+  if (!assignment.starts_at || !assignment.ends_at) {
+    return { ok: false, error: "Program dates are not configured." };
+  }
+
+  if (targetDate < assignment.starts_at || targetDate > assignment.ends_at) {
+    return { ok: false, error: "Date is outside the program window." };
+  }
+
+  const metadata = parseCoachingProgramMetadata(assignment.program_metadata);
+  const completedDates = new Set(metadata.completed_dates ?? []);
+  completedDates.add(targetDate);
+
+  const { error: updateError } = await supabase
+    .from("coaching_program_assignments")
+    .update({
+      program_metadata: {
+        ...metadata,
+        completed_dates: [...completedDates].sort(),
+      },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", assignmentId);
+
+  if (updateError) {
+    return { ok: false, error: updateError.message };
+  }
+
+  return { ok: true };
 }
 
 export function getTodayProgramView(

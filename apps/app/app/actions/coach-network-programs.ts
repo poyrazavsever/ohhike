@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 import {
+  addCompletedDateToAssignment,
   computeProgramAdherence,
   parseCoachingProgramMetadata,
   toIsoDateString,
@@ -265,19 +266,19 @@ export async function markProgramDayComplete(
     const supabase = createSupabaseAdminClient();
     const targetDate = date?.trim() || toIsoDateString(new Date());
 
-    const { data: assignment, error: assignmentError } = await supabase
+    const { data: assignment } = await supabase
       .from("coaching_program_assignments")
-      .select("*")
+      .select("athlete_id, relationship_id")
       .eq("id", assignmentId)
       .maybeSingle();
 
-    if (assignmentError || !assignment) {
+    if (!assignment) {
       return { ok: false, error: "Program not found." };
     }
 
     const { data: athlete } = await supabase
       .from("athletes")
-      .select("id, user_id")
+      .select("user_id")
       .eq("id", assignment.athlete_id)
       .maybeSingle();
 
@@ -285,35 +286,14 @@ export async function markProgramDayComplete(
       return { ok: false, error: "You can only update your own program." };
     }
 
-    if (assignment.status !== "active") {
-      return { ok: false, error: "This program is no longer active." };
-    }
+    const result = await addCompletedDateToAssignment(
+      supabase,
+      assignmentId,
+      targetDate,
+    );
 
-    if (!assignment.starts_at || !assignment.ends_at) {
-      return { ok: false, error: "Program dates are not configured." };
-    }
-
-    if (targetDate < assignment.starts_at || targetDate > assignment.ends_at) {
-      return { ok: false, error: "That date is outside your program window." };
-    }
-
-    const metadata = parseCoachingProgramMetadata(assignment.program_metadata);
-    const completedDates = new Set(metadata.completed_dates ?? []);
-    completedDates.add(targetDate);
-
-    const { error: updateError } = await supabase
-      .from("coaching_program_assignments")
-      .update({
-        program_metadata: {
-          ...metadata,
-          completed_dates: [...completedDates].sort(),
-        } as Json,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", assignmentId);
-
-    if (updateError) {
-      return { ok: false, error: updateError.message };
+    if (!result.ok) {
+      return result;
     }
 
     revalidatePath("/athlete/home");
