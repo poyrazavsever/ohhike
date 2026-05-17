@@ -2,14 +2,23 @@ import {
   DashboardHero,
   DetailStat,
 } from "../../../../components/dashboard/dashboard-cards";
-import { getBillingPlan, billingPlans } from "../../../../lib/billing/plans";
 import { toEffectiveTeamEntitlement } from "../../../../lib/billing/entitlements";
+import { billingPlans, getBillingPlan } from "../../../../lib/billing/plans";
 import { getBillingSettingsData } from "../../../../lib/workspace";
+import { DevPlanSwitcher } from "./_components/dev-plan-switcher";
+
+function devPlanOverrideEnabled() {
+  return (
+    process.env.NODE_ENV === "development" ||
+    process.env.ALLOW_DEV_PLAN_OVERRIDE === "true"
+  );
+}
 
 export default async function BillingSettingsPage() {
   const { team, entitlement } = await getBillingSettingsData();
   const currentPlan = getBillingPlan(entitlement?.plan);
   const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
+  const showDevPlanSwitcher = devPlanOverrideEnabled();
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -19,6 +28,16 @@ export default async function BillingSettingsPage() {
         subtitle="Team plans are stored per team and drive the feature gates that will power checkout."
         mascotSrc="/maskotlar/harita.png"
       />
+
+      {showDevPlanSwitcher ? (
+        <DevPlanSwitcher
+          currentPlan={currentPlan.id}
+          plans={billingPlans.map((plan) => ({
+            id: plan.id,
+            label: plan.name,
+          }))}
+        />
+      ) : null}
 
       <div className="mt-4 grid gap-2 md:grid-cols-3">
         <DetailStat label="Team" value={team?.name ?? "No team yet"} />
