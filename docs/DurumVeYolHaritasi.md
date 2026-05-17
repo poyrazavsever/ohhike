@@ -16,7 +16,7 @@
 
 ## 1. Özet
 
-OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, organizasyon, takım, sporcu, seans, günlük veri, davetler, AI raporları ve Team Memory MVP repoda. Production deploy altyapısı (Docker, Dokploy rehberi) eklendi; `apps/web` canlı ve public Faz 1 sayfaları tamamlandı. `apps/app` canlıya alınmış durumda; kalan deploy riski Clerk production DNS / auth doğrulaması ve manuel smoke paketidir.
+OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, organizasyon, takım, sporcu, seans, günlük veri, davetler, AI raporları ve Team Memory MVP repoda. Production deploy altyapısı (Docker, Dokploy rehberi) eklendi; `apps/web` canlı ve public Faz 1 sayfaları tamamlandı. `apps/app` canlıya alınmış durumda; Clerk production DNS / FAPI zinciri doğrulandı. Kalan canlı kapı manuel kullanıcı smoke paketidir.
 
 **Yeni ürün önceliği (senin kararın):**
 
@@ -32,7 +32,7 @@ OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, org
 
 | Alan | Durum | Notlar |
 |------|--------|--------|
-| Clerk auth (login, register, middleware) | ✅ kod / ◐ canlı doğrulama | `proxy.ts`, `ClerkProvider`; production form için Clerk FAPI DNS (`clerk.<domain>`) doğrulanmalı |
+| Clerk auth (login, register, middleware) | ✅ kod / ◐ manuel smoke | `proxy.ts`, `ClerkProvider`; canlı FAPI DNS ve browser script doğrulandı |
 | Clerk webhook → `users` | ✅ kod / ◐ canlı doğrulama | `/api/webhooks/clerk`; canonical env `CLERK_WEBHOOK_SIGNING_SECRET` |
 | Onboarding (org + team) | ✅ | `app/onboarding/` |
 | Org switch, workspace context | ✅ | `lib/workspace.ts` |
@@ -126,7 +126,7 @@ Plan tanımları: `docs/PricingPolicy.md` (Basic = Free, Pro $29, Pro Plus $79).
 | ID | Görev | Durum |
 |----|--------|--------|
 | M1.1 | Supabase prod + migration `002`–`011` | ⬜ panel |
-| M1.2 | Clerk prod (live keys, webhook, redirect, FAPI DNS) | ◐ live env + webhook var; login form için `clerk.<domain>` DNS/FAPI doğrulaması kapanmalı |
+| M1.2 | Clerk prod (live keys, webhook, redirect, FAPI DNS) | ◐ live env + FAPI DNS doğrulandı; manuel register/login + webhook delivery bekliyor |
 | M1.3 | Dokploy app + web (Dockerfile, context `.`, port 3000) | ✅ app + web deploy yolu çalışıyor; build-time args zorunlu hale getirildi |
 | M1.4 | Manuel smoke checklist (14 akış) | ⬜ |
 
@@ -203,7 +203,7 @@ Sıra önerisi; ihtiyaca göre kaydırılabilir.
 
 | Sıra | Özellik | Kapsam |
 |------|---------|--------|
-| 1 | Canlı auth + smoke kapatma | Clerk FAPI DNS, webhook test, register → onboarding → dashboard |
+| 1 | Canlı auth + smoke kapatma | webhook delivery, register → onboarding → dashboard |
 | 2 | `/reports` liste (PDF yok) | DB özet |
 | 3 | **PDF export** | Pro gate ile; şablon + indirme |
 | 4 | **Strava** OAuth + sync | `006_wearables` üzerine |
@@ -285,7 +285,7 @@ PORT=3000
 ### Doğrulama
 
 - [ ] `https://app.<domain>/api/health` → `ok: true`
-- [ ] `clerk.<domain>` DNS çözülüyor ve HTTPS cevap veriyor
+- [x] `clerk.<domain>` DNS çözülüyor ve HTTPS cevap veriyor
 - [ ] Kayıt → onboarding → dashboard
 - [ ] Web CTA → app domain
 
@@ -338,4 +338,4 @@ Bu dosya şu durumlarda güncellenir:
 - Yeni migration (`012_…`) eklendiğinde §2.2 ve `supabase/README.md` senkron tutulur.
 - Öncelik değişince §4 sırası revize edilir.
 
-**Son güncelleme notu:** Public web ve Docker deploy hattı canlıya alındı. Aktif sıra artık `canlı auth/smoke kapatma → B1 Billing → B2 plan gate → B3 gelir sonrası ürün tamamlama`. M1’de kalan ana kapı Clerk production FAPI DNS ve manuel smoke paketidir.
+**Son güncelleme notu:** Public web ve Docker deploy hattı canlıya alındı; Clerk production FAPI DNS zinciri doğrulandı. Aktif sıra artık `manuel canlı smoke → B1 Billing → B2 plan gate → B3 gelir sonrası ürün tamamlama`.
