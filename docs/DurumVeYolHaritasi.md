@@ -22,7 +22,8 @@ OhHike CoachOS (`apps/app`) ürün omurgası büyük ölçüde hazır: auth, org
 
 1. **Billing** — Clerk Billing + `team_billing_entitlements` senkronu  
 2. **Plan farkları** — Free (Basic) / Pro / Pro Plus feature gate’leri (`docs/PricingPolicy.md` §6–7)  
-3. **Diğer Post-MVP özellikler** — PDF, Strava, RLS, E2E, vb.
+3. **Coach Network & Remote Marketplace** — `docs/CoachNetworkPlan.md` + task listesi: `docs/CoachNetworkTasks.md`  
+4. **Diğer Post-MVP özellikler** — PDF, Strava, RLS, E2E, vb.
 
 ---
 
