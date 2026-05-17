@@ -156,6 +156,12 @@ export type WorkspaceShellData = {
   }>;
 };
 
+export type BillingSettingsData = {
+  workspace: CurrentWorkspace;
+  team: Team | null;
+  entitlement: TeamEntitlement | null;
+};
+
 export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
   const { userId } = await auth();
 
@@ -325,6 +331,41 @@ export async function getDashboardData() {
     teams: teamsResult.data ?? [],
     athleteCount: athletesCountResult.count ?? 0,
     entitlements: entitlementsResult.data ?? [],
+  };
+}
+
+export async function getBillingSettingsData(): Promise<BillingSettingsData> {
+  const workspace = await getCurrentWorkspace();
+  const supabase = createSupabaseAdminClient();
+
+  const { data: team, error: teamError } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("organization_id", workspace.organization.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (teamError) {
+    throw new Error(teamError.message);
+  }
+
+  const { data: entitlement, error: entitlementError } = team
+    ? await supabase
+        .from("team_billing_entitlements")
+        .select("*")
+        .eq("team_id", team.id)
+        .maybeSingle()
+    : { data: null, error: null };
+
+  if (entitlementError) {
+    throw new Error(entitlementError.message);
+  }
+
+  return {
+    workspace,
+    team,
+    entitlement,
   };
 }
 
