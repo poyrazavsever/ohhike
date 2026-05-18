@@ -9,12 +9,6 @@
   Antrenörler, kulüpler ve sporcular için modern bir koçluk işletim sistemi.
 </p>
 
-<p align="center">
-  <img src="apps/web/public/maskotlar/hazirlik.png" alt="Maskot Hazırlık" width="48" />
-  <img src="apps/web/public/maskotlar/kosu.png" alt="Maskot Koşu" width="48" />
-  <img src="apps/web/public/maskotlar/kutlama.png" alt="Maskot Kutlama" width="48" />
-</p>
-
 ---
 
 ## ✨ Proje Özeti
