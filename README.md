@@ -1,159 +1,190 @@
-# Turborepo starter
+<p align="center">
+  <img src="apps/web/public/logo/newLogo.png" alt="OhHike Logo" width="170" />
+</p>
 
-This Turborepo starter is maintained by the Turborepo core team.
+<h1 align="center">OhHike CoachOS Monorepo</h1>
 
-## Using this example
+<p align="center">
+  <b>AI destekli spor operasyon platformu</b><br/>
+  Antrenörler, kulüpler ve sporcular için modern bir koçluk işletim sistemi.
+</p>
 
-Run the following command:
+<p align="center">
+  <img src="apps/web/public/maskotlar/hazirlik.png" alt="Maskot Hazırlık" width="48" />
+  <img src="apps/web/public/maskotlar/kosu.png" alt="Maskot Koşu" width="48" />
+  <img src="apps/web/public/maskotlar/kutlama.png" alt="Maskot Kutlama" width="48" />
+</p>
 
-```sh
-npx create-turbo@latest
+---
+
+## ✨ Proje Özeti
+
+OhHike CoachOS, takım verisini tek bir noktada toplayıp aksiyona dönüştüren bir platformdur:
+
+- Seans, yoklama, wellness, nutrition ve personal training verisi
+- Wearable kaynakları (opsiyonel) ile zengin performans görünümü
+- AI Reports + Team Memory (RAG) ile karar desteği
+- SaaS ve self-host senaryoları için aynı kod tabanı
+
+> Bu repository; ürün uygulamalarını, paylaşılan paketleri, deployment altyapısını ve dokümantasyonu tek Turborepo yapısında birleştirir.
+
+---
+
+## 🧭 Monorepo Haritası
+
+```text
+ohhike/
+├── apps/
+│   ├── app/                 # CoachOS uygulaması (operasyon + AI)
+│   └── web/                 # Marketing + coach discovery yüzeyi
+├── packages/
+│   ├── ui/                  # Paylaşılan React UI bileşenleri
+│   ├── eslint-config/       # ESLint preset'leri
+│   └── typescript-config/   # TS config preset'leri
+├── docs/                    # PRD, mimari, DB, roadmap ve ürün dokümanları
+├── deploy/                  # Dokploy env örnekleri + deployment rehberi
+├── Dockerfile               # apps/app image build
+├── Dockerfile.web           # apps/web image build
+├── turbo.json               # Turborepo task pipeline
+└── pnpm-workspace.yaml      # Workspace tanımı
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## 🧩 Uygulamalar
 
-### Apps and Packages
+| Uygulama | Amaç | Dev URL |
+|---|---|---|
+| `apps/app` | Coach dashboard, takım yönetimi, AI raporlar, Team Memory, billing gate | `http://localhost:3001` |
+| `apps/web` | Landing, pricing, coach discovery, app CTA akışları | `http://localhost:3000` |
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## 🛠️ Teknoloji Stack'i
 
-### Utilities
+- **Monorepo & Build:** Turborepo, pnpm workspaces
+- **Uygulama Katmanı:** Next.js App Router, React, TypeScript
+- **UI:** Tailwind CSS, shadcn/ui, `packages/ui`
+- **Auth & Billing:** Clerk
+- **Data:** Supabase (PostgreSQL + Storage)
+- **AI:** Gemini tabanlı analiz + Team Memory / RAG
+- **Deploy:** Docker + Dokploy (app/web ayrı servis)
 
-This Turborepo has some additional tools already setup for you:
+---
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## 🚀 Hızlı Başlangıç
 
-### Build
+### Önkoşullar
 
-To build all apps and packages, run the following command:
+- Node.js `>=18`
+- pnpm `9.x`
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### Kurulum
 
-```sh
-cd my-turborepo
-turbo build
+```bash
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### Tüm workspace'i çalıştır
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```bash
+pnpm dev
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Tek uygulama çalıştır
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```bash
+pnpm turbo dev --filter=app
+pnpm turbo dev --filter=web
 ```
 
-Without global `turbo`:
+### Kalite komutları
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+pnpm build
+pnpm lint
+pnpm check-types
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## 🔐 Ortam Değişkenleri
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Özellikle `NEXT_PUBLIC_*` değerleri build-time'da bundle'a yazılır. Docker build sırasında eksik env'ler image'in fail-fast etmesine neden olabilir.
 
-```sh
-cd my-turborepo
-turbo dev
-```
+Kritik env seti:
 
-Without global `turbo`, use your package manager:
+- **URL:** `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_WEB_URL`
+- **Auth:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`
+- **Supabase:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- **AI:** `GEMINI_API_KEY` (+ model değişkenleri)
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
+Örnek env dosyaları:
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+- `deploy/dokploy.env.app.example`
+- `deploy/dokploy.env.web.example`
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+---
 
-```sh
-turbo dev --filter=web
-```
+## 🗄️ Veritabanı ve Migration
 
-Without global `turbo`:
+Supabase SQL dosyaları `docs/supabase/` altında tutulur. Production için özellikle `002`–`011` migration setinin sıralı uygulanması beklenir.
 
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+Başlangıç: `docs/supabase/README.md`
 
-### Remote Caching
+Kapsanan ana modüller:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+- Foundation / entitlement
+- Sessions
+- Daily data
+- Wearables
+- AI reports
+- Team memory + RAG
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+---
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## 📦 Deploy (Docker / Dokploy)
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Bu repo **iki ayrı servis** olarak deploy edilir:
 
-```sh
-cd my-turborepo
-turbo login
-```
+- **Coach App** → `Dockerfile`
+- **Marketing Web** → `Dockerfile.web`
 
-Without global `turbo`, use your package manager:
+Dikkat edilmesi gerekenler:
 
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
+1. Build context repo root (`.`) olmalı.
+2. `NEXT_PUBLIC_*` değerleri doğru şekilde build-time'a geçilmeli.
+3. Health endpoint: `/api/health`
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Detaylı rehber: `deploy/README.md`
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## 📚 Dokümantasyon Dizini
 
-```sh
-turbo link
-```
+- Ürün kapsamı: `docs/PRD.md`
+- Sistem mimarisi: `docs/SystemArchitecture.md`
+- Monorepo yaklaşımı: `docs/Monorepo.md`
+- Kullanıcı akışları: `docs/UserFlows.md`
+- Veritabanı şeması: `docs/DatabaseSchema.md`
+- Pricing & feature gate: `docs/PricingPolicy.md`
+- Coach Network planı: `docs/CoachNetworkPlan.md`
+- Güncel durum/yol haritası: `docs/DurumVeYolHaritasi.md`
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
+## 🧠 Kısa Teknik Değerlendirme
 
-## Useful Links
+Proje artık starter şablonundan çıkıp üretim odaklı bir ürün kod tabanına evrilmiş durumda:
 
-Learn more about the power of Turborepo:
+- CoachOS çekirdek operasyon akışları aktif ve dokümante
+- AI Reports + Team Memory altyapısı yerleşik
+- Billing/entitlement modeli net bir faz planıyla ilerliyor
+- Coach Network için web+app tarafında genişleyebilir bir yol haritası mevcut
+- Deploy tarafında fail-fast kontroller ve operasyon rehberleri güçlü
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+<p align="center">
+  <img src="apps/web/public/maskotlar/suIcme.png" alt="Maskot Su İçme" width="40" />
+  <img src="apps/web/public/maskotlar/dinlenme.png" alt="Maskot Dinlenme" width="40" />
+  <img src="apps/web/public/maskotlar/basardin.png" alt="Maskot Başardın" width="40" />
+</p>
