@@ -26,3 +26,5 @@ export const createDbAdminClient = () => {
 };
 
 export const createActionDb = createDbAdminClient;
+
+export const formatdbActionError = (e: any) => String(e);
