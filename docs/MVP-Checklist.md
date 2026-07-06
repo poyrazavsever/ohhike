@@ -27,10 +27,10 @@
 - [x] Web `.env.local` temizle
 
 ## Faz 2 — App UI Temizliği
-- [ ] Sidebar'dan kalkacak feature menülerini gizle/sil
-- [ ] Dashboard'dan AI/Wearable kartlarını kaldır
-- [ ] Settings/Billing → Coming Soon
-- [ ] Kalkacak route'ları redirect veya 404 yap
+- [x] Sidebar'dan kalkacak feature menülerini gizle/sil
+- [x] Dashboard'dan AI/Wearable kartlarını kaldır
+- [x] Settings/Billing → Coming Soon
+- [x] Kalkacak route'ları redirect veya 404 yap
 
 ## Faz 3 — Backend: Auth + Organization
 - [ ] Organization, OrgMember, Team, TeamStaff modelleri

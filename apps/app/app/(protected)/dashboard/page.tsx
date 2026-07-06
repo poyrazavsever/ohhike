@@ -16,29 +16,14 @@ import {
   getDashboardData,
 } from "../../../lib/workspace";
 
-function formatPlan(plan: string | undefined) {
-  if (!plan) {
-    return "Basic Team";
-  }
-
-  return plan
-    .split("_")
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
 export default async function DashboardPage() {
-  const { organization, membership, teams, athleteCount, entitlements } =
+  const { organization, membership, teams, athleteCount } =
     await getDashboardData();
   const { sessions } = await getCalendarData();
   const { summary } = await getCoachDashboardAttentionData();
 
   const primaryTeam = teams[0];
-  const primaryEntitlement = primaryTeam
-    ? entitlements.find((entitlement) => entitlement.team_id === primaryTeam.id)
-    : null;
-  const planName = formatPlan(primaryEntitlement?.plan);
-  const athleteCapacity = primaryEntitlement?.max_team_members ?? 3;
+  const athleteCapacity = 30; // Hardcoded fallback for MVP
   const athleteProgress =
     athleteCapacity > 0
       ? Math.min(Math.round((athleteCount / athleteCapacity) * 100), 100)
@@ -67,15 +52,6 @@ export default async function DashboardPage() {
       helper: "Tracked athlete profiles",
       icon: "solar:user-id-bold",
       tone: "secondary" as const,
-    },
-    {
-      label: "Plan",
-      value: planName,
-      helper: primaryEntitlement?.ai_reports_enabled
-        ? "AI reports enabled"
-        : "AI reports disabled",
-      icon: "solar:card-bold",
-      tone: "warning" as const,
     },
   ];
 
@@ -128,11 +104,6 @@ export default async function DashboardPage() {
                 href: "/readiness",
                 icon: "solar:pulse-2-bold",
               },
-              {
-                label: "View progress",
-                href: "/load-recovery",
-                icon: "solar:chart-2-bold",
-              },
             ]}
           />
         </div>
@@ -152,20 +123,6 @@ export default async function DashboardPage() {
               helper: "Profiles tracked",
               icon: "solar:user-id-bold",
               tone: "secondary",
-            },
-            {
-              label: planName,
-              helper: "Current plan",
-              icon: "solar:card-bold",
-              tone: "info",
-            },
-            {
-              label: primaryEntitlement?.ai_reports_enabled
-                ? "AI On"
-                : "AI Off",
-              helper: "Report access",
-              icon: "solar:document-add-bold",
-              tone: "warning",
             },
           ]}
         />

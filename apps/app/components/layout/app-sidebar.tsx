@@ -50,17 +50,6 @@ const navGroups = [
         label: "Sessions",
         icon: "solar:clipboard-list-bold",
       },
-      {
-        href: "/training-planner",
-        label: "Training Planner",
-        icon: "solar:map-arrow-right-bold",
-        feature: "trainingPlanner",
-      },
-      {
-        href: "/drills",
-        label: "Drill Library",
-        icon: "solar:notebook-bookmark-bold",
-      },
     ],
   },
   {
@@ -72,94 +61,19 @@ const navGroups = [
         icon: "solar:pulse-2-bold",
       },
       {
-        href: "/load-recovery",
-        label: "Load & Recovery",
-        icon: "solar:shield-warning-bold",
-      },
-      {
-        href: "/personal-training",
-        label: "Personal Training",
-        icon: "solar:running-bold",
-      },
-      {
         href: "/nutrition",
         label: "Nutrition",
         icon: "solar:cup-hot-bold",
       },
-      {
-        href: "/wearables",
-        label: "Wearables",
-        icon: "solar:watch-round-bold",
-        feature: "wearables",
-      },
     ],
   },
   {
-    label: "AI Intelligence",
+    label: "Reports",
     items: [
-      {
-        href: "/ai-reports",
-        label: "AI Reports",
-        icon: "solar:document-add-bold",
-        feature: "aiReports",
-      },
-      {
-        href: "/team-memory",
-        label: "Team Memory",
-        icon: "solar:stars-bold",
-        feature: "teamMemory",
-      },
       {
         href: "/reports",
         label: "Reports",
         icon: "solar:file-download-bold",
-      },
-    ],
-  },
-  {
-    label: "Coach Network",
-    items: [
-      {
-        href: "/coach-network/profile",
-        label: "Marketplace profile",
-        icon: "solar:shop-2-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/applications",
-        label: "Applications",
-        icon: "solar:inbox-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/messages",
-        label: "Messages",
-        icon: "solar:chat-round-dots-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/packages",
-        label: "Packages",
-        icon: "solar:box-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/remote-athletes",
-        label: "Remote athletes",
-        icon: "solar:users-group-rounded-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/proofs",
-        label: "Proof reviews",
-        icon: "solar:camera-bold",
-        feature: "coachMarketplace",
-      },
-      {
-        href: "/coach-network/reviews",
-        label: "Reviews",
-        icon: "solar:star-bold",
-        feature: "coachMarketplace",
       },
     ],
   },
@@ -188,11 +102,6 @@ const athleteNavGroups = [
         href: "/athlete/training",
         label: "Personal training",
         icon: "solar:running-bold",
-      },
-      {
-        href: "/athlete/proofs",
-        label: "Training proofs",
-        icon: "solar:camera-bold",
       },
       {
         href: "/athlete/profile",
