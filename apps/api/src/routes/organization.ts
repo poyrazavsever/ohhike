@@ -1,4 +1,4 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import Organization from "../models/Organization.js";
 import OrgMember from "../models/OrgMember.js";
@@ -16,9 +16,19 @@ router.get("/", requireAuth(), async (req: Request, res: Response) => {
     }
 
     const memberships = await OrgMember.find({ user_id: user._id }).populate("organization_id");
-    const organizations = memberships.map(m => m.organization_id);
+    
+    // Frontend'in beklediği format: { organization: {...}, membership: {...} }
+    const workspaces = memberships.map(m => ({
+      organization: m.organization_id,
+      membership: {
+        _id: m._id,
+        role: m.role,
+        organization_id: m.organization_id._id || m.organization_id,
+        user_id: m.user_id
+      }
+    }));
 
-    res.json(organizations);
+    res.json(workspaces);
   } catch (error) {
     console.error("Error fetching organizations:", error);
     res.status(500).json({ error: "Internal Server Error" });

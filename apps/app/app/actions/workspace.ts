@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 "use server";
 
 const auth = () => ({ userId: "temp" }); const currentUser = () => ({});
@@ -679,39 +679,38 @@ export async function updateActiveOrganization(
     };
   }
 
-  const { organization, membership } = await getCurrentWorkspace();
+  // Yeni Express API Mimarisi
+  const { getApiWorkspaceShellData } = await import("../../lib/api-workspace");
+  const workspace = await getApiWorkspaceShellData();
 
-  if (membership.role !== "owner" && membership.role !== "admin") {
+  if (workspace.role !== "owner" && workspace.role !== "admin") {
     return {
       ok: false,
       error: "Only owners and admins can update organization settings.",
     };
   }
 
-  const db = createDbAdminClient();
+  try {
+    const { fetchApi } = await import("../../lib/api-client");
+    // PUT /organizations/:id
+    await fetchApi(`/organizations/${workspace.organizationId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        type: input.type,
+        city: cleanString(input.city),
+        country: cleanString(input.country),
+      }),
+    });
 
-  const { error } = await db
-    .from("organizations")
-    .update({
-      name,
-      type: input.type,
-      city: cleanString(input.city),
-      country: cleanString(input.country),
-    })
-    .eq("id", organization.id);
-
-  if (error) {
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error: any) {
     return {
       ok: false,
-      error: error.message,
+      error: error.message || "Failed to update organization",
     };
   }
-
-  revalidatePath("/");
-
-  return {
-    ok: true,
-  };
 }
 
 export async function createAdditionalOrganization(
@@ -4761,5 +4760,6 @@ export async function sendTeamMemoryMessage(
     threadId,
   };
 }
+
 
 

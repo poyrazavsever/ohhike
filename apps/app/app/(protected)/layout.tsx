@@ -1,29 +1,22 @@
-﻿const auth = () => ({ userId: "temp" }); const currentUser = () => ({});
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AppShell } from "../../components/layout/app-shell";
 import { requireAthletePortalAccess } from "../../lib/athlete-portal";
-import { getWorkspaceShellData } from "../../lib/workspace";
+import { getApiWorkspaceShellData } from "../../lib/api-workspace";
 
 export default async function ProtectedLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect("/login");
-  }
-
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "";
 
   await requireAthletePortalAccess(pathname);
 
-  const workspace = await getWorkspaceShellData();
+  // Yan menü (Sidebar) verilerini gerçek Express API'den çekiyoruz
+  const workspace = await getApiWorkspaceShellData();
 
   return <AppShell workspace={workspace}>{children}</AppShell>;
 }

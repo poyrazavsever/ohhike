@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 const auth = () => ({ userId: "temp" }); const currentUser = () => ({});
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -181,55 +181,32 @@ export type BillingSettingsData = {
 };
 
 export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
-  const { userId } = await auth();
+  const cookieStore = await cookies();
+  const activeOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
 
-  if (!userId) {
+  try {
+    const { fetchApi } = await import("./api-client");
+    
+    // API'den workspaces dizisi döner: [{ organization: {}, membership: {} }]
+    const workspaces: CurrentWorkspace[] = await fetchApi("/organizations");
+
+    if (!workspaces || workspaces.length === 0) {
+      redirect("/onboarding");
+    }
+
+    const activeWorkspace = workspaces.find(
+      (ws) => ws.organization._id === activeOrganizationId || ws.organization.id === activeOrganizationId
+    ) ?? workspaces[0];
+
+    if (!activeWorkspace) {
+      redirect("/onboarding");
+    }
+
+    return activeWorkspace;
+  } catch (error) {
+    console.error("Failed to load workspace:", error);
     redirect("/login");
   }
-
-  const db = createDbAdminClient();
-  const cookieStore = await cookies();
-  const activeOrganizationId = cookieStore.get(
-    ACTIVE_ORGANIZATION_COOKIE,
-  )?.value;
-
-  const { data: memberships, error: membershipError } = await db
-    .from("organization_members")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .order("joined_at", { ascending: true });
-
-  if (membershipError || !memberships?.length) {
-    redirect("/onboarding");
-  }
-
-  const membership =
-    memberships.find(
-      (currentMembership) =>
-        currentMembership.organization_id === activeOrganizationId,
-    ) ?? memberships[0];
-
-  if (!membership) {
-    redirect("/onboarding");
-  }
-
-  const { data: organization, error: organizationError } = await db
-    .from("organizations")
-    .select("*")
-    .eq("id", membership.organization_id)
-    .single();
-
-  if (organizationError || !organization) {
-    throw new Error(
-      organizationError?.message ?? "Failed to load active organization.",
-    );
-  }
-
-  return {
-    organization,
-    membership,
-  };
 }
 
 export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
