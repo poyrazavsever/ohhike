@@ -6,28 +6,28 @@
 ---
 
 ## Faz 0 — Hazırlık ve Altyapı
-- [ ] `apps/api/` Express.js projesi oluştur
-- [ ] Mongoose bağımlılığı ekle
-- [ ] MongoDB bağlantı helper'ı yaz
-- [ ] İlk Mongoose model: `User` schema
-- [ ] Clerk webhook route → MongoDB
-- [ ] CORS middleware ekle
-- [ ] `turbo.json` → `api#dev` task ekle
-- [ ] Next.js proxy/rewrite ayarı
+- [x] `apps/api/` Express.js projesi oluştur
+- [x] Mongoose bağımlılığı ekle
+- [x] MongoDB bağlantı helper'ı yaz
+- [x] İlk Mongoose model: `User` schema
+- [x] Clerk webhook route → MongoDB
+- [x] CORS middleware ekle
+- [x] `turbo.json` → `api#dev` task ekle
+- [x] Next.js proxy/rewrite ayarı
 
 ## Faz 1 — Web Basitleştirmesi
-- [ ] Clerk kaldır (web)
-- [ ] Supabase kaldır (web)
-- [ ] `proxy.ts` sil
-- [ ] Clerk/Coach Network lib dosyalarını sil
-- [ ] Login/Register sayfalarını sil
-- [ ] Coach Network sayfalarını sil
-- [ ] Landing page sadeleştir (AI, Wearable, Coach Network referansları kaldır)
-- [ ] Pricing → Coming Soon
-- [ ] Web `.env.local` temizle
+- [x] Clerk kaldır (web)
+- [x] Supabase kaldır (web)
+- [x] `proxy.ts` sil
+- [x] Clerk/Coach Network lib dosyalarını sil
+- [x] Login/Register sayfalarını sil
+- [x] Coach Network sayfalarını sil
+- [x] Landing page sadeleştir (AI, Wearable, Coach Network referansları kaldır)
+- [x] Pricing → Coming Soon
+- [x] Web `.env.local` temizle
 
 ## Faz 2 — App UI Temizliği
-- [ ] Sidebar'dan kalkacak feature menülerini gizle
+- [ ] Sidebar'dan kalkacak feature menülerini gizle/sil
 - [ ] Dashboard'dan AI/Wearable kartlarını kaldır
 - [ ] Settings/Billing → Coming Soon
 - [ ] Kalkacak route'ları redirect veya 404 yap
