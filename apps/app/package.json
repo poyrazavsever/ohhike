@@ -12,14 +12,14 @@
     "check-production-env": "node ./scripts/check-production-env.mjs"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.3.5",
     "@iconify/react": "^6.0.2",
     "@repo/ui": "workspace:*",
     "@revenuecat/purchases-js": "^1.15.0",
     "framer-motion": "^12.38.0",
     "next": "16.2.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

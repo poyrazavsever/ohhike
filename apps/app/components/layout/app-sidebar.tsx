@@ -1,9 +1,9 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 "use client";
 
 import { Icon } from "@iconify/react";
-import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { useAuth } from "../providers/auth-provider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -333,11 +333,10 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
 }
 
 function SidebarUserCard() {
-  const { openUserProfile, signOut } = useClerk();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useUser();
 
   useEffect(() => {
     setIsOpen(false);
@@ -375,10 +374,10 @@ function SidebarUserCard() {
         <div className="absolute bottom-19 left-3 right-3 z-50 rounded-3xl border border-border bg-card p-2">
           <div className="px-3 py-2">
             <p className="truncate text-xs font-semibold text-foreground">
-              {user?.fullName ?? "Account"}
+              {user?.displayName ?? "Account"}
             </p>
             <p className="truncate text-[11px] font-medium text-muted-foreground">
-              {user?.primaryEmailAddress?.emailAddress ?? "Signed in"}
+              {user?.email ?? "Signed in"}
             </p>
           </div>
 
@@ -398,21 +397,18 @@ function SidebarUserCard() {
 
           <div className="my-1 h-px bg-border" />
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              openUserProfile();
-            }}
+          <Link
+            href="/settings/profile"
+            onClick={() => setIsOpen(false)}
             className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Icon icon="solar:user-check-rounded-bold" className="size-4" />
             Manage account
-          </button>
+          </Link>
 
           <button
             type="button"
-            onClick={() => signOut({ redirectUrl: "/login" })}
+            onClick={() => logout()}
             className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Icon icon="solar:logout-3-bold" className="size-4" />
@@ -427,7 +423,7 @@ function SidebarUserCard() {
         className="flex w-full items-center gap-3 rounded-3xl border border-border bg-background p-3 text-left transition-colors hover:border-primary/35"
       >
         <Image
-          src={user?.imageUrl ?? "/logo/logoWtextBlack.png"}
+          src="/logo/logoWtextBlack.png"
           alt=""
           width={40}
           height={40}
@@ -435,9 +431,7 @@ function SidebarUserCard() {
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">
-            {user?.fullName ??
-              user?.primaryEmailAddress?.emailAddress ??
-              "Coach"}
+            {user?.displayName ?? user?.email ?? "Coach"}
           </p>
           <p className="truncate text-[11px] font-medium text-muted-foreground">
             Account & admin
@@ -503,7 +497,6 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
                       }
                     >
                       <Icon icon={item.icon} className="size-4 shrink-0" />
-                      <Icon icon={item.icon} className="size-5 shrink-0" />
                       <span className="truncate">{item.label}</span>
                       {isLocked ? (
                         <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
@@ -702,7 +695,7 @@ function MobileAppNavigation({
 }
 
 function MobileAccountLinks({ onNavigate }: { onNavigate: () => void }) {
-  const { openUserProfile, signOut } = useClerk();
+  const { logout } = useAuth();
 
   return (
     <section>
@@ -722,17 +715,7 @@ function MobileAccountLinks({ onNavigate }: { onNavigate: () => void }) {
         ))}
         <button
           type="button"
-          onClick={() => {
-            onNavigate();
-            openUserProfile();
-          }}
-          className="border-b border-border py-4 text-left text-lg font-extrabold text-foreground"
-        >
-          Manage account
-        </button>
-        <button
-          type="button"
-          onClick={() => signOut({ redirectUrl: "/login" })}
+          onClick={() => logout()}
           className="border-b border-border py-4 text-left text-lg font-extrabold text-foreground"
         >
           Sign out
@@ -741,4 +724,3 @@ function MobileAccountLinks({ onNavigate }: { onNavigate: () => void }) {
     </section>
   );
 }
-

@@ -1,12 +1,15 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "../components/providers/auth-provider";
 import type { Metadata } from "next";
-
-import { getClerkPublishableKey } from "../lib/clerk-env";
+import { Inter, Outfit } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
   title: "OhHike CoachOS",
-  description: "AI coaching operations platform for sports teams.",
+  description: "Coaching operations platform for sports teams.",
 };
 
 export default function RootLayout({
@@ -14,18 +17,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const publishableKey = getClerkPublishableKey();
-
   return (
     <html lang="en">
-      <body>
-        <ClerkProvider
-          publishableKey={publishableKey || undefined}
-          signInUrl="/login"
-          signUpUrl="/register"
-        >
+      <body
+        className={`${outfit.variable} ${inter.variable} min-h-screen bg-background font-sans antialiased selection:bg-primary/20`}
+      >
+        <AuthProvider>
           {children}
-        </ClerkProvider>
+          <Toaster position="bottom-right" />
+        </AuthProvider>
       </body>
     </html>
   );
