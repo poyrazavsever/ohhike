@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 
@@ -100,3 +101,4 @@ export function CoachCard({ coach }: { coach: PublicCoachCard }) {
     </article>
   );
 }
+

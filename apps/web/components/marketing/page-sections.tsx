@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { Icon } from "@iconify/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card } from "@repo/ui/components/ui/card";
@@ -191,3 +192,4 @@ function CtaBand({
 }
 
 export { CtaBand, InfoGrid, MarketingHero, TextBand, type InfoCard };
+

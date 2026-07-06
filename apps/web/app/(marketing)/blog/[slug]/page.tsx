@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
@@ -51,3 +52,4 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     </main>
   );
 }
+

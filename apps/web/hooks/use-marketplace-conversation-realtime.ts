@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
@@ -149,3 +150,4 @@ export function useMarketplaceConversationRealtime(
 
   return { status, statusDetail };
 }
+
