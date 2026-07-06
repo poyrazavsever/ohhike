@@ -1,5 +1,5 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "@clerk/express";
+﻿import { Router, Request, Response } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import Team from "../models/Team.js";
 import TeamStaff from "../models/TeamStaff.js";
 import { User } from "../models/User.js";
@@ -7,7 +7,7 @@ import { User } from "../models/User.js";
 const router = Router();
 
 // Get teams for an organization
-router.get("/:orgId", requireAuth(), async (req: Request & { auth?: any }, res: Response) => {
+router.get("/:orgId", requireAuth(), async (req: Request, res: Response) => {
   try {
     const { orgId } = req.params;
     const teams = await Team.find({ organization_id: orgId });
@@ -19,11 +19,11 @@ router.get("/:orgId", requireAuth(), async (req: Request & { auth?: any }, res: 
 });
 
 // Create team
-router.post("/", requireAuth(), async (req: Request & { auth?: any }, res: Response) => {
+router.post("/", requireAuth(), async (req: Request, res: Response) => {
   try {
     const { name, organization_id } = req.body;
-    const clerkId = req.auth.userId;
-    const user = await User.findOne({ clerkId });
+    const userId = req.user?.id;
+    const user = await User.findOne({ _id: userId });
     
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -47,3 +47,4 @@ router.post("/", requireAuth(), async (req: Request & { auth?: any }, res: Respo
 });
 
 export default router;
+

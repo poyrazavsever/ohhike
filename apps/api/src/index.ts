@@ -17,8 +17,10 @@ import teamRoutes from "./routes/team.js";
 import athleteRoutes from "./routes/athlete.js";
 import sessionRoutes from "./routes/session.js";
 import dailyDataRoutes from "./routes/dailyData.js";
+import authRoutes from "./routes/auth.js";
 
 app.use("/api/webhooks", webhookRoutes);
+app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/organizations", orgRoutes);
 app.use("/api/v1/teams", teamRoutes);
 app.use("/api/v1/athletes", athleteRoutes);

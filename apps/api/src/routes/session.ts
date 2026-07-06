@@ -1,5 +1,5 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "@clerk/express";
+﻿import { Router, Request, Response } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import Session from "../models/Session.js";
 
 const router = Router();
@@ -32,3 +32,4 @@ router.post("/", requireAuth(), async (req: Request, res: Response) => {
 });
 
 export default router;
+

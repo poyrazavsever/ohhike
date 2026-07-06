@@ -1,5 +1,5 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "@clerk/express";
+﻿import { Router, Request, Response } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import Athlete from "../models/Athlete.js";
 import Team from "../models/Team.js";
 
@@ -38,3 +38,4 @@ router.post("/", requireAuth(), async (req: Request, res: Response) => {
 });
 
 export default router;
+

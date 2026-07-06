@@ -1,5 +1,5 @@
-import { Router, Request, Response } from "express";
-import { requireAuth } from "@clerk/express";
+﻿import { Router, Request, Response } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import WellnessCheckin from "../models/WellnessCheckin.js";
 import NutritionLog from "../models/NutritionLog.js";
 import PersonalTraining from "../models/PersonalTraining.js";
@@ -45,3 +45,4 @@ router.post("/nutrition", requireAuth(), async (req: Request, res: Response) => 
 });
 
 export default router;
+
