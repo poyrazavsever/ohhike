@@ -7,7 +7,7 @@
 **Marka:** OhHike  
 **Maskot:** Doctor Panda  
 **Ana kullanıcılar:** Antrenörler, spor kulüpleri, sporcular  
-**Tech:** Next.js, Express.js, MongoDB, Clerk, Tailwind CSS, shadcn/ui
+**Tech:** Next.js, Express.js, MongoDB, Tailwind CSS, shadcn/ui (Custom JWT Auth)
 
 ---
 
