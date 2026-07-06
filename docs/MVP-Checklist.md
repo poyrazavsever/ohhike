@@ -45,9 +45,9 @@
 - [x] Next.js frontend → yeni API'ye bağla
 
 ## Faz 5 — Backend: Daily Data
-- [ ] WellnessCheckin, NutritionLog, PersonalTraining modelleri
-- [ ] Express CRUD route'ları
-- [ ] Next.js frontend → yeni API'ye bağla
+- [x] WellnessCheckin, NutritionLog, PersonalTraining modelleri
+- [x] Express CRUD route'ları
+- [x] Next.js frontend → yeni API'ye bağla
 
 ## Faz 6 — Supabase Tam Temizlik
 - [ ] `@supabase/supabase-js` kaldır (app)

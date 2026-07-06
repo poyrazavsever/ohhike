@@ -1,6 +1,6 @@
 import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
 import { getAthletePortalContext } from "../../../../lib/athlete-portal";
-import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
+import { auth } from "@clerk/nextjs/server";
 import { AthleteSelfCheckinForm } from "../_components/athlete-portal-forms";
 
 function formatDay(value: string) {
@@ -12,14 +12,23 @@ function formatDay(value: string) {
 export default async function AthleteCheckInPage() {
   const { athlete, teamName, workspace } = await getAthletePortalContext();
 
-  const supabase = createSupabaseAdminClient();
-  const { data: latest } = await supabase
-    .from("wellness_checkins")
-    .select("checkin_date, readiness_score, fatigue")
-    .eq("athlete_id", athlete.id)
-    .order("checkin_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  let latest = null;
+  try {
+    const res = await fetch(`http://localhost:3002/api/v1/daily-data/${athlete.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.wellness && data.wellness.length > 0) {
+        latest = data.wellness[0];
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch wellness data");
+  }
 
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
@@ -32,7 +41,7 @@ export default async function AthleteCheckInPage() {
 
       {latest ? (
         <p className="mt-4 text-sm font-medium text-muted-foreground">
-          Last saved {formatDay(latest.checkin_date)}
+          Last saved {formatDay(latest.date)}
           {latest.readiness_score != null
             ? ` · readiness ${latest.readiness_score}`
             : ""}
