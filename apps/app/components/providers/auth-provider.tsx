@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Cookies from "js-cookie";
 
 interface User {
   id: string;
@@ -25,32 +26,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    // Uygulama açıldığında LocalStorage'dan token ve user kontrolü
-    const storedToken = localStorage.getItem("ohhike_token");
-    const storedUser = localStorage.getItem("ohhike_user");
+    // Uygulama açıldığında Cookies'den token ve user kontrolü
+    const storedToken = Cookies.get("ohhike_token");
+    const storedUser = Cookies.get("ohhike_user");
 
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user cookie", e);
+      }
     }
     
     setIsLoading(false);
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    localStorage.setItem("ohhike_token", newToken);
-    localStorage.setItem("ohhike_user", JSON.stringify(newUser));
+    // 30 günlük çerez süresi belirliyoruz
+    Cookies.set("ohhike_token", newToken, { expires: 30 });
+    Cookies.set("ohhike_user", JSON.stringify(newUser), { expires: 30 });
+    
     setToken(newToken);
     setUser(newUser);
     router.push("/dashboard");
   };
 
   const logout = () => {
-    localStorage.removeItem("ohhike_token");
-    localStorage.removeItem("ohhike_user");
+    Cookies.remove("ohhike_token");
+    Cookies.remove("ohhike_user");
+    
     setToken(null);
     setUser(null);
     router.push("/login");
