@@ -3,12 +3,27 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
-import type {
-  OrganizationType,
-  SportType,
-  TablesInsert,
-} from "../../lib/database.types";
-import { createSupabaseAdminClient } from "../../lib/supabase-admin";
+type OrganizationType =
+  | "club"
+  | "academy"
+  | "individual_coach"
+  | "school_team"
+  | "university_team"
+  | "performance_center"
+  | "other";
+
+type SportType =
+  | "football"
+  | "basketball"
+  | "volleyball"
+  | "handball"
+  | "running"
+  | "fitness"
+  | "tennis"
+  | "swimming"
+  | "martial_arts"
+  | "esports"
+  | "other";
 
 const organizationTypes = [
   "club",

@@ -50,12 +50,12 @@
 - [x] Next.js frontend → yeni API'ye bağla
 
 ## Faz 6 — Supabase Tam Temizlik
-- [ ] `@supabase/supabase-js` kaldır (app)
-- [ ] Supabase lib dosyalarını sil
-- [ ] AI, Coach Network, Strava, Billing lib'lerini sil
-- [ ] Kalkacak API route'larını sil
-- [ ] Env ve turbo.json temizle
-- [ ] Grep ile doğrula: sıfır Supabase/Gemini referansı
+- [x] `@supabase/supabase-js` kaldır (app)
+- [x] Supabase lib dosyalarını sil
+- [x] AI, Coach Network, Strava, Billing lib'lerini sil
+- [x] Kalkacak API route'larını sil
+- [x] Env ve turbo.json temizle
+- [x] Grep ile doğrula: sıfır Supabase/Gemini referansı
 
 ## Faz 7 — Docs Temizliği
 - [ ] Gereksiz docs dosyalarını sil
