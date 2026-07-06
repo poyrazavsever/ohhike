@@ -1,4 +1,4 @@
-# OhHike - Design System (v1.0)
+# OhHike - Design System (v4.0 — MVP)
 ## "Friendly, Fresh, and Focused"
 
 Bu tasarım sistemi, OhHike'ın samimi, kullanıcıyı motive eden ve karmaşadan uzak yapısını yansıtmak üzere Next.js & Tailwind CSS altyapısına kolayca entegre edilebilecek şekilde (Design Tokens) kurgulanmıştır.
