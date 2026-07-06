@@ -21,16 +21,16 @@
 
 ### MİMARİ & GÜVENLİK
 #### Faz 6 — Auth & Token Mimarisinin Geliştirilmesi
-- [ ] 6.1 Token'ın `localStorage`'dan `cookies`'e taşınması
-- [ ] 6.2 `AuthProvider` context yapısının çerezlerle uyumlu hale getirilmesi
-- [ ] 6.3 Next.js `middleware.ts` yazılarak giriş yapmamış kullanıcıların dashboard'a erişiminin engellenmesi
+- [x] 6.1 Token'ın `localStorage`'dan `cookies`'e taşınması
+- [x] 6.2 `AuthProvider` context yapısının çerezlerle uyumlu hale getirilmesi
+- [x] 6.3 Next.js `middleware.ts` yazılarak giriş yapmamış kullanıcıların dashboard'a erişiminin engellenmesi
 
 ### API ENTEGRASYONU (MOCK VERİLERİN SİLİNMESİ)
 #### Faz 7 — Frontend API Entegrasyonu: Core (Organizasyon ve Takımlar)
-- [ ] 7.1 Eski `db.types.ts` dosyasının silinip MongoDB interface tiplerinin oluşturulması
-- [ ] 7.2 Organizasyon verilerinin (`getOrganization`, `createOrganization`) Express'e bağlanması
-- [ ] 7.3 Takım verilerinin (`getTeam`, `createTeam`) Express API'ye bağlanması
-- [ ] 7.4 Yan menünün (Sidebar) gerçek takım verileriyle beslenmesi
+- [x] 7.1 Eski `db.types.ts` dosyasının silinip MongoDB interface tiplerinin oluşturulması
+- [x] 7.2 Organizasyon verilerinin (`getOrganization`, `createOrganization`) Express'e bağlanması
+- [x] 7.3 Takım verilerinin (`getTeam`, `createTeam`) Express API'ye bağlanması
+- [x] 7.4 Yan menünün (Sidebar) gerçek takım verileriyle beslenmesi
 
 #### Faz 8 — Frontend API Entegrasyonu: Sporcular (Athletes)
 - [x] 8.1 Sporcu verilerinin (CRUD işlemleri) Express API'ye bağlanması
