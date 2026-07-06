@@ -33,9 +33,9 @@
 - [ ] 7.4 Yan menünün (Sidebar) gerçek takım verileriyle beslenmesi
 
 #### Faz 8 — Frontend API Entegrasyonu: Sporcular (Athletes)
-- [ ] 8.1 Sporcu verilerinin (CRUD işlemleri) Express API'ye bağlanması
-- [ ] 8.2 Sporcu Listesi sayfasının mock verilerden kurtarılması
-- [ ] 8.3 Sporcu Detay ve Profil sayfalarının API'ye bağlanması
+- [x] 8.1 Sporcu verilerinin (CRUD işlemleri) Express API'ye bağlanması
+- [x] 8.2 Sporcu Listesi sayfasının mock verilerden kurtarılması
+- [x] 8.3 Sporcu Detay ve Profil sayfalarının API'ye bağlanması
 
 #### Faz 9 — Frontend API Entegrasyonu: Antrenmanlar (Sessions)
 - [ ] 9.1 Antrenman verilerinin (CRUD işlemleri) Express API'ye bağlanması

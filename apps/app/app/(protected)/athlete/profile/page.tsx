@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
-import { getAthletePortalContext } from "../../../../lib/athlete-portal";
+import { getApiAthletePortalContext } from "../../../../lib/api-athletes";
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -15,7 +15,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 export default async function AthleteProfilePage() {
-  const { athlete, teamName, workspace } = await getAthletePortalContext();
+  const { athlete, teamName, workspace } = await getApiAthletePortalContext();
 
   const displayName =
     athlete.display_name ??
@@ -25,7 +25,7 @@ export default async function AthleteProfilePage() {
   return (
     <section className="bg-primary-50 px-5 py-6 md:px-8">
       <DashboardHero
-        eyebrow={teamName ?? workspace.organization.name}
+        eyebrow={teamName ?? workspace.organizationName}
         title="My profile"
         subtitle="Roster details shared with your coaching staff."
         mascotSrc="/maskotlar/kosu.png"

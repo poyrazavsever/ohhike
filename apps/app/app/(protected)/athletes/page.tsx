@@ -3,15 +3,17 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
-import { getAthletesData } from "../../../lib/workspace";
+import { getApiWorkspaceShellData } from "../../../lib/api-workspace";
+import { getTeamAthletes } from "../../../lib/api-athletes";
+import { fetchApi } from "../../../lib/api-client";
 import { AthleteRowActions } from "./_components/athlete-row-actions";
 import { CreateAthleteForm } from "./_components/create-athlete-form";
 
-function getAthleteName(firstName: string, lastName: string | null) {
+function getAthleteName(firstName: string, lastName: string | null | undefined) {
   return [firstName, lastName].filter(Boolean).join(" ");
 }
 
-function formatStatus(status: string | null) {
+function formatStatus(status: string | null | undefined) {
   return status
     ? status
         .split("_")
@@ -21,7 +23,12 @@ function formatStatus(status: string | null) {
 }
 
 export default async function AthletesPage() {
-  const { workspace, athletes, teams } = await getAthletesData();
+  const workspace = await getApiWorkspaceShellData();
+  const athletes = await getTeamAthletes();
+  
+  // Takım seçimi formu için organizasyondaki tüm takımları getir
+  const teams = await fetchApi(`/teams/${workspace.organizationId}`);
+
   const claimedCount = athletes.filter((athlete) => athlete.user_id).length;
   const invitedCount = athletes.length - claimedCount;
   const activeCount = athletes.filter(
@@ -33,7 +40,7 @@ export default async function AthletesPage() {
       <DashboardHero
         eyebrow="Team Operations"
         title="Athletes"
-        subtitle={`Track athlete profiles, roster status and claim readiness for ${workspace.organization.name}.`}
+        subtitle={`Track athlete profiles, roster status and claim readiness for ${workspace.organizationName}.`}
         mascotSrc="/maskotlar/kosu.png"
       />
 
@@ -76,12 +83,11 @@ export default async function AthletesPage() {
           <div className="divide-y divide-border">
             {athletes.map((athlete) => (
               <article
-                key={athlete.id}
+                key={athlete._id}
                 className="grid gap-3 px-4 py-3 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto] md:gap-4"
               >
                 <div>
                   <p className="text-sm font-black text-foreground">
-                    {athlete.number ? `#${athlete.number} · ` : ""}
                     {getAthleteName(athlete.first_name, athlete.last_name)}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-muted-foreground">
@@ -89,7 +95,7 @@ export default async function AthletesPage() {
                   </p>
                 </div>
                 <p className="text-sm font-bold text-foreground">
-                  {athlete.teamName ?? "No team"}
+                  {workspace.teamName ?? "No team"}
                 </p>
                 <p className="text-sm font-bold text-foreground">
                   {formatStatus(athlete.status)}
@@ -97,7 +103,7 @@ export default async function AthletesPage() {
                 <p className="text-sm font-semibold text-muted-foreground">
                   {athlete.user_id ? "Claimed" : "Unclaimed"}
                 </p>
-                <AthleteRowActions athlete={athlete} teams={teams} />
+                <AthleteRowActions athlete={athlete as any} teams={teams} />
               </article>
             ))}
           </div>

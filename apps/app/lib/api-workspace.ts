@@ -38,6 +38,7 @@ export async function getApiWorkspaceShellData(): Promise<WorkspaceShellData> {
     return {
       organizationId: activeWorkspace.organization._id,
       organizationName: activeWorkspace.organization.name,
+      teamId: activeTeam?._id ?? null,
       teamName: activeTeam?.name ?? null,
       plan: "pro_team", // Şimdilik varsayılan Pro Team
       role: activeWorkspace.membership.role as any, // 'owner' | 'admin' vs.

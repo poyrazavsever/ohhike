@@ -25,3 +25,16 @@ export interface ApiTeam {
   created_at: string;
   updated_at: string;
 }
+
+export interface ApiAthlete {
+  _id: string;
+  team_id: string;
+  user_id?: string;
+  first_name: string;
+  last_name?: string;
+  email?: string;
+  status: 'active' | 'injured' | 'inactive';
+  position?: string;
+  created_at: string;
+  updated_at: string;
+}

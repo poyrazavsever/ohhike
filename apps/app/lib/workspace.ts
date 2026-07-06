@@ -154,6 +154,7 @@ export type ReportsCenterAiReport = AiReport & {
 export type WorkspaceShellData = {
   organizationId: string;
   organizationName: string;
+  teamId: string | null;
   teamName: string | null;
   plan: TeamEntitlement["plan"] | null;
   role: OrganizationMember["role"];

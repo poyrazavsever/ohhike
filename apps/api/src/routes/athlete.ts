@@ -1,4 +1,4 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import Athlete from "../models/Athlete.js";
 import Team from "../models/Team.js";
@@ -13,6 +13,28 @@ router.get("/team/:teamId", requireAuth(), async (req: Request, res: Response) =
     res.json(athletes);
   } catch (error) {
     console.error("Error fetching athletes:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get current logged in athlete profile
+router.get("/me", requireAuth(), async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    // Auth middleware req.user._id veya id döndürebiliyor, Mongoose için ObjectId'ye gerek yok mongoose kendisi çevirir
+    const athlete = await Athlete.findOne({ user_id: userId }).populate("team_id");
+    
+    if (!athlete) {
+      return res.status(404).json({ error: "Athlete profile not found" });
+    }
+    
+    res.json(athlete);
+  } catch (error) {
+    console.error("Error fetching athlete profile:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
