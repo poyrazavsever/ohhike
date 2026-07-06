@@ -1,4 +1,5 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
+import mongoose from "mongoose";
 import { requireAuth } from "../middleware/auth.js";
 import Session from "../models/Session.js";
 
@@ -8,7 +9,35 @@ const router = Router();
 router.get("/team/:teamId", requireAuth(), async (req: Request, res: Response) => {
   try {
     const { teamId } = req.params;
-    const sessions = await Session.find({ team_id: teamId }).sort({ date: -1 });
+    
+    // Mongoose Aggregation ile antrenmanları, yoklamaları ve blokları birleştiriyoruz
+    const sessions = await Session.aggregate([
+      { $match: { team_id: new mongoose.Types.ObjectId(teamId as string) } },
+      {
+        $lookup: {
+          from: 'attendances',
+          localField: '_id',
+          foreignField: 'session_id',
+          as: 'attendances'
+        }
+      },
+      {
+        $lookup: {
+          from: 'trainingblocks',
+          localField: '_id',
+          foreignField: 'session_id',
+          as: 'trainingBlocks'
+        }
+      },
+      {
+        $addFields: {
+          attendanceCount: { $size: "$attendances" },
+          trainingBlocksCount: { $size: "$trainingBlocks" }
+        }
+      },
+      { $sort: { date: -1 } }
+    ]);
+    
     res.json(sessions);
   } catch (error) {
     console.error("Error fetching sessions:", error);

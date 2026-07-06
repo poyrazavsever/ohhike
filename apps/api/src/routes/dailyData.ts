@@ -1,4 +1,5 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
+import mongoose from "mongoose";
 import { requireAuth } from "../middleware/auth.js";
 import WellnessCheckin from "../models/WellnessCheckin.js";
 import NutritionLog from "../models/NutritionLog.js";
@@ -18,6 +19,79 @@ router.get("/:athleteId", requireAuth(), async (req: Request, res: Response) => 
     res.json({ wellness, nutrition, training });
   } catch (error) {
     console.error("Error fetching daily data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET team wellness checkins
+router.get("/team/:teamId/wellness", requireAuth(), async (req: Request, res: Response) => {
+  try {
+    const { teamId } = req.params;
+    // Mongoose Aggregate kullanarak ilgili takıma ait sporcuların wellness verilerini getirir
+    const wellness = await WellnessCheckin.aggregate([
+      {
+        $lookup: {
+          from: 'athletes',
+          localField: 'athlete_id',
+          foreignField: '_id',
+          as: 'athlete'
+        }
+      },
+      { $unwind: "$athlete" },
+      { $match: { "athlete.team_id": new mongoose.Types.ObjectId(teamId as string) } },
+      { $sort: { date: -1 } },
+      { $limit: 100 }
+    ]);
+    res.json(wellness);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET team nutrition logs
+router.get("/team/:teamId/nutrition", requireAuth(), async (req: Request, res: Response) => {
+  try {
+    const { teamId } = req.params;
+    const nutrition = await NutritionLog.aggregate([
+      {
+        $lookup: {
+          from: 'athletes',
+          localField: 'athlete_id',
+          foreignField: '_id',
+          as: 'athlete'
+        }
+      },
+      { $unwind: "$athlete" },
+      { $match: { "athlete.team_id": new mongoose.Types.ObjectId(teamId as string) } },
+      { $sort: { date: -1 } },
+      { $limit: 100 }
+    ]);
+    res.json(nutrition);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// GET team personal trainings
+router.get("/team/:teamId/training", requireAuth(), async (req: Request, res: Response) => {
+  try {
+    const { teamId } = req.params;
+    const training = await PersonalTraining.aggregate([
+      {
+        $lookup: {
+          from: 'athletes',
+          localField: 'athlete_id',
+          foreignField: '_id',
+          as: 'athlete'
+        }
+      },
+      { $unwind: "$athlete" },
+      { $match: { "athlete.team_id": new mongoose.Types.ObjectId(teamId as string) } },
+      { $sort: { date: -1 } },
+      { $limit: 100 }
+    ]);
+    res.json(training);
+  } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

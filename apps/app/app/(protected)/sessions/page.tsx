@@ -6,23 +6,24 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
-import {
-  sessionFocusAreaLabel,
-  sessionPlannedIntensityLabel,
-} from "../../../lib/coach-vocabulary";
-import { getSessionsData } from "../../../lib/workspace";
+import { sessionFocusAreaLabel } from "../../../lib/coach-vocabulary";
+import { getApiWorkspaceShellData } from "../../../lib/api-workspace";
+import { getTeamSessions } from "../../../lib/api-sessions";
+import { fetchApi } from "../../../lib/api-client";
+import { getTeamAthletes } from "../../../lib/api-athletes";
 import { CreateSessionForm } from "./_components/create-session-form";
 import { SessionCardActions } from "./_components/session-card-actions";
 import { SessionTrainingBlocksButton } from "./_components/session-training-blocks-button";
 
-function formatSessionType(type: string) {
+function formatSessionType(type: string | undefined | null) {
+  if (!type) return "Training";
   return type
     .split("_")
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
     .join(" ");
 }
 
-function formatDate(value: string | null) {
+function formatDate(value: string | null | undefined) {
   if (!value) {
     return "Not scheduled";
   }
@@ -34,14 +35,25 @@ function formatDate(value: string | null) {
 }
 
 export default async function SessionsPage() {
-  const { workspace, sessions, teams, athletes } = await getSessionsData();
-  const scheduledCount = sessions.filter((session) => session.scheduled_at).length;
+  const workspace = await getApiWorkspaceShellData();
+  const sessions = await getTeamSessions();
+  const teams = await fetchApi(`/teams/${workspace.organizationId}`);
+  const apiAthletes = await getTeamAthletes();
+  
+  // Alt component'lerin beklediği (AthleteOption) tipe dönüştürüyoruz
+  const athletes = apiAthletes.map((a: any) => ({
+    ...a,
+    id: a._id,
+    number: null,
+  }));
+
+  const scheduledCount = sessions.filter((session) => session.date).length;
   const attendanceCount = sessions.reduce(
-    (total, session) => total + session.attendanceCount,
+    (total, session) => total + (session.attendanceCount || 0),
     0,
   );
   const blockCount = sessions.reduce(
-    (total, session) => total + session.trainingBlocks.length,
+    (total, session) => total + (session.trainingBlocksCount || 0),
     0,
   );
 
@@ -50,7 +62,7 @@ export default async function SessionsPage() {
       <DashboardHero
         eyebrow="Training Workflow"
         title="Sessions"
-        subtitle={`Plan sessions, attendance and RPE workflows for ${workspace.organization.name}.`}
+        subtitle={`Plan sessions, attendance and RPE workflows for ${workspace.organizationName}.`}
         mascotSrc="/maskotlar/hazirlik.png"
       />
 
@@ -90,23 +102,23 @@ export default async function SessionsPage() {
 
       {sessions.length > 0 ? (
         <div className="mt-4 grid gap-3">
-          {sessions.map((session) => (
+          {sessions.map((session: any) => (
             <article
-              key={session.id}
+              key={session._id}
               className="rounded-2xl border border-border bg-card p-4"
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-base font-black text-foreground">
                     <Link
-                      href={`/sessions/${session.id}`}
+                      href={`/sessions/${session._id}`}
                       className="transition-colors hover:text-primary"
                     >
                       {session.title}
                     </Link>
                   </h2>
                   <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                    {session.teamName ?? "No team"} · {formatSessionType(session.type)}
+                    {workspace.teamName ?? "No team"} · {formatSessionType(session.type)}
                   </p>
                 </div>
                 <div className="flex flex-col items-start gap-2 md:items-end">
@@ -114,7 +126,7 @@ export default async function SessionsPage() {
                     {session.status ?? "planned"}
                   </div>
                   <Link
-                    href={`/sessions/${session.id}`}
+                    href={`/sessions/${session._id}`}
                     className="text-xs font-bold text-primary transition-colors hover:text-primary-hover"
                   >
                     Open detail →
@@ -128,22 +140,18 @@ export default async function SessionsPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-5">
-                <DetailStat label="Scheduled" value={formatDate(session.scheduled_at)} />
+              <div className="mt-4 grid gap-2 md:grid-cols-4">
+                <DetailStat label="Scheduled" value={formatDate(session.date)} />
                 <DetailStat
                   label="Duration"
                   value={
-                    session.planned_duration_min
-                      ? `${session.planned_duration_min} min`
+                    session.duration_minutes
+                      ? `${session.duration_minutes} min`
                       : "Not set"
                   }
                 />
-                <DetailStat
-                  label="Intensity"
-                  value={sessionPlannedIntensityLabel(session.planned_intensity)}
-                />
-                <DetailStat label="Attendance" value={session.attendanceCount} />
-                <DetailStat label="Blocks" value={session.trainingBlocks.length} />
+                <DetailStat label="Attendance" value={session.attendanceCount || 0} />
+                <DetailStat label="Blocks" value={session.trainingBlocksCount || 0} />
               </div>
 
               {session.focus_area || session.coach_notes ? (

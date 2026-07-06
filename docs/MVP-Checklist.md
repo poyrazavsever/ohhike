@@ -38,9 +38,9 @@
 - [x] 8.3 Sporcu Detay ve Profil sayfalarının API'ye bağlanması
 
 #### Faz 9 — Frontend API Entegrasyonu: Antrenmanlar (Sessions)
-- [ ] 9.1 Antrenman verilerinin (CRUD işlemleri) Express API'ye bağlanması
-- [ ] 9.2 Antrenman Yoklaması (Attendance) ve Blokların API'ye bağlanması
-- [ ] 9.3 Takvim (Calendar) sayfasının Express verileriyle render edilmesi
+- [x] 9.1 Antrenman verilerinin (CRUD işlemleri) Express API'ye bağlanması
+- [x] 9.2 Antrenman Yoklaması (Attendance) ve Blokların API'ye bağlanması
+- [x] 9.3 Takvim (Calendar) sayfasının Express verileriyle render edilmesi
 
 #### Faz 10 — Frontend API Entegrasyonu: Günlük Veriler (Daily Data)
 - [ ] 10.1 Wellness Check-in formlarının API'ye bağlanması
