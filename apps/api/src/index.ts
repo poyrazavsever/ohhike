@@ -14,10 +14,14 @@ app.use(express.json());
 // --- Routes ---
 import orgRoutes from "./routes/organization.js";
 import teamRoutes from "./routes/team.js";
+import athleteRoutes from "./routes/athlete.js";
+import sessionRoutes from "./routes/session.js";
 
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api/v1/organizations", orgRoutes);
 app.use("/api/v1/teams", teamRoutes);
+app.use("/api/v1/athletes", athleteRoutes);
+app.use("/api/v1/sessions", sessionRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

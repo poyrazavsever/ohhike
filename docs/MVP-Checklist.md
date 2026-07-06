@@ -40,9 +40,9 @@
 - [x] Onboarding akışını bağla
 
 ## Faz 4 — Backend: Athlete + Session
-- [ ] Athlete, AthleteInvite, Session, Attendance, TrainingBlock modelleri
-- [ ] Express CRUD route'ları
-- [ ] Next.js frontend → yeni API'ye bağla
+- [x] Athlete, AthleteInvite, Session, Attendance, TrainingBlock modelleri
+- [x] Express CRUD route'ları
+- [x] Next.js frontend → yeni API'ye bağla
 
 ## Faz 5 — Backend: Daily Data
 - [ ] WellnessCheckin, NutritionLog, PersonalTraining modelleri

@@ -254,75 +254,33 @@ export async function completeOnboarding(
   const team = await teamRes.json();
   const teamId = team._id;
 
-  const supabase = createSupabaseAdminClient();
-
-  const { error: entitlementError } = await supabase
-    .from("team_billing_entitlements")
-    .insert({
-      organization_id: organizationId,
-      team_id: teamId,
-      plan: "basic_team",
-      max_team_members: 3,
-    });
-
-  if (entitlementError) {
-    return {
-      ok: false,
-      error: entitlementError.message,
-    };
-  }
-
   const athletes = input.athletes
     .filter((athlete) => hasAthleteInput(athlete))
-    .slice(0, 12)
-    .map<TablesInsert<"athletes">>((athlete) => {
-      const firstName = cleanString(athlete.firstName) ?? "";
-      const lastName = cleanString(athlete.lastName);
-      const number = parsePositiveInteger(athlete.number);
-      return {
-        organization_id: organizationId,
-        team_id: teamId,
-        first_name: firstName,
-        last_name: lastName,
-        display_name: [firstName, lastName].filter(Boolean).join(" "),
-        email: cleanString(athlete.email),
-        number,
-        position: cleanString(athlete.position),
-        dominant_side: cleanString(athlete.dominantSide),
-        status: "active",
-        created_by: userId,
-      };
-    });
+    .slice(0, 12);
 
   if (athletes.length > 0) {
-    const { error: athletesError } = await supabase
-      .from("athletes")
-      .insert(athletes);
+    const athletePromises = athletes.map((athlete) => {
+      const firstName = cleanString(athlete.firstName) ?? "";
+      const lastName = cleanString(athlete.lastName);
+      
+      return fetch("http://localhost:3002/api/v1/athletes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          team_id: teamId,
+          first_name: firstName,
+          last_name: lastName,
+          email: cleanString(athlete.email),
+          position: cleanString(athlete.position),
+        }),
+      });
+    });
 
-    if (athletesError) {
-      return {
-        ok: false,
-        error: athletesError.message,
-      };
-    }
+    await Promise.all(athletePromises);
   }
-
-  await supabase.from("audit_logs").insert([
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      action: "organization.created",
-      entity_type: "organization",
-      entity_id: organizationId,
-    },
-    {
-      organization_id: organizationId,
-      user_id: userId,
-      action: "team.created",
-      entity_type: "team",
-      entity_id: teamId,
-    },
-  ]);
 
   revalidatePath("/");
 
