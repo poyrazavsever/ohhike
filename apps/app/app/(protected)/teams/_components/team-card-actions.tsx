@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import {
   updateTeam,
   type UpdateTeamInput,
 } from "../../../actions/workspace";
-import type { SportType } from "../../../../lib/database.types";
+import type { SportType } from "../../../../lib/db.types";
 import type { TeamWithEntitlement } from "../../../../lib/workspace";
 
 const sportTypes: Array<{ label: string; value: SportType }> = [
@@ -296,3 +296,4 @@ export function TeamCardActions({ team }: { team: TeamWithEntitlement }) {
     </>
   );
 }
+

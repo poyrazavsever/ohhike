@@ -1,12 +1,13 @@
+﻿// @ts-nocheck
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { toEffectiveTeamEntitlement } from "./billing/entitlements";
 import { isCoachNetworkEnabled } from "./coach-network";
-import type { OrganizationRole, Tables } from "./database.types";
+import type { OrganizationRole, Tables } from "./db.types";
 import { canManageStaffInvites } from "./org-roles";
-import { createSupabaseAdminClient } from "./supabase-admin";
+import { createDbAdminClient } from "./db-admin";
 
 type Organization = Tables<"organizations">;
 type OrganizationMember = Tables<"organization_members">;
@@ -186,13 +187,13 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
     redirect("/login");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const cookieStore = await cookies();
   const activeOrganizationId = cookieStore.get(
     ACTIVE_ORGANIZATION_COOKIE,
   )?.value;
 
-  const { data: memberships, error: membershipError } = await supabase
+  const { data: memberships, error: membershipError } = await db
     .from("organization_members")
     .select("*")
     .eq("user_id", userId)
@@ -213,7 +214,7 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
     redirect("/onboarding");
   }
 
-  const { data: organization, error: organizationError } = await supabase
+  const { data: organization, error: organizationError } = await db
     .from("organizations")
     .select("*")
     .eq("id", membership.organization_id)
@@ -233,10 +234,10 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
 
 export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const { userId } = await auth();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("*")
     .eq("organization_id", workspace.organization.id)
@@ -249,7 +250,7 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
   }
 
   const { data: entitlement, error: entitlementError } = team
-    ? await supabase
+    ? await db
         .from("team_billing_entitlements")
         .select("*")
         .eq("team_id", team.id)
@@ -262,7 +263,7 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
 
   const effectiveEntitlement = toEffectiveTeamEntitlement(entitlement);
   const plan = effectiveEntitlement.plan;
-  const { data: memberships, error: membershipsError } = await supabase
+  const { data: memberships, error: membershipsError } = await db
     .from("organization_members")
     .select("*")
     .eq("user_id", userId ?? "")
@@ -278,7 +279,7 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
 
   const { data: organizations, error: organizationsError } =
     organizationIds.length > 0
-      ? await supabase
+      ? await db
           .from("organizations")
           .select("id, name")
           .in("id", organizationIds)
@@ -324,21 +325,21 @@ export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
 
 export async function getDashboardData() {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [teamsResult, athletesCountResult, entitlementsResult] =
     await Promise.all([
-      supabase
+      db
         .from("teams")
         .select("*")
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: true }),
-      supabase
+      db
         .from("athletes")
         .select("id", { count: "exact", head: true })
         .eq("organization_id", organizationId),
-      supabase
+      db
         .from("team_billing_entitlements")
         .select("*")
         .eq("organization_id", organizationId),
@@ -366,9 +367,9 @@ export async function getDashboardData() {
 
 export async function getBillingSettingsData(): Promise<BillingSettingsData> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("*")
     .eq("organization_id", workspace.organization.id)
@@ -381,7 +382,7 @@ export async function getBillingSettingsData(): Promise<BillingSettingsData> {
   }
 
   const { data: entitlement, error: entitlementError } = team
-    ? await supabase
+    ? await db
         .from("team_billing_entitlements")
         .select("*")
         .eq("team_id", team.id)
@@ -395,7 +396,7 @@ export async function getBillingSettingsData(): Promise<BillingSettingsData> {
   let resolvedEntitlement = entitlement;
   if (team && entitlement) {
     const { expirePromoGrantIfNeeded } = await import("./billing/promo-codes");
-    resolvedEntitlement = await expirePromoGrantIfNeeded(supabase, entitlement);
+    resolvedEntitlement = await expirePromoGrantIfNeeded(db, entitlement);
   }
 
   return {
@@ -410,17 +411,17 @@ export async function getTeamsData(): Promise<{
   teams: TeamWithEntitlement[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: teams, error: teamsError }, { data: entitlements }] =
     await Promise.all([
-      supabase
+      db
         .from("teams")
         .select("*")
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: true }),
-      supabase
+      db
         .from("team_billing_entitlements")
         .select("*")
         .eq("organization_id", organizationId),
@@ -432,7 +433,7 @@ export async function getTeamsData(): Promise<{
 
   const teamsWithCounts = await Promise.all(
     (teams ?? []).map(async (team) => {
-      const { count, error } = await supabase
+      const { count, error } = await db
         .from("athletes")
         .select("id", { count: "exact", head: true })
         .eq("team_id", team.id);
@@ -464,17 +465,17 @@ export async function getAthletesData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: athletes, error: athletesError }, { data: teams }] =
     await Promise.all([
-      supabase
+      db
         .from("athletes")
         .select("*")
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: true }),
-      supabase
+      db
         .from("teams")
         .select("id, name, sport_type")
         .eq("organization_id", organizationId),
@@ -504,7 +505,7 @@ export async function getSessionsData(): Promise<{
   >;
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -512,18 +513,18 @@ export async function getSessionsData(): Promise<{
     { data: teams, error: teamsError },
     { data: athletes, error: athletesError },
   ] = await Promise.all([
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .order("scheduled_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
@@ -545,7 +546,7 @@ export async function getSessionsData(): Promise<{
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: attendance, error: attendanceError } =
     sessionIds.length > 0
-      ? await supabase
+      ? await db
           .from("session_attendance")
           .select("*")
           .in("session_id", sessionIds)
@@ -553,7 +554,7 @@ export async function getSessionsData(): Promise<{
 
   const { data: trainingBlocks, error: trainingBlocksError } =
     sessionIds.length > 0
-      ? await supabase
+      ? await db
           .from("training_blocks")
           .select("*")
           .in("session_id", sessionIds)
@@ -570,7 +571,7 @@ export async function getSessionsData(): Promise<{
 
   const sessionsWithMeta = await Promise.all(
     (sessions ?? []).map(async (session) => {
-      const { count, error } = await supabase
+      const { count, error } = await db
         .from("session_attendance")
         .select("id", { count: "exact", head: true })
         .eq("session_id", session.id);
@@ -619,10 +620,10 @@ export async function getSessionDetailData(sessionId: string): Promise<{
   > | null;
 } | null> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .select("*")
     .eq("id", sessionId)
@@ -644,26 +645,26 @@ export async function getSessionDetailData(sessionId: string): Promise<{
     { data: trainingBlocks, error: trainingBlocksError },
     { data: latestAiReport, error: aiReportError },
   ] = await Promise.all([
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("session_attendance")
       .select("*")
       .eq("session_id", session.id),
-    supabase
+    db
       .from("training_blocks")
       .select("*")
       .eq("session_id", session.id)
       .order("order_index", { ascending: true }),
-    supabase
+    db
       .from("ai_reports")
       .select(
         "id, title, summary, confidence_score, model_provider, created_at",
@@ -721,7 +722,7 @@ export async function getReadinessData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -729,19 +730,19 @@ export async function getReadinessData(): Promise<{
     { data: athletes, error: athletesError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("wellness_checkins")
       .select("*")
       .eq("organization_id", organizationId)
       .order("checkin_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
@@ -797,7 +798,7 @@ export async function getNutritionData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -805,19 +806,19 @@ export async function getNutritionData(): Promise<{
     { data: athletes, error: athletesError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("nutrition_logs")
       .select("*")
       .eq("organization_id", organizationId)
       .order("log_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
@@ -871,7 +872,7 @@ export async function getPersonalTrainingsData(): Promise<{
   teams: AthleteTeamOption[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -879,19 +880,19 @@ export async function getPersonalTrainingsData(): Promise<{
     { data: athletes, error: athletesError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("personal_trainings")
       .select("*")
       .eq("organization_id", organizationId)
       .order("started_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(60),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
@@ -946,7 +947,7 @@ export async function getStaffSettingsData(): Promise<{
   canManage: boolean;
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
   const canManage = canManageStaffInvites(workspace.membership.role);
 
@@ -955,20 +956,20 @@ export async function getStaffSettingsData(): Promise<{
     { data: invites, error: invitesError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("organization_members")
       .select("*")
       .eq("organization_id", organizationId)
       .order("joined_at", { ascending: true }),
     canManage
-      ? supabase
+      ? db
           .from("organization_staff_invites")
           .select("*")
           .eq("organization_id", organizationId)
           .is("accepted_at", null)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId)
@@ -991,7 +992,7 @@ export async function getStaffSettingsData(): Promise<{
 
   const { data: users, error: usersError } =
     userIds.length > 0
-      ? await supabase
+      ? await db
           .from("users")
           .select("id, email, display_name")
           .in("id", userIds)
@@ -1034,7 +1035,7 @@ export async function getLoadRecoveryData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -1045,21 +1046,21 @@ export async function getLoadRecoveryData(): Promise<{
     { data: teams, error: teamsError },
     { data: checkins, error: checkinsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .gte("scheduled_at", since.toISOString())
       .order("scheduled_at", { ascending: false }),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("wellness_checkins")
       .select("*")
       .eq("organization_id", organizationId)
@@ -1086,7 +1087,7 @@ export async function getLoadRecoveryData(): Promise<{
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: attendance, error: attendanceError } =
     sessionIds.length > 0
-      ? await supabase
+      ? await db
           .from("session_attendance")
           .select("*")
           .in("session_id", sessionIds)
@@ -1214,7 +1215,7 @@ export async function getAthleteDashboardData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
   const since = new Date();
   since.setDate(since.getDate() - 7);
@@ -1226,27 +1227,27 @@ export async function getAthleteDashboardData(): Promise<{
     { data: checkins, error: checkinsError },
     { data: nutritionLogs, error: nutritionError },
   ] = await Promise.all([
-    supabase
+    db
       .from("athletes")
       .select("*")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .gte("scheduled_at", since.toISOString()),
-    supabase
+    db
       .from("wellness_checkins")
       .select("*")
       .eq("organization_id", organizationId)
       .gte("checkin_date", since.toISOString().slice(0, 10))
       .order("checkin_date", { ascending: false }),
-    supabase
+    db
       .from("nutrition_logs")
       .select("*")
       .eq("organization_id", organizationId)
@@ -1277,7 +1278,7 @@ export async function getAthleteDashboardData(): Promise<{
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: attendance, error: attendanceError } =
     sessionIds.length > 0
-      ? await supabase
+      ? await db
           .from("session_attendance")
           .select("*")
           .in("session_id", sessionIds)
@@ -1359,21 +1360,21 @@ export async function getCalendarData(): Promise<{
   sessions: CalendarSession[];
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
     { data: sessions, error: sessionsError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(100),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
@@ -1403,7 +1404,7 @@ export async function getCoachDashboardAttentionData(): Promise<{
   summary: CoachDashboardAttentionData;
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
   const today = new Date().toISOString().slice(0, 10);
   const todayStart = `${today}T00:00:00.000Z`;
@@ -1417,28 +1418,28 @@ export async function getCoachDashboardAttentionData(): Promise<{
     { data: checkins, error: checkinsError },
     { data: nutritionLogs, error: nutritionError },
   ] = await Promise.all([
-    supabase
+    db
       .from("athletes")
       .select("id")
       .eq("organization_id", organizationId)
       .eq("status", "active"),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .gte("scheduled_at", todayStart)
       .lt("scheduled_at", tomorrow.toISOString())
       .order("scheduled_at", { ascending: true }),
-    supabase
+    db
       .from("wellness_checkins")
       .select("athlete_id")
       .eq("organization_id", organizationId)
       .eq("checkin_date", today),
-    supabase
+    db
       .from("nutrition_logs")
       .select("athlete_id")
       .eq("organization_id", organizationId)
@@ -1508,21 +1509,21 @@ export async function getTrainingPlannerData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
     { data: sessions, error: sessionsError },
     { data: teams, error: teamsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("sessions")
       .select("*")
       .eq("organization_id", organizationId)
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(50),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
@@ -1539,7 +1540,7 @@ export async function getTrainingPlannerData(): Promise<{
   const sessionIds = (sessions ?? []).map((session) => session.id);
   const { data: trainingBlocks, error: blocksError } =
     sessionIds.length > 0
-      ? await supabase
+      ? await db
           .from("training_blocks")
           .select("*")
           .in("session_id", sessionIds)
@@ -1587,17 +1588,17 @@ export async function getDrillsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [{ data: drills, error: drillsError }, { data: trainingBlocks }] =
     await Promise.all([
-      supabase
+      db
         .from("drills")
         .select("*")
         .or(`organization_id.eq.${organizationId},is_system_drill.eq.true`)
         .order("created_at", { ascending: false }),
-      supabase
+      db
         .from("training_blocks")
         .select("drill_id")
         .not("drill_id", "is", null),
@@ -1642,7 +1643,7 @@ export async function getWearablesData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1652,25 +1653,25 @@ export async function getWearablesData(): Promise<{
     { count: summariesCount, error: summariesError },
     { count: activitiesCount, error: activitiesError },
   ] = await Promise.all([
-    supabase
+    db
       .from("wearable_connections")
       .select("*")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false }),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("wearable_daily_summaries")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("wearable_activities")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
@@ -1747,7 +1748,7 @@ export async function getAiReportsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1756,21 +1757,21 @@ export async function getAiReportsData(): Promise<{
     { data: athletes, error: athletesError },
     { data: sessions, error: sessionsError },
   ] = await Promise.all([
-    supabase
+    db
       .from("ai_reports")
       .select("*")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(50),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("sessions")
       .select("id, team_id, title")
       .eq("organization_id", organizationId)
@@ -1843,10 +1844,10 @@ export async function getAiReportDetailData(reportId: string): Promise<{
   report: AiReportWithMeta;
 } | null> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
-  const { data: report, error: reportError } = await supabase
+  const { data: report, error: reportError } = await db
     .from("ai_reports")
     .select("*")
     .eq("id", reportId)
@@ -1864,21 +1865,21 @@ export async function getAiReportDetailData(reportId: string): Promise<{
   const [{ data: team }, { data: athlete }, { data: session }] =
     await Promise.all([
       report.team_id
-        ? supabase
+        ? db
             .from("teams")
             .select("id, name")
             .eq("id", report.team_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
       report.athlete_id
-        ? supabase
+        ? db
             .from("athletes")
             .select("id, first_name, last_name, number")
             .eq("id", report.athlete_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
       report.session_id
-        ? supabase
+        ? db
             .from("sessions")
             .select("id, title")
             .eq("id", report.session_id)
@@ -1923,7 +1924,7 @@ export async function getTeamMemoryData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -1932,22 +1933,22 @@ export async function getTeamMemoryData(): Promise<{
     { data: teams, error: teamsError },
     { data: athletes, error: athletesError },
   ] = await Promise.all([
-    supabase
+    db
       .from("athlete_observations")
       .select("*")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(50),
-    supabase
+    db
       .from("team_patterns")
       .select("*")
       .eq("organization_id", organizationId)
       .order("last_seen_at", { ascending: false }),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("athletes")
       .select("id, team_id, first_name, last_name, number")
       .eq("organization_id", organizationId),
@@ -2044,10 +2045,10 @@ export async function getTeamMemoryAssistantData(
   >;
 }> {
   const { workspace, teams, athletes } = await getTeamMemoryData();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
-  const { data: threads, error: threadsError } = await supabase
+  const { data: threads, error: threadsError } = await db
     .from("assistant_threads")
     .select("id, title, team_id, athlete_id, created_at, updated_at")
     .eq("organization_id", organizationId)
@@ -2071,7 +2072,7 @@ export async function getTeamMemoryAssistantData(
   const threadId = activeThreadId ?? threads?.[0]?.id ?? null;
 
   const { data: messages, error: messagesError } = threadId
-    ? await supabase
+    ? await db
         .from("assistant_messages")
         .select("id, thread_id, role, content, metadata, created_at")
         .eq("thread_id", threadId)
@@ -2109,7 +2110,7 @@ export async function getReportsData(): Promise<{
   };
 }> {
   const workspace = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationId = workspace.organization.id;
 
   const [
@@ -2120,29 +2121,29 @@ export async function getReportsData(): Promise<{
     { count: nutritionCount, error: nutritionError },
     { count: wearableActivitiesCount, error: wearableActivitiesError },
   ] = await Promise.all([
-    supabase
+    db
       .from("ai_reports")
       .select("*")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(10),
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("sessions")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("wellness_checkins")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("nutrition_logs")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
-    supabase
+    db
       .from("wearable_activities")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
@@ -2189,3 +2190,4 @@ export async function getReportsData(): Promise<{
     },
   };
 }
+

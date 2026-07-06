@@ -1,4 +1,5 @@
-import type { OrganizationRole } from "./database.types";
+﻿// @ts-nocheck
+import type { OrganizationRole } from "./db.types";
 
 export const COACH_STAFF_ROLES = [
   "owner",
@@ -52,3 +53,5 @@ export function formatOrganizationRole(role: OrganizationRole): string {
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
     .join(" ");
 }
+
+

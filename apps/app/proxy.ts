@@ -2,10 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { getClerkMiddlewareKeys } from "./lib/clerk-env";
-import { isCoachNetworkEnabled } from "./lib/coach-network";
 import { getRequestPublicOrigin, getRequestPublicUrl } from "./lib/request-origin";
-
-const isCoachNetworkRoute = createRouteMatcher(["/coach-network(.*)"]);
 
 const isPublicRoute = createRouteMatcher([
   "/api/health",
@@ -18,10 +15,6 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(
   async (auth, req) => {
-    if (isCoachNetworkRoute(req) && !isCoachNetworkEnabled()) {
-      return new NextResponse(null, { status: 404 });
-    }
-
     const { isAuthenticated } = await auth();
 
     if (!isAuthenticated && !isPublicRoute(req)) {

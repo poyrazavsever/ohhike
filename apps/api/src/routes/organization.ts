@@ -2,15 +2,15 @@ import { Router, Request, Response } from "express";
 import { requireAuth } from "@clerk/express";
 import Organization from "../models/Organization.js";
 import OrgMember from "../models/OrgMember.js";
-import User from "../models/User.js";
+import { User } from "../models/User.js";
 
 const router = Router();
 
 // Get user's organizations
-router.get("/", requireAuth(), async (req: Request, res: Response) => {
+router.get("/", requireAuth(), async (req: Request & { auth?: any }, res: Response) => {
   try {
     const clerkId = req.auth.userId;
-    const user = await User.findOne({ clerk_id: clerkId });
+    const user = await User.findOne({ clerkId });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -26,11 +26,11 @@ router.get("/", requireAuth(), async (req: Request, res: Response) => {
 });
 
 // Create organization
-router.post("/", requireAuth(), async (req: Request, res: Response) => {
+router.post("/", requireAuth(), async (req: Request & { auth?: any }, res: Response) => {
   try {
     const { name, slug } = req.body;
     const clerkId = req.auth.userId;
-    const user = await User.findOne({ clerk_id: clerkId });
+    const user = await User.findOne({ clerkId });
     
     if (!user) {
       return res.status(404).json({ error: "User not found" });

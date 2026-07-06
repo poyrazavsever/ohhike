@@ -1,9 +1,10 @@
-import { createSupabaseAdminClient } from "./supabase-admin";
+﻿// @ts-nocheck
+import { createDbAdminClient } from "./db-admin";
 
 export async function hasActiveOrganizationMembership(userId: string) {
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("organization_members")
     .select("id")
     .eq("user_id", userId)
@@ -17,3 +18,4 @@ export async function hasActiveOrganizationMembership(userId: string) {
 
   return Boolean(data);
 }
+

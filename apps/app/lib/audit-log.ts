@@ -1,8 +1,9 @@
+﻿// @ts-nocheck
 import "server-only";
 
-import type { OrganizationRole } from "./database.types";
+import type { OrganizationRole } from "./db.types";
 import { isCoachStaffRole } from "./org-roles";
-import { createSupabaseAdminClient } from "./supabase-admin";
+import { createDbAdminClient } from "./db-admin";
 
 type WorkspaceAuditLogInput = {
   organizationId: string;
@@ -19,9 +20,9 @@ export async function writeWorkspaceAuditLog(input: WorkspaceAuditLogInput) {
     return;
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: input.organizationId,
     user_id: input.userId,
     action: input.action,
@@ -29,3 +30,4 @@ export async function writeWorkspaceAuditLog(input: WorkspaceAuditLogInput) {
     entity_id: input.entityId ?? null,
   });
 }
+

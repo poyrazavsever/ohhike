@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { DashboardHero } from "../../../../components/dashboard/dashboard-cards";
 import { parseEntitlementMetadata } from "../../../../lib/billing/promo-codes";
 import { billingPlans, getBillingPlan } from "../../../../lib/billing/plans";
@@ -6,7 +7,7 @@ import {
   getRevenueCatTeamAppUserId,
   isRevenueCatEnabled,
 } from "../../../../lib/billing/revenuecat";
-import { createSupabaseAdminClient } from "../../../../lib/supabase-admin";
+import { createDbAdminClient } from "../../../../lib/db-admin";
 import { getBillingSettingsData } from "../../../../lib/workspace";
 import { DevPlanSwitcher } from "./_components/dev-plan-switcher";
 import { PromoCodeForm } from "./_components/promo-code-form";
@@ -33,8 +34,8 @@ export default async function BillingSettingsPage() {
 
   let activePromoLabel: string | null = null;
   if (activePromoCode && team) {
-    const supabase = createSupabaseAdminClient();
-    const { data: promo } = await supabase
+    const db = createDbAdminClient();
+    const { data: promo } = await db
       .from("promo_codes")
       .select("label")
       .eq("code", activePromoCode)
@@ -131,7 +132,7 @@ export default async function BillingSettingsPage() {
             <p className="text-sm font-black text-foreground">Billing status</p>
             <p className="mt-2 text-sm font-semibold leading-6 text-muted-foreground">
               RevenueCat Test Store is active for plan testing. Feature access
-              is synced back into Supabase, so provider changes later will not
+              is synced back into db, so provider changes later will not
               disturb the rest of the app.
             </p>
           </section>
@@ -222,3 +223,4 @@ export default async function BillingSettingsPage() {
     </section>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -10,7 +10,7 @@ import {
 import type {
   OrganizationType,
   SportType,
-} from "../../../../../../lib/database.types";
+} from "../../../../../../lib/db.types";
 
 const organizationTypes: Array<{ label: string; value: OrganizationType }> = [
   { label: "Club", value: "club" },
@@ -255,3 +255,4 @@ export function NewOrganizationForm({ canCreate }: { canCreate: boolean }) {
     </div>
   );
 }
+

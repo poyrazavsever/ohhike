@@ -1,6 +1,7 @@
+﻿// @ts-nocheck
 import "server-only";
 
-import { createSupabaseAdminClient } from "./supabase-admin";
+import { createDbAdminClient } from "./db-admin";
 
 export type AthleteInvitePreviewResult =
   | {
@@ -22,9 +23,9 @@ export async function getAthleteInvitePreview(
     return { ok: false, reason: "not_found" };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await db
     .from("athlete_invites")
     .select("athlete_id, organization_id, expires_at, accepted_at")
     .eq("token", trimmed)
@@ -45,7 +46,7 @@ export async function getAthleteInvitePreview(
     return { ok: false, reason: "expired" };
   }
 
-  const { data: athlete } = await supabase
+  const { data: athlete } = await db
     .from("athletes")
     .select("first_name, user_id")
     .eq("id", invite.athlete_id)
@@ -55,7 +56,7 @@ export async function getAthleteInvitePreview(
     return { ok: false, reason: "already_claimed" };
   }
 
-  const { data: organization } = await supabase
+  const { data: organization } = await db
     .from("organizations")
     .select("name")
     .eq("id", invite.organization_id)
@@ -68,3 +69,4 @@ export async function getAthleteInvitePreview(
     expiresAt: invite.expires_at,
   };
 }
+

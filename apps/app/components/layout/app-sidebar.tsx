@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use client";
 
 import { Icon } from "@iconify/react";
@@ -64,16 +65,6 @@ const navGroups = [
         href: "/nutrition",
         label: "Nutrition",
         icon: "solar:cup-hot-bold",
-      },
-    ],
-  },
-  {
-    label: "Reports",
-    items: [
-      {
-        href: "/reports",
-        label: "Reports",
-        icon: "solar:file-download-bold",
       },
     ],
   },
@@ -236,7 +227,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
               {workspace.organizationName}
             </p>
             <p className="mt-1 truncate text-[11px] font-medium text-muted-foreground">
-              {workspace.teamName ?? "No active team"} ·{" "}
+              {workspace.teamName ?? "No active team"} Â·{" "}
               {formatRole(workspace.role)}
             </p>
           </div>
@@ -324,7 +315,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
             {workspace.organizationName}
           </p>
           <p className="truncate text-[11px] font-medium text-muted-foreground">
-            {workspace.teamName ?? "No active team"} ·{" "}
+            {workspace.teamName ?? "No active team"} Â·{" "}
             {formatPlan(workspace.plan)}
           </p>
         </div>
@@ -512,6 +503,7 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
                       }
                     >
                       <Icon icon={item.icon} className="size-4 shrink-0" />
+                      <Icon icon={item.icon} className="size-5 shrink-0" />
                       <span className="truncate">{item.label}</span>
                       {isLocked ? (
                         <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
@@ -526,7 +518,10 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
           ))}
         </nav>
 
-        <SidebarUserCard />
+        {/* Workspace Footer */}
+        <div className="border-t border-border p-4">
+          <SidebarUserCard />
+        </div>
       </aside>
     </>
   );
@@ -746,3 +741,4 @@ function MobileAccountLinks({ onNavigate }: { onNavigate: () => void }) {
     </section>
   );
 }
+

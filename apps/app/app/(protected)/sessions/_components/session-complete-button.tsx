@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { completeSession } from "../../../actions/workspace";
-import type { SessionStatus } from "../../../../lib/database.types";
+import type { SessionStatus } from "../../../../lib/db.types";
 
 export function SessionCompleteButton({
   sessionId,
@@ -46,7 +46,7 @@ export function SessionCompleteButton({
         className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
       >
         <Icon icon="solar:check-circle-bold" className="size-3.5" />
-        {isPending ? "Completing…" : "Mark session complete"}
+        {isPending ? "Completingâ€¦" : "Mark session complete"}
       </button>
       {error ? (
         <p className="text-xs font-bold text-destructive">{error}</p>
@@ -54,3 +54,4 @@ export function SessionCompleteButton({
     </div>
   );
 }
+

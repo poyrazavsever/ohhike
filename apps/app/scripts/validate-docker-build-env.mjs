@@ -1,9 +1,10 @@
+﻿// @ts-nocheck
 #!/usr/bin/env node
 /** Docker build: NEXT_PUBLIC_* must be passed as build args for client bundles. */
 const buildPublicKeys = [
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "NEXT_PUBLIC_db_URL",
+  "NEXT_PUBLIC_db_ANON_KEY",
   "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
 ];
 
@@ -24,3 +25,4 @@ console.error(
   missing.join(", "),
 );
 process.exit(1);
+

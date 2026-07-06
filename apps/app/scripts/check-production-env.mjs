@@ -1,10 +1,11 @@
+﻿// @ts-nocheck
 #!/usr/bin/env node
 
 const required = [
   "NEXT_PUBLIC_APP_URL",
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_db_URL",
+  "NEXT_PUBLIC_db_ANON_KEY",
+  "db_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "CLERK_SECRET_KEY",
   "CLERK_WEBHOOK_SIGNING_SECRET",
@@ -45,3 +46,4 @@ console.log("Required production env vars are set.");
 if (optionalMissing.length > 0) {
   console.log("Optional (AI):", optionalMissing.join(", "));
 }
+

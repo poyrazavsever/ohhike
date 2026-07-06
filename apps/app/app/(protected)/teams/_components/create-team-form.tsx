@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { createTeam, type CreateTeamInput } from "../../../actions/workspace";
-import type { SportType } from "../../../../lib/database.types";
+import type { SportType } from "../../../../lib/db.types";
 
 const sportTypes: Array<{ label: string; value: SportType }> = [
   { label: "Football", value: "football" },
@@ -227,3 +227,4 @@ export function CreateTeamForm() {
     </div>
   );
 }
+

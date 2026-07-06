@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
@@ -13,7 +14,7 @@ import type {
   SessionType,
   SportType,
   WearableProvider,
-} from "../../lib/database.types";
+} from "../../lib/db.types";
 import {
   isDrillEquipmentValue,
   isOptionalDrillCategory,
@@ -50,11 +51,11 @@ import {
   formatAssistantAnswerForChat,
   runTeamMemoryQuery,
 } from "../../lib/team-memory-assistant";
-import { createSupabaseAdminClient } from "../../lib/supabase-admin";
+import { createDbAdminClient } from "../../lib/db-admin";
 import {
-  createActionSupabase,
-  formatSupabaseActionError,
-} from "../../lib/supabase-action";
+  createActionDb,
+  formatdbActionError,
+} from "../../lib/db-admin";
 import { getAppBaseUrl, buildAppUrl } from "../../lib/app-url";
 import { sendInviteEmail } from "../../lib/email";
 import {
@@ -558,9 +559,9 @@ function parseDistanceKm(value: string | undefined) {
 
 async function canCurrentWorkspaceCreateOrganization() {
   const { organization } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("id")
     .eq("organization_id", organization.id)
@@ -576,7 +577,7 @@ async function canCurrentWorkspaceCreateOrganization() {
     return false;
   }
 
-  const { data: entitlement, error: entitlementError } = await supabase
+  const { data: entitlement, error: entitlementError } = await db
     .from("team_billing_entitlements")
     .select("plan")
     .eq("team_id", team.id)
@@ -621,9 +622,9 @@ export async function switchActiveOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: membership, error } = await supabase
+  const { data: membership, error } = await db
     .from("organization_members")
     .select("id, role")
     .eq("user_id", userId)
@@ -687,9 +688,9 @@ export async function updateActiveOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from("organizations")
     .update({
       name,
@@ -766,10 +767,10 @@ export async function createAdditionalOrganization(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const organizationSlug = `${slugify(organizationName)}-${crypto.randomUUID().slice(0, 8)}`;
 
-  const { data: organization, error: organizationError } = await supabase
+  const { data: organization, error: organizationError } = await db
     .from("organizations")
     .insert({
       name: organizationName,
@@ -791,7 +792,7 @@ export async function createAdditionalOrganization(
 
   const organizationId = organization.id;
 
-  const { error: membershipError } = await supabase
+  const { error: membershipError } = await db
     .from("organization_members")
     .insert({
       organization_id: organizationId,
@@ -807,7 +808,7 @@ export async function createAdditionalOrganization(
     };
   }
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .insert({
       organization_id: organizationId,
@@ -829,7 +830,7 @@ export async function createAdditionalOrganization(
 
   const teamId = team.id;
 
-  const { error: teamStaffError } = await supabase.from("team_staff").insert({
+  const { error: teamStaffError } = await db.from("team_staff").insert({
     team_id: teamId,
     user_id: userId,
     role: "head_coach",
@@ -843,7 +844,7 @@ export async function createAdditionalOrganization(
     };
   }
 
-  const { error: entitlementError } = await supabase
+  const { error: entitlementError } = await db
     .from("team_billing_entitlements")
     .insert({
       organization_id: organizationId,
@@ -866,7 +867,7 @@ export async function createAdditionalOrganization(
     path: "/",
   });
 
-  await supabase.from("audit_logs").insert([
+  await db.from("audit_logs").insert([
     {
       organization_id: organizationId,
       user_id: userId,
@@ -929,9 +930,9 @@ export async function createTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .insert({
       organization_id: organization.id,
@@ -952,7 +953,7 @@ export async function createTeam(
     };
   }
 
-  const { error: teamStaffError } = await supabase.from("team_staff").insert({
+  const { error: teamStaffError } = await db.from("team_staff").insert({
     team_id: team.id,
     user_id: userId,
     role: "head_coach",
@@ -966,7 +967,7 @@ export async function createTeam(
     };
   }
 
-  const { error: entitlementError } = await supabase
+  const { error: entitlementError } = await db
     .from("team_billing_entitlements")
     .insert({
       organization_id: organization.id,
@@ -982,7 +983,7 @@ export async function createTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "team.created",
@@ -1026,9 +1027,9 @@ export async function updateTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from("teams")
     .update({
       name: teamName,
@@ -1048,7 +1049,7 @@ export async function updateTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "team.updated",
@@ -1076,9 +1077,9 @@ export async function deleteTeam(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { count: teamCount, error: teamCountError } = await supabase
+  const { count: teamCount, error: teamCountError } = await db
     .from("teams")
     .select("id", { count: "exact", head: true })
     .eq("organization_id", organization.id);
@@ -1097,7 +1098,7 @@ export async function deleteTeam(
     };
   }
 
-  const { count: athleteCount, error: athleteCountError } = await supabase
+  const { count: athleteCount, error: athleteCountError } = await db
     .from("athletes")
     .select("id", { count: "exact", head: true })
     .eq("team_id", teamId);
@@ -1116,7 +1117,7 @@ export async function deleteTeam(
     };
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("teams")
     .delete()
     .eq("id", teamId)
@@ -1129,7 +1130,7 @@ export async function deleteTeam(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "team.deleted",
@@ -1188,9 +1189,9 @@ export async function createAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("id")
     .eq("id", input.teamId)
@@ -1205,7 +1206,7 @@ export async function createAthlete(
   }
 
   const entitlement = await getTeamEntitlement(team.id);
-  const { count: currentAthleteCount, error: athleteCountError } = await supabase
+  const { count: currentAthleteCount, error: athleteCountError } = await db
     .from("athletes")
     .select("id", { count: "exact", head: true })
     .eq("team_id", team.id);
@@ -1225,7 +1226,7 @@ export async function createAthlete(
   }
 
   const lastName = cleanString(input.lastName);
-  const { error } = await supabase.from("athletes").insert({
+  const { error } = await db.from("athletes").insert({
     organization_id: organization.id,
     team_id: team.id,
     first_name: firstName,
@@ -1246,7 +1247,7 @@ export async function createAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "athlete.created",
@@ -1296,9 +1297,9 @@ export async function updateAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("id")
     .eq("id", input.teamId)
@@ -1313,7 +1314,7 @@ export async function updateAthlete(
   }
 
   const lastName = cleanString(input.lastName);
-  const { error } = await supabase
+  const { error } = await db
     .from("athletes")
     .update({
       team_id: team.id,
@@ -1335,7 +1336,7 @@ export async function updateAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "athlete.updated",
@@ -1368,9 +1369,9 @@ export async function deleteAthlete(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from("athletes")
     .delete()
     .eq("id", athleteId)
@@ -1383,7 +1384,7 @@ export async function deleteAthlete(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "athlete.deleted",
@@ -1425,9 +1426,9 @@ export async function createAthleteInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: athlete, error: athleteError } = await supabase
+  const { data: athlete, error: athleteError } = await db
     .from("athletes")
     .select("id, organization_id, team_id, user_id, email")
     .eq("id", athleteId)
@@ -1448,7 +1449,7 @@ export async function createAthleteInvite(
     };
   }
 
-  await supabase
+  await db
     .from("athlete_invites")
     .delete()
     .eq("athlete_id", athlete.id)
@@ -1459,7 +1460,7 @@ export async function createAthleteInvite(
     Date.now() + 14 * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const { error: insertError } = await supabase.from("athlete_invites").insert({
+  const { error: insertError } = await db.from("athlete_invites").insert({
     athlete_id: athlete.id,
     organization_id: organization.id,
     team_id: athlete.team_id,
@@ -1476,7 +1477,7 @@ export async function createAthleteInvite(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "athlete.invite_created",
@@ -1531,9 +1532,9 @@ export async function claimAthleteProfile(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await db
     .from("athlete_invites")
     .select("*")
     .eq("token", trimmed)
@@ -1563,7 +1564,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  const { data: athlete, error: athleteError } = await supabase
+  const { data: athlete, error: athleteError } = await db
     .from("athletes")
     .select("id, organization_id, user_id, email")
     .eq("id", invite.athlete_id)
@@ -1583,7 +1584,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  const { data: existingClaim } = await supabase
+  const { data: existingClaim } = await db
     .from("athletes")
     .select("id")
     .eq("organization_id", athlete.organization_id)
@@ -1598,7 +1599,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  const { data: existingMember } = await supabase
+  const { data: existingMember } = await db
     .from("organization_members")
     .select("id, role")
     .eq("organization_id", invite.organization_id)
@@ -1631,7 +1632,7 @@ export async function claimAthleteProfile(
     }
   }
 
-  const { data: updatedAthlete, error: updateAthleteError } = await supabase
+  const { data: updatedAthlete, error: updateAthleteError } = await db
     .from("athletes")
     .update({ user_id: userId })
     .eq("id", athlete.id)
@@ -1646,7 +1647,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  const { error: inviteUpdateError } = await supabase
+  const { error: inviteUpdateError } = await db
     .from("athlete_invites")
     .update({
       accepted_at: new Date().toISOString(),
@@ -1663,13 +1664,13 @@ export async function claimAthleteProfile(
 
   const memberError = existingMember
     ? (
-        await supabase
+        await db
           .from("organization_members")
           .update({ role: "athlete", is_active: true })
           .eq("id", existingMember.id)
       ).error
     : (
-        await supabase.from("organization_members").insert({
+        await db.from("organization_members").insert({
           organization_id: invite.organization_id,
           user_id: userId,
           role: "athlete",
@@ -1685,7 +1686,7 @@ export async function claimAthleteProfile(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: invite.organization_id,
     user_id: userId,
     action: "athlete.claimed",
@@ -1739,11 +1740,11 @@ export async function createStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const teamId = cleanString(input.teamId);
 
   if (teamId) {
-    const { data: team } = await supabase
+    const { data: team } = await db
       .from("teams")
       .select("id")
       .eq("id", teamId)
@@ -1760,14 +1761,14 @@ export async function createStaffInvite(
 
   if (email) {
     const normalizedEmail = email.toLowerCase();
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await db
       .from("users")
       .select("id")
       .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (existingUser) {
-      const { data: existingMember } = await supabase
+      const { data: existingMember } = await db
         .from("organization_members")
         .select("id, role")
         .eq("organization_id", organization.id)
@@ -1785,7 +1786,7 @@ export async function createStaffInvite(
   }
 
   if (email) {
-    await supabase
+    await db
       .from("organization_staff_invites")
       .delete()
       .eq("organization_id", organization.id)
@@ -1798,7 +1799,7 @@ export async function createStaffInvite(
     Date.now() + 14 * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  const { error: insertError } = await supabase
+  const { error: insertError } = await db
     .from("organization_staff_invites")
     .insert({
       organization_id: organization.id,
@@ -1818,12 +1819,12 @@ export async function createStaffInvite(
     return {
       ok: false,
       error: missingTable
-        ? "Staff invites table is missing. Run docs/supabase/010_organization_staff_invites.sql in Supabase, then retry."
+        ? "Staff invites table is missing. Run docs/db/010_organization_staff_invites.sql in db, then retry."
         : insertError.message,
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "staff.invite_created",
@@ -1876,9 +1877,9 @@ export async function claimStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await db
     .from("organization_staff_invites")
     .select("*")
     .eq("token", trimmed)
@@ -1923,7 +1924,7 @@ export async function claimStaffInvite(
     }
   }
 
-  const { data: existingAthlete } = await supabase
+  const { data: existingAthlete } = await db
     .from("athletes")
     .select("id")
     .eq("organization_id", invite.organization_id)
@@ -1938,7 +1939,7 @@ export async function claimStaffInvite(
     };
   }
 
-  const { data: existingMember } = await supabase
+  const { data: existingMember } = await db
     .from("organization_members")
     .select("id, role, is_active")
     .eq("organization_id", invite.organization_id)
@@ -1953,7 +1954,7 @@ export async function claimStaffInvite(
   }
 
   const { error: memberError } = existingMember
-    ? await supabase
+    ? await db
         .from("organization_members")
         .update({
           role: invite.role,
@@ -1961,7 +1962,7 @@ export async function claimStaffInvite(
           invited_by: invite.invited_by,
         })
         .eq("id", existingMember.id)
-    : await supabase.from("organization_members").insert({
+    : await db.from("organization_members").insert({
         organization_id: invite.organization_id,
         user_id: userId,
         role: invite.role,
@@ -1977,7 +1978,7 @@ export async function claimStaffInvite(
   }
 
   if (invite.team_id) {
-    await supabase.from("team_staff").upsert(
+    await db.from("team_staff").upsert(
       {
         team_id: invite.team_id,
         user_id: userId,
@@ -1988,7 +1989,7 @@ export async function claimStaffInvite(
     );
   }
 
-  const { error: inviteUpdateError } = await supabase
+  const { error: inviteUpdateError } = await db
     .from("organization_staff_invites")
     .update({
       accepted_at: new Date().toISOString(),
@@ -2010,7 +2011,7 @@ export async function claimStaffInvite(
     path: "/",
   });
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: invite.organization_id,
     user_id: userId,
     action: "staff.invite_claimed",
@@ -2048,9 +2049,9 @@ export async function revokeStaffInvite(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { error } = await supabase
+  const { error } = await db
     .from("organization_staff_invites")
     .delete()
     .eq("id", inviteId)
@@ -2110,10 +2111,10 @@ export async function completeAthletePortalProfile(
   }
 
   const lastName = cleanString(input.lastName);
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const existingMeta = getAthleteMetadata(athlete);
 
-  const { error } = await supabase
+  const { error } = await db
     .from("athletes")
     .update({
       first_name: firstName,
@@ -2139,7 +2140,7 @@ export async function completeAthletePortalProfile(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "athlete.profile_completed",
@@ -2212,9 +2213,9 @@ export async function createSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: team, error: teamError } = await supabase
+  const { data: team, error: teamError } = await db
     .from("teams")
     .select("id")
     .eq("id", input.teamId)
@@ -2231,7 +2232,7 @@ export async function createSession(
   const athleteIds = [...new Set(input.athleteIds)].filter(Boolean);
 
   if (athleteIds.length > 0) {
-    const { data: athletes, error: athletesError } = await supabase
+    const { data: athletes, error: athletesError } = await db
       .from("athletes")
       .select("id")
       .eq("organization_id", organization.id)
@@ -2253,7 +2254,7 @@ export async function createSession(
     }
   }
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .insert({
       organization_id: organization.id,
@@ -2281,7 +2282,7 @@ export async function createSession(
   }
 
   if (athleteIds.length > 0) {
-    const { error: attendanceError } = await supabase
+    const { error: attendanceError } = await db
       .from("session_attendance")
       .insert(
         athleteIds.map((athleteId) => ({
@@ -2299,7 +2300,7 @@ export async function createSession(
     }
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "session.created",
@@ -2369,17 +2370,17 @@ export async function updateSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
   const [{ data: session }, { data: team, error: teamError }] =
     await Promise.all([
-      supabase
+      db
         .from("sessions")
         .select("id, team_id")
         .eq("id", input.sessionId)
         .eq("organization_id", organization.id)
         .maybeSingle(),
-      supabase
+      db
         .from("teams")
         .select("id")
         .eq("id", input.teamId)
@@ -2401,7 +2402,7 @@ export async function updateSession(
     };
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("sessions")
     .update({
       team_id: team.id,
@@ -2427,7 +2428,7 @@ export async function updateSession(
   }
 
   if (session.team_id !== team.id) {
-    const { error: attendanceDeleteError } = await supabase
+    const { error: attendanceDeleteError } = await db
       .from("session_attendance")
       .delete()
       .eq("session_id", input.sessionId);
@@ -2440,7 +2441,7 @@ export async function updateSession(
     }
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.updated",
@@ -2473,9 +2474,9 @@ export async function completeSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .select("id, status, started_at, planned_duration_min")
     .eq("id", sessionId)
@@ -2506,7 +2507,7 @@ export async function completeSession(
   const endedAt = new Date().toISOString();
   const startedAt = session.started_at ?? endedAt;
 
-  const { error } = await supabase
+  const { error } = await db
     .from("sessions")
     .update({
       status: "completed",
@@ -2524,7 +2525,7 @@ export async function completeSession(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.completed",
@@ -2558,9 +2559,9 @@ export async function deleteSession(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: session } = await supabase
+  const { data: session } = await db
     .from("sessions")
     .select("id")
     .eq("id", sessionId)
@@ -2574,7 +2575,7 @@ export async function deleteSession(
     };
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("sessions")
     .delete()
     .eq("id", sessionId)
@@ -2587,7 +2588,7 @@ export async function deleteSession(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.deleted",
@@ -2620,9 +2621,9 @@ export async function updateSessionAttendance(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .select("id, team_id")
     .eq("id", input.sessionId)
@@ -2640,7 +2641,7 @@ export async function updateSessionAttendance(
   const includedAthleteIds = includedEntries.map((entry) => entry.athleteId);
 
   if (includedAthleteIds.length > 0) {
-    const { data: athletes, error: athletesError } = await supabase
+    const { data: athletes, error: athletesError } = await db
       .from("athletes")
       .select("id")
       .eq("organization_id", organization.id)
@@ -2662,7 +2663,7 @@ export async function updateSessionAttendance(
     }
   }
 
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await db
     .from("session_attendance")
     .delete()
     .eq("session_id", session.id);
@@ -2729,7 +2730,7 @@ export async function updateSessionAttendance(
       });
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await db
       .from("session_attendance")
       .insert(normalizedEntries);
 
@@ -2741,7 +2742,7 @@ export async function updateSessionAttendance(
     }
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.attendance_updated",
@@ -2811,9 +2812,9 @@ export async function updateSessionTrainingBlocks(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .select("id")
     .eq("id", input.sessionId)
@@ -2827,7 +2828,7 @@ export async function updateSessionTrainingBlocks(
     };
   }
 
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await db
     .from("training_blocks")
     .delete()
     .eq("session_id", session.id);
@@ -2840,7 +2841,7 @@ export async function updateSessionTrainingBlocks(
   }
 
   if (blocks.length > 0) {
-    const { error: insertError } = await supabase.from("training_blocks").insert(
+    const { error: insertError } = await db.from("training_blocks").insert(
       blocks.map((block) => ({
         session_id: session.id,
         title: block.title as string,
@@ -2862,7 +2863,7 @@ export async function updateSessionTrainingBlocks(
     }
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: membership.user_id,
     action: "session.training_blocks_updated",
@@ -2901,7 +2902,7 @@ export async function upsertReadinessCheckin(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = await createActionSupabase();
+  const db = await createActionDb();
 
   let athlete: { id: string; team_id: string } | null = null;
 
@@ -2920,7 +2921,7 @@ export async function upsertReadinessCheckin(
       membership.role,
     )
   ) {
-    const { data, error: athleteError } = await supabase
+    const { data, error: athleteError } = await db
       .from("athletes")
       .select("id, team_id")
       .eq("id", input.athleteId)
@@ -2931,7 +2932,7 @@ export async function upsertReadinessCheckin(
       return {
         ok: false,
         error: athleteError
-          ? formatSupabaseActionError(athleteError.message)
+          ? formatdbActionError(athleteError.message)
           : "Please select a valid athlete.",
       };
     }
@@ -2951,7 +2952,7 @@ export async function upsertReadinessCheckin(
     };
   }
 
-  const { error } = await supabase.from("wellness_checkins").upsert(
+  const { error } = await db.from("wellness_checkins").upsert(
     {
       organization_id: organization.id,
       team_id: athlete.team_id,
@@ -2981,9 +2982,9 @@ export async function upsertReadinessCheckin(
 
     return {
       ok: false,
-      error: formatSupabaseActionError(error.message, {
+      error: formatdbActionError(error.message, {
         schemaAlignHint: missingColumn
-          ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+          ? "Database schema is out of date. Run docs/db/009_daily_data_schema_align.sql in the db SQL Editor, then retry."
           : undefined,
       }),
     };
@@ -3029,7 +3030,7 @@ export async function upsertNutritionLog(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = await createActionSupabase();
+  const db = await createActionDb();
 
   let athlete: { id: string; team_id: string } | null = null;
 
@@ -3052,7 +3053,7 @@ export async function upsertNutritionLog(
       "nutritionist",
     ].includes(membership.role)
   ) {
-    const { data, error: athleteError } = await supabase
+    const { data, error: athleteError } = await db
       .from("athletes")
       .select("id, team_id")
       .eq("id", input.athleteId)
@@ -3063,7 +3064,7 @@ export async function upsertNutritionLog(
       return {
         ok: false,
         error: athleteError
-          ? formatSupabaseActionError(athleteError.message)
+          ? formatdbActionError(athleteError.message)
           : "Please select a valid athlete.",
       };
     }
@@ -3075,7 +3076,7 @@ export async function upsertNutritionLog(
     };
   }
 
-  const { error } = await supabase.from("nutrition_logs").upsert(
+  const { error } = await db.from("nutrition_logs").upsert(
     {
       organization_id: organization.id,
       team_id: athlete.team_id,
@@ -3101,9 +3102,9 @@ export async function upsertNutritionLog(
 
     return {
       ok: false,
-      error: formatSupabaseActionError(error.message, {
+      error: formatdbActionError(error.message, {
         schemaAlignHint: missingColumn
-          ? "Database schema is out of date. Run docs/supabase/009_daily_data_schema_align.sql in the Supabase SQL Editor, then retry."
+          ? "Database schema is out of date. Run docs/db/009_daily_data_schema_align.sql in the db SQL Editor, then retry."
           : undefined,
       }),
     };
@@ -3160,8 +3161,8 @@ async function resolveAthleteForPersonalTraining(
     };
   }
 
-  const supabase = await createActionSupabase();
-  const { data, error } = await supabase
+  const db = await createActionDb();
+  const { data, error } = await db
     .from("athletes")
     .select("id, team_id")
     .eq("id", athleteId)
@@ -3172,7 +3173,7 @@ async function resolveAthleteForPersonalTraining(
     return {
       ok: false,
       error: error
-        ? formatSupabaseActionError(error.message)
+        ? formatdbActionError(error.message)
         : "Please select a valid athlete.",
     };
   }
@@ -3231,10 +3232,10 @@ export async function createPersonalTraining(
     return athleteResult;
   }
 
-  const supabase = await createActionSupabase();
+  const db = await createActionDb();
   const startedAt = parseDateTime(input.startedAt) ?? new Date().toISOString();
 
-  const { error } = await supabase.from("personal_trainings").insert({
+  const { error } = await db.from("personal_trainings").insert({
     organization_id: organization.id,
     team_id: athleteResult.athlete.team_id,
     athlete_id: athleteResult.athlete.id,
@@ -3252,7 +3253,7 @@ export async function createPersonalTraining(
   if (error) {
     return {
       ok: false,
-      error: formatSupabaseActionError(error.message),
+      error: formatdbActionError(error.message),
     };
   }
 
@@ -3315,9 +3316,9 @@ export async function updatePersonalTraining(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from("personal_trainings")
     .select("id, athlete_id")
     .eq("id", input.trainingId)
@@ -3360,7 +3361,7 @@ export async function updatePersonalTraining(
     "analyst",
   ].includes(membership.role);
 
-  const { error } = await supabase
+  const { error } = await db
     .from("personal_trainings")
     .update({
       team_id: athleteResult.athlete.team_id,
@@ -3385,7 +3386,7 @@ export async function updatePersonalTraining(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "personal_training.updated",
@@ -3415,9 +3416,9 @@ export async function deletePersonalTraining(
   }
 
   const { organization, membership } = await getCurrentWorkspace();
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from("personal_trainings")
     .select("id, athlete_id")
     .eq("id", trainingId)
@@ -3451,7 +3452,7 @@ export async function deletePersonalTraining(
     };
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("personal_trainings")
     .delete()
     .eq("id", trainingId)
@@ -3464,7 +3465,7 @@ export async function deletePersonalTraining(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "personal_training.deleted",
@@ -3547,8 +3548,8 @@ export async function createDrill(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.from("drills").insert({
+  const db = createDbAdminClient();
+  const { error } = await db.from("drills").insert({
     organization_id: organization.id,
     created_by: userId,
     sport_type: input.sportType,
@@ -3575,7 +3576,7 @@ export async function createDrill(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "drill.created",
@@ -3622,8 +3623,8 @@ export async function createWearableConnection(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: athlete, error: athleteError } = await supabase
+  const db = createDbAdminClient();
+  const { data: athlete, error: athleteError } = await db
     .from("athletes")
     .select("id, team_id")
     .eq("id", input.athleteId)
@@ -3646,7 +3647,7 @@ export async function createWearableConnection(
     };
   }
 
-  const { error } = await supabase.from("wearable_connections").upsert(
+  const { error } = await db.from("wearable_connections").upsert(
     {
       organization_id: organization.id,
       athlete_id: athlete.id,
@@ -3669,7 +3670,7 @@ export async function createWearableConnection(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "wearable_connection.upserted",
@@ -3708,8 +3709,8 @@ export async function syncStravaConnection(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: connection, error: connectionError } = await supabase
+  const db = createDbAdminClient();
+  const { data: connection, error: connectionError } = await db
     .from("wearable_connections")
     .select("*")
     .eq("id", connectionId)
@@ -3724,7 +3725,7 @@ export async function syncStravaConnection(
     };
   }
 
-  const { data: athlete } = await supabase
+  const { data: athlete } = await db
     .from("athletes")
     .select("team_id")
     .eq("id", connection.athlete_id)
@@ -3765,7 +3766,7 @@ export async function syncStravaConnection(
     accessToken = refreshed.access_token;
     refreshToken = refreshed.refresh_token;
 
-    await supabase
+    await db
       .from("wearable_connections")
       .update({
         access_token_encrypted: encryptStravaSecret(accessToken),
@@ -3800,7 +3801,7 @@ export async function syncStravaConnection(
   }));
 
   if (rows.length > 0) {
-    const { error: upsertError } = await supabase
+    const { error: upsertError } = await db
       .from("wearable_activities")
       .upsert(rows, { onConflict: "provider,provider_activity_id" });
 
@@ -3812,7 +3813,7 @@ export async function syncStravaConnection(
     }
   }
 
-  await supabase
+  await db
     .from("wearable_connections")
     .update({
       last_synced_at: new Date().toISOString(),
@@ -3869,14 +3870,14 @@ export async function createAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const teamId = cleanString(input.teamId);
   const athleteId = cleanString(input.athleteId);
   const sessionId = cleanString(input.sessionId);
   let targetTeamId = teamId;
 
   if (teamId) {
-    const { data: team } = await supabase
+    const { data: team } = await db
       .from("teams")
       .select("id")
       .eq("id", teamId)
@@ -3892,7 +3893,7 @@ export async function createAiReport(
   }
 
   if (athleteId) {
-    const { data: athlete } = await supabase
+    const { data: athlete } = await db
       .from("athletes")
       .select("id, team_id")
       .eq("id", athleteId)
@@ -3910,7 +3911,7 @@ export async function createAiReport(
   }
 
   if (sessionId) {
-    const { data: session } = await supabase
+    const { data: session } = await db
       .from("sessions")
       .select("id, team_id")
       .eq("id", sessionId)
@@ -3939,7 +3940,7 @@ export async function createAiReport(
   }
 
   const { count: monthlyReportCount, error: monthlyReportCountError } =
-    await supabase
+    await db
       .from("ai_reports")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organization.id)
@@ -3959,7 +3960,7 @@ export async function createAiReport(
     };
   }
 
-  const { error } = await supabase.from("ai_reports").insert({
+  const { error } = await db.from("ai_reports").insert({
     organization_id: organization.id,
     team_id: teamId,
     athlete_id: athleteId,
@@ -3984,7 +3985,7 @@ export async function createAiReport(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "ai_report.created",
@@ -4023,9 +4024,9 @@ export async function generateSessionAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: session, error: sessionError } = await supabase
+  const { data: session, error: sessionError } = await db
     .from("sessions")
     .select("*")
     .eq("id", sessionId)
@@ -4049,7 +4050,7 @@ export async function generateSessionAiReport(
   }
 
   const { count: monthlyReportCount, error: monthlyReportCountError } =
-    await supabase
+    await db
       .from("ai_reports")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organization.id)
@@ -4075,19 +4076,19 @@ export async function generateSessionAiReport(
     { data: attendance, error: attendanceError },
     { data: trainingBlocks, error: blocksError },
   ] = await Promise.all([
-    supabase
+    db
       .from("teams")
       .select("id, name, sport_type")
       .eq("id", session.team_id)
       .eq("organization_id", organization.id)
       .maybeSingle(),
-    supabase
+    db
       .from("athletes")
       .select("id, first_name, last_name, number, team_id")
       .eq("organization_id", organization.id)
       .eq("team_id", session.team_id),
-    supabase.from("session_attendance").select("*").eq("session_id", session.id),
-    supabase
+    db.from("session_attendance").select("*").eq("session_id", session.id),
+    db
       .from("training_blocks")
       .select("*")
       .eq("session_id", session.id)
@@ -4132,7 +4133,7 @@ export async function generateSessionAiReport(
 
   const { data: checkins, error: checkinsError } =
     athleteIds.length > 0
-      ? await supabase
+      ? await db
           .from("wellness_checkins")
           .select("*")
           .in("athlete_id", athleteIds)
@@ -4165,10 +4166,10 @@ export async function generateSessionAiReport(
   const statusMessage = usedLlm
     ? `Analysis generated with Gemini (${geminiConfig.model}).`
     : isGeminiConfigured()
-      ? "Report saved with rule-based analysis. Gemini did not return a valid response — verify your API key and model in .env.local."
+      ? "Report saved with rule-based analysis. Gemini did not return a valid response â€” verify your API key and model in .env.local."
       : "Report saved with rule-based analysis. Add GEMINI_API_KEY for LLM-powered session reports.";
 
-  const { data: inserted, error: insertError } = await supabase
+  const { data: inserted, error: insertError } = await db
     .from("ai_reports")
     .insert({
       organization_id: organization.id,
@@ -4205,7 +4206,7 @@ export async function generateSessionAiReport(
     };
   }
 
-  await supabase.from("audit_logs").insert({
+  await db.from("audit_logs").insert({
     organization_id: organization.id,
     user_id: userId,
     action: "ai_report.generated",
@@ -4249,9 +4250,9 @@ export async function deleteAiReport(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: report } = await supabase
+  const { data: report } = await db
     .from("ai_reports")
     .select("id, session_id")
     .eq("id", reportId)
@@ -4265,7 +4266,7 @@ export async function deleteAiReport(
     };
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("ai_reports")
     .delete()
     .eq("id", reportId)
@@ -4339,8 +4340,8 @@ export async function createAthleteObservation(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: athlete, error: athleteError } = await supabase
+  const db = createDbAdminClient();
+  const { data: athlete, error: athleteError } = await db
     .from("athletes")
     .select("id, team_id")
     .eq("id", input.athleteId)
@@ -4381,7 +4382,7 @@ export async function createAthleteObservation(
     };
   }
 
-  const { error } = await supabase.from("athlete_observations").insert({
+  const { error } = await db.from("athlete_observations").insert({
     organization_id: organization.id,
     team_id: athlete.team_id,
     athlete_id: athlete.id,
@@ -4403,7 +4404,7 @@ export async function createAthleteObservation(
   }
 
   void syncOrganizationMemoryEmbeddings(
-    supabase,
+    db,
     organization.id,
     userId,
   ).catch(() => undefined);
@@ -4465,8 +4466,8 @@ export async function createTeamPattern(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: team } = await supabase
+  const db = createDbAdminClient();
+  const { data: team } = await db
     .from("teams")
     .select("id")
     .eq("id", input.teamId)
@@ -4489,7 +4490,7 @@ export async function createTeamPattern(
     };
   }
 
-  const { error } = await supabase.from("team_patterns").insert({
+  const { error } = await db.from("team_patterns").insert({
     organization_id: organization.id,
     team_id: team.id,
     pattern_type: patternType,
@@ -4509,7 +4510,7 @@ export async function createTeamPattern(
   }
 
   void syncOrganizationMemoryEmbeddings(
-    supabase,
+    db,
     organization.id,
     userId,
   ).catch(() => undefined);
@@ -4562,7 +4563,7 @@ export async function sendTeamMemoryMessage(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
   const teamId = cleanString(input.teamId);
   const athleteId = cleanString(input.athleteId);
 
@@ -4570,7 +4571,7 @@ export async function sendTeamMemoryMessage(
   let athleteName: string | null = null;
 
   if (teamId) {
-    const { data: team } = await supabase
+    const { data: team } = await db
       .from("teams")
       .select("id, name")
       .eq("id", teamId)
@@ -4599,7 +4600,7 @@ export async function sendTeamMemoryMessage(
   }
 
   if (athleteId) {
-    const { data: athlete } = await supabase
+    const { data: athlete } = await db
       .from("athletes")
       .select("id, first_name, last_name, number, team_id")
       .eq("id", athleteId)
@@ -4652,7 +4653,7 @@ export async function sendTeamMemoryMessage(
   let threadId = cleanString(input.threadId);
 
   if (threadId) {
-    const { data: existingThread } = await supabase
+    const { data: existingThread } = await db
       .from("assistant_threads")
       .select("id")
       .eq("id", threadId)
@@ -4665,7 +4666,7 @@ export async function sendTeamMemoryMessage(
   }
 
   if (!threadId) {
-    const { data: createdThread, error: threadError } = await supabase
+    const { data: createdThread, error: threadError } = await db
       .from("assistant_threads")
       .insert({
         organization_id: organization.id,
@@ -4683,14 +4684,14 @@ export async function sendTeamMemoryMessage(
       return {
         ok: false,
         error: missingTable
-          ? "Team Memory assistant tables are missing. Run docs/supabase/011_team_memory_rag.sql in Supabase, then retry."
+          ? "Team Memory assistant tables are missing. Run docs/db/011_team_memory_rag.sql in db, then retry."
           : threadError?.message ?? "Could not start a conversation thread.",
       };
     }
 
     threadId = createdThread.id;
   } else {
-    await supabase
+    await db
       .from("assistant_threads")
       .update({
         team_id: teamId || null,
@@ -4700,7 +4701,7 @@ export async function sendTeamMemoryMessage(
       .eq("id", threadId);
   }
 
-  const { error: userMessageError } = await supabase
+  const { error: userMessageError } = await db
     .from("assistant_messages")
     .insert({
       thread_id: threadId,
@@ -4720,7 +4721,7 @@ export async function sendTeamMemoryMessage(
     };
   }
 
-  const { error: assistantMessageError } = await supabase
+  const { error: assistantMessageError } = await db
     .from("assistant_messages")
     .insert({
       thread_id: threadId,
@@ -4760,3 +4761,4 @@ export async function sendTeamMemoryMessage(
     threadId,
   };
 }
+

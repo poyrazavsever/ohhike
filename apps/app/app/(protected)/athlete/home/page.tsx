@@ -6,11 +6,10 @@ import {
   MetricCard,
 } from "../../../../components/dashboard/dashboard-cards";
 import { getAthleteHomeData } from "../../../../lib/athlete-portal";
-import { TodayProgramCard } from "./_components/today-program-card";
 
 function formatDate(value: string | null) {
   if (!value) {
-    return "—";
+    return "â€”";
   }
 
   return new Intl.DateTimeFormat("en", {
@@ -45,7 +44,7 @@ export default async function AthleteHomePage() {
   const metricCards = [
     {
       label: "Readiness",
-      value: latestCheckin?.readiness_score?.toString() ?? "—",
+      value: latestCheckin?.readiness_score?.toString() ?? "â€”",
       helper: latestCheckin
         ? `Last check-in ${formatDay(latestCheckin.checkin_date)}`
         : "No check-in yet",
@@ -55,13 +54,13 @@ export default async function AthleteHomePage() {
     {
       label: "7D load",
       value: sevenDayLoad.toString(),
-      helper: "Minutes × RPE",
+      helper: "Minutes Ã— RPE",
       icon: "solar:chart-2-bold",
       tone: "secondary" as const,
     },
     {
       label: "Hydration",
-      value: latestNutrition?.hydration_score?.toString() ?? "—",
+      value: latestNutrition?.hydration_score?.toString() ?? "â€”",
       helper: latestNutrition
         ? `Log ${formatDay(latestNutrition.log_date)}`
         : "No nutrition log",
@@ -90,12 +89,6 @@ export default async function AthleteHomePage() {
           <MetricCard key={card.label} {...card} />
         ))}
       </div>
-
-      {todayProgram ? (
-        <div className="mt-6">
-          <TodayProgramCard {...todayProgram} />
-        </div>
-      ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-5">
@@ -153,7 +146,7 @@ export default async function AthleteHomePage() {
                     {session.title}
                   </p>
                   <p className="mt-1 text-xs font-medium text-muted-foreground">
-                    {formatDate(session.scheduled_at)} · {session.type}
+                    {formatDate(session.scheduled_at)} Â· {session.type}
                   </p>
                 </li>
               ))}
@@ -164,3 +157,4 @@ export default async function AthleteHomePage() {
     </section>
   );
 }
+

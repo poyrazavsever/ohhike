@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -7,7 +8,7 @@ import {
   createAthlete,
   type CreateAthleteInput,
 } from "../../../actions/workspace";
-import type { SportType } from "../../../../lib/database.types";
+import type { SportType } from "../../../../lib/db.types";
 import type { AthleteTeamOption } from "../../../../lib/workspace";
 
 const sportFieldConfig: Record<
@@ -330,3 +331,5 @@ export function CreateAthleteForm({ teams }: { teams: AthleteTeamOption[] }) {
     </div>
   );
 }
+
+

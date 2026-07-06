@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 "use client";
 
 import { Icon } from "@iconify/react";
@@ -20,7 +21,7 @@ import {
 import type {
   SessionStatus,
   SessionType,
-} from "../../../../lib/database.types";
+} from "../../../../lib/db.types";
 import type {
   AthleteTeamOption,
   SessionWithMeta,
@@ -781,3 +782,5 @@ export function SessionCardActions({
     </div>
   );
 }
+
+

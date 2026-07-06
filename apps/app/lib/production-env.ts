@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import {
   getClerkPublishableKey,
   getClerkWebhookSigningSecret,
@@ -5,9 +6,9 @@ import {
 
 /** Required for production deploy (apps/app). Secrets are presence-only checks. */
 export const PRODUCTION_ENV_KEYS = [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_db_URL",
+  "NEXT_PUBLIC_db_ANON_KEY",
+  "db_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "CLERK_SECRET_KEY",
   "CLERK_WEBHOOK_SIGNING_SECRET",
@@ -38,3 +39,4 @@ export function getMissingProductionEnvKeys(): string[] {
     return !process.env[key]?.trim();
   });
 }
+

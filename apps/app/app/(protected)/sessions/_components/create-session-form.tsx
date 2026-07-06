@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ import {
   SESSION_FOCUS_AREA_OPTIONS,
   SESSION_PLANNED_INTENSITY_OPTIONS,
 } from "../../../../lib/coach-vocabulary";
-import type { SessionType } from "../../../../lib/database.types";
+import type { SessionType } from "../../../../lib/db.types";
 import type { AthleteTeamOption } from "../../../../lib/workspace";
 
 type AthleteOption = {
@@ -365,3 +365,4 @@ export function CreateSessionForm({
     </div>
   );
 }
+

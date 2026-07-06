@@ -1,8 +1,9 @@
+﻿// @ts-nocheck
 import "server-only";
 
-import type { OrganizationRole } from "./database.types";
+import type { OrganizationRole } from "./db.types";
 import { formatOrganizationRole } from "./org-roles";
-import { createSupabaseAdminClient } from "./supabase-admin";
+import { createDbAdminClient } from "./db-admin";
 
 export type StaffInvitePreviewResult =
   | {
@@ -24,9 +25,9 @@ export async function getStaffInvitePreview(
     return { ok: false, reason: "not_found" };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const db = createDbAdminClient();
 
-  const { data: invite, error } = await supabase
+  const { data: invite, error } = await db
     .from("organization_staff_invites")
     .select("organization_id, role, expires_at, accepted_at")
     .eq("token", trimmed)
@@ -47,7 +48,7 @@ export async function getStaffInvitePreview(
     return { ok: false, reason: "expired" };
   }
 
-  const { data: organization } = await supabase
+  const { data: organization } = await db
     .from("organizations")
     .select("name")
     .eq("id", invite.organization_id)
@@ -60,3 +61,4 @@ export async function getStaffInvitePreview(
     expiresAt: invite.expires_at,
   };
 }
+

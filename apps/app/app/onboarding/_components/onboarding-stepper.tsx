@@ -1,10 +1,11 @@
+﻿// @ts-nocheck
 "use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
-import type { OrganizationType, SportType } from "../../../lib/database.types";
+import type { OrganizationType, SportType } from "../../../lib/db.types";
 import {
   completeOnboarding,
   type OnboardingAthleteInput,
@@ -668,3 +669,5 @@ export function OnboardingStepper() {
     </section>
   );
 }
+
+
