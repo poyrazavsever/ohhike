@@ -50,10 +50,10 @@
 
 ### UI MODERNİZASYONU (SHADCN/UI)
 #### Faz 11 — Shadcn UI Kurulumu ve Altyapı
-- [ ] 11.1 `apps/web` projesine `npx shadcn@latest init` uygulanması
-- [ ] 11.2 `apps/app` projesine `npx shadcn@latest init` uygulanması
-- [ ] 11.3 Tailwind yapılandırmalarının marka kimliğine göre ayarlanması
-- [ ] 11.4 Temel bileşenlerin (`Button`, `Input`, `Form`, `Card`, `Dialog`) dahil edilmesi
+- [x] 11.1 `apps/web` projesine `npx shadcn@latest init` uygulanması
+- [x] 11.2 `apps/app` projesine `npx shadcn@latest init` uygulanması
+- [x] 11.3 Tailwind yapılandırmalarının marka kimliğine göre ayarlanması
+- [x] 11.4 Temel bileşenlerin (`Button`, `Input`, `Form`, `Card`, `Dialog`) dahil edilmesi
 
 #### Faz 12 — Shadcn UI: Web (Tanıtım) Sayfaları
 - [ ] 12.1 `hero-section.tsx` (Ana Karşılama) ekranının Shadcn ile modernleştirilmesi
