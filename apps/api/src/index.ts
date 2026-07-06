@@ -12,7 +12,12 @@ app.use(corsMiddleware);
 app.use(express.json());
 
 // --- Routes ---
+import orgRoutes from "./routes/organization.js";
+import teamRoutes from "./routes/team.js";
+
 app.use("/api/webhooks", webhookRoutes);
+app.use("/api/v1/organizations", orgRoutes);
+app.use("/api/v1/teams", teamRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

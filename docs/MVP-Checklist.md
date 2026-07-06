@@ -33,11 +33,11 @@
 - [x] Kalkacak route'ları redirect veya 404 yap
 
 ## Faz 3 — Backend: Auth + Organization
-- [ ] Organization, OrgMember, Team, TeamStaff modelleri
-- [ ] Express CRUD route'ları
-- [ ] Clerk auth middleware (Express)
-- [ ] Next.js actions → API çağrılarına dönüştür
-- [ ] Onboarding akışını bağla
+- [x] Organization, OrgMember, Team, TeamStaff modelleri
+- [x] Express CRUD route'ları
+- [x] Clerk auth middleware (Express)
+- [x] Next.js actions → API çağrılarına dönüştür
+- [x] Onboarding akışını bağla
 
 ## Faz 4 — Backend: Athlete + Session
 - [ ] Athlete, AthleteInvite, Session, Attendance, TrainingBlock modelleri

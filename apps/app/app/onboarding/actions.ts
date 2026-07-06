@@ -186,18 +186,18 @@ export async function completeOnboarding(
     };
   }
 
-  const { userId } = await auth();
+  const { userId, getToken } = await auth();
   const user = await currentUser();
   const email = getPrimaryEmail(user);
+  const token = await getToken();
 
-  if (!userId || !email) {
+  if (!userId || !email || !token) {
     return {
       ok: false,
       error: "You need a signed-in account with an email address.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
   const organizationName = cleanString(input.organization.name);
   const teamName = cleanString(input.team.name);
 
@@ -208,99 +208,53 @@ export async function completeOnboarding(
     };
   }
 
-  const displayName = getDisplayName(user);
   const organizationSlug = `${slugify(organizationName)}-${crypto.randomUUID().slice(0, 8)}`;
 
-  const { error: userError } = await supabase.from("users").upsert({
-    id: userId,
-    email,
-    display_name: displayName,
-    avatar_url: user?.imageUrl ?? null,
-    updated_at: new Date().toISOString(),
-  });
-
-  if (userError) {
-    return {
-      ok: false,
-      error: userError.message,
-    };
-  }
-
-  const { data: organization, error: organizationError } = await supabase
-    .from("organizations")
-    .insert({
+  // Create Organization via Express API
+  const orgRes = await fetch("http://localhost:3002/api/v1/organizations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
       name: organizationName,
       slug: organizationSlug,
-      type: input.organization.type,
-      city: cleanString(input.organization.city),
-      country: cleanString(input.organization.country),
-      created_by: userId,
-    })
-    .select("id")
-    .single();
-
-  if (organizationError) {
-    return {
-      ok: false,
-      error: organizationError.message,
-    };
-  }
-
-  const organizationId = organization.id;
-
-  const { error: membershipError } = await supabase
-    .from("organization_members")
-    .insert({
-      organization_id: organizationId,
-      user_id: userId,
-      role: "owner",
-      is_active: true,
-    });
-
-  if (membershipError) {
-    return {
-      ok: false,
-      error: membershipError.message,
-    };
-  }
-
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .insert({
-      organization_id: organizationId,
-      name: teamName,
-      sport_type: input.team.sportType,
-      age_group: cleanString(input.team.ageGroup),
-      level: cleanString(input.team.level),
-      season_goal: cleanString(input.team.seasonGoal),
-      weekly_training_count:
-        parsePositiveInteger(input.team.weeklyTrainingCount) ?? 0,
-    })
-    .select("id")
-    .single();
-
-  if (teamError) {
-    return {
-      ok: false,
-      error: teamError.message,
-    };
-  }
-
-  const teamId = team.id;
-
-  const { error: teamStaffError } = await supabase.from("team_staff").insert({
-    team_id: teamId,
-    user_id: userId,
-    role: "head_coach",
-    assigned_by: userId,
+    }),
   });
 
-  if (teamStaffError) {
+  if (!orgRes.ok) {
     return {
       ok: false,
-      error: teamStaffError.message,
+      error: "Failed to create organization via API.",
     };
   }
+  const organization = await orgRes.json();
+  const organizationId = organization._id;
+
+  // Create Team via Express API
+  const teamRes = await fetch("http://localhost:3002/api/v1/teams", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name: teamName,
+      organization_id: organizationId,
+    }),
+  });
+
+  if (!teamRes.ok) {
+    return {
+      ok: false,
+      error: "Failed to create team via API.",
+    };
+  }
+  const team = await teamRes.json();
+  const teamId = team._id;
+
+  const supabase = createSupabaseAdminClient();
 
   const { error: entitlementError } = await supabase
     .from("team_billing_entitlements")
