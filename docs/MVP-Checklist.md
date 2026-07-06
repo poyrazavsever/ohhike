@@ -43,10 +43,10 @@
 - [x] 9.3 Takvim (Calendar) sayfasının Express verileriyle render edilmesi
 
 #### Faz 10 — Frontend API Entegrasyonu: Günlük Veriler (Daily Data)
-- [ ] 10.1 Wellness Check-in formlarının API'ye bağlanması
-- [ ] 10.2 Beslenme (Nutrition) kayıtlarının API'ye bağlanması
-- [ ] 10.3 Kişisel antrenman formlarının API'ye bağlanması
-- [ ] 10.4 `workspace.ts` içindeki devasa mock yığınının tamamen temizlenmesi
+- [x] 10.1 Wellness Check-in formlarının API'ye bağlanması
+- [x] 10.2 Beslenme (Nutrition) kayıtlarının API'ye bağlanması
+- [x] 10.3 Kişisel antrenman formlarının API'ye bağlanması
+- [x] 10.4 `workspace.ts` içindeki devasa mock yığınının tamamen temizlenmesi
 
 ### UI MODERNİZASYONU (SHADCN/UI)
 #### Faz 11 — Shadcn UI Kurulumu ve Altyapı

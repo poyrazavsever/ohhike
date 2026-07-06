@@ -25,3 +25,34 @@ export async function getAthleteDailyData(): Promise<AthleteDailyData> {
     return { wellness: [], nutrition: [], training: [] };
   }
 }
+
+// Antrenörler için Takım Verileri
+export async function getTeamWellness(): Promise<any[]> {
+  try {
+    const workspace = await getApiWorkspaceShellData();
+    if (!workspace.teamId) return [];
+    return await fetchApi(`/daily-data/team/${workspace.teamId}/wellness`);
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getTeamNutrition(): Promise<any[]> {
+  try {
+    const workspace = await getApiWorkspaceShellData();
+    if (!workspace.teamId) return [];
+    return await fetchApi(`/daily-data/team/${workspace.teamId}/nutrition`);
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getTeamTraining(): Promise<any[]> {
+  try {
+    const workspace = await getApiWorkspaceShellData();
+    if (!workspace.teamId) return [];
+    return await fetchApi(`/daily-data/team/${workspace.teamId}/training`);
+  } catch (error) {
+    return [];
+  }
+}

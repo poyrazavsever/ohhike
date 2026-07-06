@@ -3,17 +3,20 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
-import { getReadinessData } from "../../../lib/workspace";
+import { getApiWorkspaceShellData } from "../../../lib/api-workspace";
+import { getTeamWellness } from "../../../lib/api-daily";
+import { fetchApi } from "../../../lib/api-client";
+import { getTeamAthletes } from "../../../lib/api-athletes";
 import { ReadinessCheckinForm } from "./_components/readiness-checkin-form";
 
-function formatDate(value: string) {
+function formatDate(date: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-  }).format(new Date(value));
+  }).format(new Date(date));
 }
 
-function average(values: Array<number | null>) {
-  const validValues = values.filter((value): value is number => value !== null);
+function average(values: Array<number | null | undefined>) {
+  const validValues = values.filter((value): value is number => value !== null && value !== undefined);
 
   if (validValues.length === 0) {
     return "No data";
@@ -25,11 +28,22 @@ function average(values: Array<number | null>) {
 }
 
 export default async function ReadinessPage() {
-  const { workspace, checkins, athletes } = await getReadinessData();
+  const workspace = await getApiWorkspaceShellData();
+  const checkins = await getTeamWellness();
+  const apiAthletes = await getTeamAthletes();
+  const teams = await fetchApi(`/teams/${workspace.organizationId}`);
+
+  // Form için gerekli (AthleteOption) formatına dönüştürüyoruz
+  const athletes = apiAthletes.map((a: any) => ({
+    ...a,
+    id: a._id,
+    number: null,
+  }));
+
   const latestCheckins = checkins.slice(0, 8);
-  const today = new Date().toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().split("T")[0];
   const todayCheckins = checkins.filter(
-    (checkin) => checkin.checkin_date === today,
+    (c: any) => c.date && c.date.startsWith(todayStr),
   );
 
   const metricCards = [
@@ -41,14 +55,14 @@ export default async function ReadinessPage() {
     },
     {
       label: "Avg Readiness",
-      value: average(todayCheckins.map((checkin) => checkin.readiness_score)),
+      value: average(todayCheckins.map((checkin: any) => checkin.readiness_score)),
       helper: "Today score",
       icon: "solar:pulse-2-bold",
       tone: "info" as const,
     },
     {
       label: "Avg Fatigue",
-      value: average(todayCheckins.map((checkin) => checkin.fatigue)),
+      value: average(todayCheckins.map((checkin: any) => checkin.fatigue_level)),
       helper: "Lower is better",
       icon: "solar:shield-warning-bold",
       tone: "warning" as const,
@@ -67,7 +81,7 @@ export default async function ReadinessPage() {
       <DashboardHero
         eyebrow="Performance Data"
         title="Readiness"
-        subtitle={`Daily wellness overview for ${workspace.organization.name}.`}
+        subtitle={`Daily wellness overview for ${workspace.organizationName}.`}
         mascotSrc="/maskotlar/uykuu.png"
       />
 
@@ -93,18 +107,18 @@ export default async function ReadinessPage() {
           </div>
 
           <div className="divide-y divide-border">
-            {latestCheckins.map((checkin) => (
+            {latestCheckins.map((checkin: any) => (
               <article
-                key={checkin.id}
+                key={checkin._id}
                 className="grid gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr]"
               >
                 <div>
                   <p className="font-black text-foreground">
-                    {checkin.athleteName}
+                    {checkin.athlete?.first_name} {checkin.athlete?.last_name}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                    {checkin.teamName ?? "No team"} ·{" "}
-                    {formatDate(checkin.checkin_date)}
+                    {workspace.teamName ?? "No team"} ·{" "}
+                    {formatDate(checkin.date)}
                   </p>
                 </div>
                 <div>
@@ -127,10 +141,10 @@ export default async function ReadinessPage() {
                 </div>
                 <div>
                   <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
-                    Fatigue / Mood
+                    Fatigue / Stress
                   </p>
                   <p className="mt-1 text-sm font-black text-foreground">
-                    {checkin.fatigue ?? "-"} / {checkin.mood ?? "-"}
+                    {checkin.fatigue_level ?? "-"} / {checkin.stress_level ?? "-"}
                   </p>
                 </div>
               </article>
