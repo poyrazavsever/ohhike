@@ -1,8 +1,8 @@
 # OhHike CoachOS - Sistem Mimarisi (v4.0 — MVP)
 
-**Güncelleme:** 2026-07-06  
+**Güncelleme:** 2026-07-07  
 **Mimari yaklaşım:** Modüler Monorepo — Next.js frontend + Express.js backend  
-**Core stack:** Next.js, TypeScript, Clerk, Express.js, MongoDB, Tailwind CSS, shadcn/ui  
+**Core stack:** Next.js, TypeScript, Express.js, MongoDB, Tailwind CSS, shadcn/ui, Custom Auth (JWT)  
 **Veri modeli:** Organization → Team → Athlete → Session → Check-in
 
 ---
@@ -17,7 +17,7 @@ Client Layer (Next.js)
 
 Application Layer (Express.js)
   ├── REST API (/api/v1/*)
-  ├── Clerk Auth Middleware
+  ├── Custom JWT Auth Middleware
   ├── Route Handlers (CRUD)
   └── Validation (Zod)
 
@@ -27,7 +27,7 @@ Data Layer (MongoDB)
   └── Indexes
 
 Auth Layer
-  └── Clerk (login, register, webhook, token verification)
+  └── Custom Auth (login, register, JWT token verification with cookies)
 ```
 
 ---
@@ -56,7 +56,7 @@ ohhike/
 ### 3.1 `apps/app` — Coach Dashboard
 - **Port:** 3001 (dev)
 - **Amaç:** Antrenör ve sporcu paneli. Auth gerektirir.
-- **Tech:** Next.js App Router, Clerk auth, API çağrıları (Express backend'e)
+- **Tech:** Next.js App Router, Custom Auth (Cookies), API çağrıları (Express backend'e)
 - **Route grupları:** `(protected)/` altında tüm korumalı sayfalar
 
 ### 3.2 `apps/web` — Marketing Site
@@ -68,7 +68,7 @@ ohhike/
 ### 3.3 `apps/api` — Express.js Backend
 - **Port:** 3002 (dev)
 - **Amaç:** Tüm CRUD işlemleri ve iş mantığı
-- **Auth:** Clerk token doğrulama middleware
+- **Auth:** Custom JWT token doğrulama middleware
 - **DB:** MongoDB (Mongoose)
 
 ---
@@ -77,19 +77,12 @@ ohhike/
 
 ```text
 Next.js (frontend)
-  → fetch("/api/v1/teams", { headers: { Authorization: "Bearer <clerk-token>" } })
+  → fetch("/api/v1/teams", { headers: { Cookie: "token=<jwt-token>" } })
   → Express.js (backend)
-    → Clerk token doğrula
+    → JWT token doğrula
     → Mongoose ile MongoDB sorgusu
     → JSON yanıt döndür
   → Next.js UI güncelle
-```
-
-### Clerk Webhook Akışı
-```text
-Clerk user.created event
-  → POST /api/webhooks/clerk (Express)
-  → MongoDB users collection'a insert
 ```
 
 ---
@@ -97,7 +90,7 @@ Clerk user.created event
 ## 5. Veri Modeli (MongoDB)
 
 ```text
-users              → { clerkId, email, displayName, avatarUrl }
+users              → { email, passwordHash, displayName, avatarUrl }
 organizations      → { name, slug, type, logoUrl, createdBy }
 organization_members → { organizationId, userId, role, isActive }
 teams              → { organizationId, name, sportType, ageGroup, seasonGoal }
@@ -116,7 +109,7 @@ personal_trainings → { organizationId, athleteId, title, trainingType, duratio
 
 ## 6. Güvenlik
 
-- **Auth:** Tüm API istekleri Clerk JWT token ile doğrulanır.
+- **Auth:** Tüm API istekleri Custom JWT token (Cookie üzerinden) ile doğrulanır.
 - **Organization isolation:** Her sorgu `organizationId` ile filtrelenir.
 - **Rol bazlı erişim:** `organization_members.role` ile kontrol edilir.
 - **CORS:** Express'te sadece izin verilen origin'ler kabul edilir.
@@ -128,7 +121,8 @@ personal_trainings → { organizationId, athleteId, title, trainingType, duratio
 | Eski Katman | Durum |
 |------------|-------|
 | Supabase (PostgreSQL + RLS + Storage) | **Kaldırıldı** → MongoDB |
+| Clerk (Auth & User Management) | **Kaldırıldı** → Custom JWT Auth |
 | AI Layer (Gemini + pgvector + RAG) | **Kaldırıldı** |
 | Wearable Integration (Strava, Garmin) | **Kaldırıldı** |
 | Coach Network / Marketplace | **Kaldırıldı** |
-| Clerk Billing | **Ertelendi** (Coming Soon) |
+| Billing (Stripe / RevenueCat) | **Ertelendi** (Coming Soon) |

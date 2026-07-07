@@ -1,8 +1,8 @@
 # OhHike CoachOS - Veritabanı Şeması (v4.0 — MVP)
 
-**Güncelleme:** 2026-07-06  
+**Güncelleme:** 2026-07-07  
 **Veritabanı:** MongoDB (Mongoose)  
-**Auth:** Clerk  
+**Auth:** Custom Auth (JWT)  
 **Veri modeli:** Organization → Team → Athlete → Session → Check-in
 
 ---
@@ -11,7 +11,7 @@
 
 - MongoDB document-based yapı kullanılır.
 - Her collection organizasyon izolasyonuna sahiptir (`organizationId` alanı).
-- Clerk kullanıcıları `users` collection'ında tutulur.
+- Kullanıcılar `users` collection'ında tutulur.
 - Mongoose schema'ları ile validation sağlanır.
 
 ---
@@ -21,8 +21,8 @@
 ### users
 ```javascript
 {
-  clerkId: String,       // PK — Clerk User ID
   email: String,         // unique
+  passwordHash: String,
   displayName: String,
   avatarUrl: String,
   phone: String,
@@ -43,7 +43,7 @@
   logoUrl: String,
   country: String,
   city: String,
-  createdBy: String,     // ref: users.clerkId
+  createdBy: ObjectId,   // ref: users
   createdAt: Date,
   updatedAt: Date
 }
@@ -53,7 +53,7 @@
 ```javascript
 {
   organizationId: ObjectId,  // ref: organizations
-  userId: String,            // ref: users.clerkId
+  userId: ObjectId,          // ref: users
   role: String,              // enum: owner, admin, head_coach, assistant_coach, analyst, physiotherapist, nutritionist, athlete, viewer
   isActive: Boolean,         // default: true
   invitedBy: String,

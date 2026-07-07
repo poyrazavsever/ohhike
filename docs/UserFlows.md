@@ -10,7 +10,7 @@
 Kullanıcı ohhike.com'a gelir
 → CTA butonuna tıklar
 → app.ohhike.com/register'a yönlenir
-→ Clerk sign-up (Google OAuth veya e-posta)
+→ Custom sign-up (E-posta ve şifre)
 → /onboarding sayfasına yönlenir
 → Organizasyon bilgilerini girer
 → İlk takımını oluşturur
@@ -27,8 +27,8 @@ Kullanıcı ohhike.com'a gelir
 Antrenör sporcu kaydı oluşturur (isim, mevki, numara)
 → Davet linki oluşturur
 → Sporcu davet linkini açar
-→ Clerk ile kayıt olur veya giriş yapar
-→ Token doğrulanır
+→ E-posta ve şifre ile sisteme kayıt olur veya giriş yapar
+→ Token (JWT) doğrulanır
 → Sporcu profili kullanıcıya bağlanır (claim)
 → Sporcu dashboard açılır
 ```

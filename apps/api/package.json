@@ -16,8 +16,7 @@
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.15.1",
-    "svix": "^1.62.0"
+    "mongoose": "^8.15.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import { connectDB } from "./lib/database.js";
 import { corsMiddleware } from "./middleware/cors.js";
-import webhookRoutes from "./routes/webhooks.js";
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -19,7 +18,6 @@ import sessionRoutes from "./routes/session.js";
 import dailyDataRoutes from "./routes/dailyData.js";
 import authRoutes from "./routes/auth.js";
 
-app.use("/api/webhooks", webhookRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/organizations", orgRoutes);
 app.use("/api/v1/teams", teamRoutes);
