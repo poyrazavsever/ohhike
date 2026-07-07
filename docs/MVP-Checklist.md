@@ -66,9 +66,9 @@
 - [x] 13.3 `app-sidebar.tsx` (Yan menü) ve mobil navigasyonun modernleştirilmesi
 
 #### Faz 14 — Shadcn UI: App Ana Ekranları (Dashboard & Listeler)
-- [ ] 14.1 Koç Dashboard'unun Shadcn grid ve stat kartlarıyla yeniden tasarlanması
-- [ ] 14.2 Takım yönetimi modal'larının Shadcn `Dialog` ile yapılması
-- [ ] 14.3 Sporcu listelerinin modern bir Shadcn `Table` (DataTable) ile yapılandırılması
+- [x] 14.1 Koç Dashboard'unun Shadcn grid ve stat kartlarıyla yeniden tasarlanması
+- [x] 14.2 Takım yönetimi modal'larının Shadcn `Dialog` ile yapılması
+- [x] 14.3 Sporcu listelerinin modern bir Shadcn `Table` (DataTable) ile yapılandırılması
 
 #### Faz 15 — Shadcn UI: App Detay Ekranları
 - [ ] 15.1 Takvim ve Antrenman planlama görünümünün yenilenmesi

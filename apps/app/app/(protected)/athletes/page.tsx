@@ -3,6 +3,14 @@ import {
   EmptyStateCard,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getApiWorkspaceShellData } from "../../../lib/api-workspace";
 import { getTeamAthletes } from "../../../lib/api-athletes";
 import { fetchApi } from "../../../lib/api-client";
@@ -36,7 +44,7 @@ export default async function AthletesPage() {
   ).length;
 
   return (
-    <section className="bg-primary-50 px-5 py-6 md:px-8">
+    <section className="bg-primary/5 px-5 py-6 md:px-8">
       <DashboardHero
         eyebrow="Team Operations"
         title="Athletes"
@@ -72,41 +80,44 @@ export default async function AthletesPage() {
       </div>
 
       {athletes.length > 0 ? (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr_auto] gap-4 border-b border-border px-4 py-3 text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground md:grid">
-            <span>Athlete</span>
-            <span>Team</span>
-            <span>Status</span>
-            <span>Claim</span>
-            <span>Actions</span>
-          </div>
-          <div className="divide-y divide-border">
-            {athletes.map((athlete) => (
-              <article
-                key={athlete._id}
-                className="grid gap-3 px-4 py-3 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto] md:gap-4"
-              >
-                <div>
-                  <p className="text-sm font-black text-foreground">
-                    {getAthleteName(athlete.first_name, athlete.last_name)}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                    {athlete.position ?? "Position not set"}
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-foreground">
-                  {workspace.teamName ?? "No team"}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {formatStatus(athlete.status)}
-                </p>
-                <p className="text-sm font-semibold text-muted-foreground">
-                  {athlete.user_id ? "Claimed" : "Unclaimed"}
-                </p>
-                <AthleteRowActions athlete={athlete as any} teams={teams} />
-              </article>
-            ))}
-          </div>
+        <div className="mt-4 overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Athlete</TableHead>
+                <TableHead className="font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Team</TableHead>
+                <TableHead className="font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                <TableHead className="font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Claim</TableHead>
+                <TableHead className="text-right font-extrabold text-xs uppercase tracking-widest text-muted-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {athletes.map((athlete) => (
+                <TableRow key={athlete._id} className="hover:bg-muted/30">
+                  <TableCell>
+                    <p className="text-sm font-black text-foreground">
+                      {getAthleteName(athlete.first_name, athlete.last_name)}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                      {athlete.position ?? "Position not set"}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-foreground">
+                    {workspace.teamName ?? "No team"}
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-foreground">
+                    {formatStatus(athlete.status)}
+                  </TableCell>
+                  <TableCell className="text-sm font-semibold text-muted-foreground">
+                    {athlete.user_id ? "Claimed" : "Unclaimed"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <AthleteRowActions athlete={athlete as any} teams={teams} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       ) : (
         <EmptyStateCard
