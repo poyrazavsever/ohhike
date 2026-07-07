@@ -4,22 +4,55 @@ import { useState } from "react";
 import { useAuth } from "../../components/providers/auth-provider";
 import Link from "next/link";
 import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+const loginSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin."),
+  password: z.string().min(1, "Şifre alanı boş bırakılamaz."),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: LoginFormValues) => {
     setLoading(true);
 
     try {
       const res = await fetch("http://localhost:3002/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(values),
       });
 
       const data = await res.json();
@@ -38,53 +71,73 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-muted/20">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">OhHike'a Giriş Yap</h1>
-          <p className="text-sm text-muted-foreground mt-2">Devam etmek için e-posta ve şifrenizi girin</p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-md shadow-lg shadow-primary/5">
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-3xl font-extrabold tracking-tight">OhHike'a Giriş Yap</CardTitle>
+          <CardDescription className="text-base">
+            Devam etmek için e-posta ve şifrenizi girin
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground font-semibold">E-posta</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="ornek@email.com"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">E-posta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="ornek@email.com"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Şifre</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground font-semibold">Şifre</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
-          </button>
-        </form>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-base font-bold"
+              >
+                {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
+              </Button>
+            </form>
+          </Form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Hesabınız yok mu?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Kayıt olun
-          </Link>
-        </p>
-      </div>
+          <p className="mt-6 text-center text-sm font-medium text-muted-foreground">
+            Hesabınız yok mu?{" "}
+            <Link href="/register" className="text-primary hover:underline font-bold transition-colors">
+              Kayıt olun
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

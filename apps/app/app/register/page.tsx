@@ -4,23 +4,57 @@ import { useState } from "react";
 import { useAuth } from "../../components/providers/auth-provider";
 import Link from "next/link";
 import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+const registerSchema = z.object({
+  displayName: z.string().min(2, "Ad soyad en az 2 karakter olmalıdır."),
+  email: z.string().email("Geçerli bir e-posta adresi girin."),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır."),
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      displayName: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: RegisterFormValues) => {
     setLoading(true);
 
     try {
       const res = await fetch("http://localhost:3002/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify(values),
       });
 
       const data = await res.json();
@@ -39,66 +73,91 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-muted/20">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Hesap Oluştur</h1>
-          <p className="text-sm text-muted-foreground mt-2">OhHike'a katılmak için bilgilerinizi girin</p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-md shadow-lg shadow-primary/5">
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-3xl font-extrabold tracking-tight">Hesap Oluştur</CardTitle>
+          <CardDescription className="text-base">
+            OhHike'a katılmak için bilgilerinizi girin
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground font-semibold">Ad Soyad</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John Doe"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Ad Soyad</label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="John Doe"
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground font-semibold">E-posta</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="ornek@email.com"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">E-posta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="ornek@email.com"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Şifre</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground font-semibold">Şifre</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-11"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? "Hesap Oluşturuluyor..." : "Kayıt Ol"}
-          </button>
-        </form>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-base font-bold"
+              >
+                {loading ? "Hesap Oluşturuluyor..." : "Kayıt Ol"}
+              </Button>
+            </form>
+          </Form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Zaten hesabınız var mı?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Giriş yapın
-          </Link>
-        </p>
-      </div>
+          <p className="mt-6 text-center text-sm font-medium text-muted-foreground">
+            Zaten hesabınız var mı?{" "}
+            <Link href="/login" className="text-primary hover:underline font-bold transition-colors">
+              Giriş yapın
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

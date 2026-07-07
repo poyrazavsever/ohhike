@@ -61,9 +61,9 @@
 - [x] 12.3 `navbar.tsx` (Üst Menü) bileşeninin modernleştirilmesi
 
 #### Faz 13 — Shadcn UI: App Auth & Layout
-- [ ] 13.1 `Login` sayfasının Shadcn `Form` ve `Card` ile yenilenmesi
-- [ ] 13.2 `Register` sayfasının Shadcn `Form` ve `Card` ile yenilenmesi
-- [ ] 13.3 `app-sidebar.tsx` (Yan menü) ve mobil navigasyonun modernleştirilmesi
+- [x] 13.1 `Login` sayfasının Shadcn `Form` ve `Card` ile yenilenmesi
+- [x] 13.2 `Register` sayfasının Shadcn `Form` ve `Card` ile yenilenmesi
+- [x] 13.3 `app-sidebar.tsx` (Yan menü) ve mobil navigasyonun modernleştirilmesi
 
 #### Faz 14 — Shadcn UI: App Ana Ekranları (Dashboard & Listeler)
 - [ ] 14.1 Koç Dashboard'unun Shadcn grid ve stat kartlarıyla yeniden tasarlanması

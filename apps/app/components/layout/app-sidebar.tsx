@@ -7,6 +7,8 @@ import { useAuth } from "../providers/auth-provider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { switchActiveOrganization } from "../../app/actions/workspace";
 import { isAthleteRole } from "../../lib/org-roles";
@@ -236,25 +238,21 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceShellData }) {
 
           <div className="grid gap-1">
             {workspace.organizations.map((organization) => (
-              <button
+              <Button
                 key={organization.id}
-                type="button"
+                variant={organization.isActive ? "secondary" : "ghost"}
                 disabled={organization.isActive || isSwitching}
                 onClick={() => handleOrganizationSwitch(organization.id)}
-                className={
-                  organization.isActive
-                    ? "flex w-full items-center gap-2.5 rounded-xl bg-primary-soft px-3 py-2 text-left text-xs font-bold text-primary-700"
-                    : "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
-                }
+                className="w-full justify-start gap-2.5 rounded-xl px-3 text-xs"
               >
-                <Icon icon="solar:buildings-3-bold" className="size-4" />
-                <span className="min-w-0 flex-1 truncate">
+                <Icon icon="solar:buildings-3-bold" className="size-4 shrink-0" />
+                <span className="min-w-0 flex-1 truncate text-left">
                   {organization.name}
                 </span>
                 {organization.isActive ? (
-                  <Icon icon="solar:check-circle-bold" className="size-4" />
+                  <Icon icon="solar:check-circle-bold" className="size-4 shrink-0 text-primary-700" />
                 ) : null}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -406,14 +404,14 @@ function SidebarUserCard() {
             Manage account
           </Link>
 
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => logout()}
-            className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="w-full justify-start gap-2.5 rounded-2xl px-3 text-xs text-muted-foreground hover:text-foreground"
           >
-            <Icon icon="solar:logout-3-bold" className="size-4" />
+            <Icon icon="solar:logout-3-bold" className="size-4 shrink-0" />
             Sign out
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -487,23 +485,25 @@ export function AppSidebar({ workspace }: { workspace: WorkspaceShellData }) {
                     ];
 
                   return (
-                    <Link
+                    <Button
                       key={item.href}
-                      href={item.href}
-                      className={
-                        isActive
-                          ? "flex items-center gap-2.5 rounded-2xl bg-primary-soft px-3 py-2 text-xs font-semibold text-primary-700"
-                          : "flex items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      }
+                      asChild
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start gap-2.5 rounded-2xl px-3 text-xs",
+                        isActive ? "text-primary-700 bg-primary-soft font-semibold hover:bg-primary-soft" : "text-muted-foreground font-medium"
+                      )}
                     >
-                      <Icon icon={item.icon} className="size-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                      {isLocked ? (
-                        <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
-                          Pro
-                        </span>
-                      ) : null}
-                    </Link>
+                      <Link href={item.href}>
+                        <Icon icon={item.icon} className="size-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        {isLocked ? (
+                          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+                            Pro
+                          </span>
+                        ) : null}
+                      </Link>
+                    </Button>
                   );
                 })}
               </div>
