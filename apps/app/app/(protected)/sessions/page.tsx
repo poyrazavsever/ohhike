@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
 import {
   DashboardHero,
@@ -103,31 +104,28 @@ export default async function SessionsPage() {
       {sessions.length > 0 ? (
         <div className="mt-4 grid gap-3">
           {sessions.map((session: any) => (
-            <article
-              key={session._id}
-              className="rounded-2xl border border-border bg-card p-4"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <Card key={session._id} className="transition-all hover:shadow-md">
+              <CardHeader className="flex flex-col gap-3 pb-4 md:flex-row md:items-start md:justify-between space-y-0">
                 <div>
-                  <h2 className="text-base font-black text-foreground">
+                  <CardTitle className="text-base font-black">
                     <Link
                       href={`/sessions/${session._id}`}
                       className="transition-colors hover:text-primary"
                     >
                       {session.title}
                     </Link>
-                  </h2>
-                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                  </CardTitle>
+                  <CardDescription className="mt-1 font-semibold">
                     {workspace.teamName ?? "No team"} · {formatSessionType(session.type)}
-                  </p>
+                  </CardDescription>
                 </div>
                 <div className="flex flex-col items-start gap-2 md:items-end">
-                  <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
+                  <div className="rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
                     {session.status ?? "planned"}
                   </div>
                   <Link
                     href={`/sessions/${session._id}`}
-                    className="text-xs font-bold text-primary transition-colors hover:text-primary-hover"
+                    className="text-xs font-bold text-primary transition-colors hover:text-primary/80"
                   >
                     Open detail →
                   </Link>
@@ -138,31 +136,33 @@ export default async function SessionsPage() {
                   />
                   <SessionTrainingBlocksButton session={session} />
                 </div>
-              </div>
+              </CardHeader>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-4">
-                <DetailStat label="Scheduled" value={formatDate(session.date)} />
-                <DetailStat
-                  label="Duration"
-                  value={
-                    session.duration_minutes
-                      ? `${session.duration_minutes} min`
-                      : "Not set"
-                  }
-                />
-                <DetailStat label="Attendance" value={session.attendanceCount || 0} />
-                <DetailStat label="Blocks" value={session.trainingBlocksCount || 0} />
-              </div>
+              <CardContent>
+                <div className="grid gap-2 md:grid-cols-4">
+                  <DetailStat label="Scheduled" value={formatDate(session.date)} />
+                  <DetailStat
+                    label="Duration"
+                    value={
+                      session.duration_minutes
+                        ? `${session.duration_minutes} min`
+                        : "Not set"
+                    }
+                  />
+                  <DetailStat label="Attendance" value={session.attendanceCount || 0} />
+                  <DetailStat label="Blocks" value={session.trainingBlocksCount || 0} />
+                </div>
 
-              {session.focus_area || session.coach_notes ? (
-                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
-                  {session.focus_area
-                    ? `Focus: ${sessionFocusAreaLabel(session.focus_area)}. `
-                    : ""}
-                  {session.coach_notes ?? ""}
-                </p>
-              ) : null}
-            </article>
+                {session.focus_area || session.coach_notes ? (
+                  <p className="mt-4 text-sm font-semibold leading-6 text-muted-foreground">
+                    {session.focus_area
+                      ? `Focus: ${sessionFocusAreaLabel(session.focus_area)}. `
+                      : ""}
+                    {session.coach_notes ?? ""}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (

@@ -1,4 +1,11 @@
 import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
   DashboardHero,
   MetricCard,
 } from "../../../components/dashboard/dashboard-cards";
@@ -55,9 +62,10 @@ function splitSessions(sessions: CalendarSession[]) {
   };
 }
 
+
 function SessionRow({ session }: { session: CalendarSession }) {
   return (
-    <article className="grid gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[0.8fr_1.4fr_0.8fr_0.8fr]">
+    <Card className="grid gap-3 p-4 shadow-sm hover:shadow-md transition-shadow md:grid-cols-[0.8fr_1.4fr_0.8fr_0.8fr]">
       <div>
         <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
           Date
@@ -91,7 +99,7 @@ function SessionRow({ session }: { session: CalendarSession }) {
           {session.status ?? "planned"}
         </p>
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -105,31 +113,32 @@ function SessionSection({
   sessions: CalendarSession[];
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-3">
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4 space-y-0">
         <div>
-          <p className="text-sm font-black text-foreground">{title}</p>
-          <p className="mt-1 text-sm font-semibold text-muted-foreground">
+          <CardTitle className="text-sm font-black">{title}</CardTitle>
+          <CardDescription className="mt-1 text-sm font-medium">
             {description}
-          </p>
+          </CardDescription>
         </div>
-        <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
+        <div className="rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
           {sessions.length}
         </div>
-      </div>
-
-      <div className="mt-4 grid gap-2">
+      </CardHeader>
+      <CardContent className="grid gap-3 pt-0">
         {sessions.length > 0 ? (
           sessions.map((session) => (
             <SessionRow key={session.id} session={session} />
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-border bg-background p-4 text-center text-sm font-semibold text-muted-foreground">
-            No sessions in this section.
-          </p>
+          <div className="rounded-xl border border-dashed bg-transparent p-6 text-center">
+            <p className="text-sm font-semibold text-muted-foreground">
+              No sessions in this section.
+            </p>
+          </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

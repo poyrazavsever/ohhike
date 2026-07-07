@@ -1,8 +1,19 @@
-﻿"use client";
+"use client";
 
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import {
   createSession,
@@ -36,7 +47,7 @@ const sessionTypes: Array<{ label: string; value: SessionType }> = [
 ];
 
 function inputClassName() {
-  return "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/15";
+  return "flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 }
 
 function athleteName(athlete: AthleteOption) {
@@ -128,241 +139,216 @@ export function CreateSessionForm({
 
   return (
     <div className="mt-6 flex justify-end">
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        disabled={teams.length === 0}
-        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <Icon icon="solar:add-circle-bold" className="size-4" />
-        Create session
-      </button>
-
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 px-4 py-6 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="create-session-title"
-        >
-          <button
-            type="button"
-            aria-label="Close create session modal"
-            onClick={closeModal}
-            className="absolute inset-0 cursor-default"
-          />
-
-          <div className="relative z-10 max-h-[90svh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-border bg-card p-5 shadow-xl md:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-700">
-                  <Icon icon="solar:clipboard-list-bold" className="size-5" />
-                </div>
-                <div>
-                  <p id="create-session-title" className="text-base font-extrabold text-foreground">
-                    Create session
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground">
-                    Plan training, matches or recovery work and draft attendance.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-              >
-                <Icon icon="solar:close-circle-bold" className="size-3.5" />
-                Close
-              </button>
+      <Dialog open={isOpen} onOpenChange={(val) => {
+        if (!val) closeModal();
+        else setIsOpen(true);
+      }}>
+        <DialogTrigger asChild>
+          <Button disabled={teams.length === 0} size="lg" className="gap-2 font-bold rounded-xl shadow-md">
+            <Icon icon="solar:add-circle-bold" className="size-5" />
+            Create session
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-6 gap-6">
+          <DialogHeader className="flex flex-row items-center gap-4 space-y-0">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Icon icon="solar:clipboard-list-bold" className="size-6" />
             </div>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <input
-                className={`${inputClassName()} md:col-span-2`}
-                value={form.title}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, title: event.target.value }))
-                }
-                placeholder="Session title"
-              />
-              <select
-                className={inputClassName()}
-                value={form.teamId}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    teamId: event.target.value,
-                    athleteIds: [],
-                  }))
-                }
-              >
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={inputClassName()}
-                value={form.type}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    type: event.target.value as SessionType,
-                  }))
-                }
-              >
-                {sessionTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="datetime-local"
-                className={inputClassName()}
-                value={form.scheduledAt}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    scheduledAt: event.target.value,
-                  }))
-                }
-              />
-              <input
-                className={inputClassName()}
-                value={form.location}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, location: event.target.value }))
-                }
-                placeholder="Location"
-              />
-              <input
-                className={inputClassName()}
-                value={form.opponent}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, opponent: event.target.value }))
-                }
-                placeholder="Opponent (for match)"
-              />
-              <input
-                type="number"
-                min="0"
-                className={inputClassName()}
-                value={form.plannedDurationMin}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    plannedDurationMin: event.target.value,
-                  }))
-                }
-                placeholder="Duration minutes"
-              />
-              <select
-                className={inputClassName()}
-                value={form.plannedIntensity}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    plannedIntensity: event.target.value,
-                  }))
-                }
-              >
-                {SESSION_PLANNED_INTENSITY_OPTIONS.map((opt) => (
-                  <option key={opt.value || "none"} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={inputClassName()}
-                value={form.focusArea}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    focusArea: event.target.value,
-                  }))
-                }
-              >
-                {SESSION_FOCUS_AREA_OPTIONS.map((opt) => (
-                  <option key={opt.value || "none-focus"} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <textarea
-                className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
-                value={form.coachNotes}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    coachNotes: event.target.value,
-                  }))
-                }
-                placeholder="Coach notes"
-              />
+            <div>
+              <DialogTitle className="text-xl font-extrabold text-foreground">
+                Create session
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm font-medium text-muted-foreground">
+                Plan training, matches or recovery work and draft attendance.
+              </DialogDescription>
             </div>
+          </DialogHeader>
 
-            <div className="mt-5 rounded-2xl border border-border bg-background p-4">
-              <p className="text-sm font-extrabold text-foreground">
-                Draft attendance
-              </p>
-              <p className="mt-1 text-xs font-medium text-muted-foreground">
-                Select athletes to create attendance rows for this session.
-              </p>
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                {teamAthletes.length > 0 ? (
-                  teamAthletes.map((athlete) => (
-                    <label
-                      key={athlete.id}
-                      className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.athleteIds.includes(athlete.id)}
-                        onChange={() => toggleAthlete(athlete.id)}
-                      />
-                      {athleteName(athlete)}
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-sm font-medium text-muted-foreground">
-                    No athletes in this team yet.
-                  </p>
-                )}
-              </div>
-            </div>
+          <div className="grid gap-4 md:grid-cols-2 mt-2">
+            <Input
+              className="h-11 md:col-span-2"
+              value={form.title}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, title: event.target.value }))
+              }
+              placeholder="Session title"
+            />
+            <select
+              className={inputClassName()}
+              value={form.teamId}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  teamId: event.target.value,
+                  athleteIds: [],
+                }))
+              }
+            >
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className={inputClassName()}
+              value={form.type}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  type: event.target.value as SessionType,
+                }))
+              }
+            >
+              {sessionTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+            <Input
+              type="datetime-local"
+              className="h-11"
+              value={form.scheduledAt}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  scheduledAt: event.target.value,
+                }))
+              }
+            />
+            <Input
+              className="h-11"
+              value={form.location}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, location: event.target.value }))
+              }
+              placeholder="Location"
+            />
+            <Input
+              className="h-11"
+              value={form.opponent}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, opponent: event.target.value }))
+              }
+              placeholder="Opponent (for match)"
+            />
+            <Input
+              type="number"
+              min="0"
+              className="h-11"
+              value={form.plannedDurationMin}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  plannedDurationMin: event.target.value,
+                }))
+              }
+              placeholder="Duration minutes"
+            />
+            <select
+              className={inputClassName()}
+              value={form.plannedIntensity}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  plannedIntensity: event.target.value,
+                }))
+              }
+            >
+              {SESSION_PLANNED_INTENSITY_OPTIONS.map((opt) => (
+                <option key={opt.value || "none"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className={inputClassName()}
+              value={form.focusArea}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  focusArea: event.target.value,
+                }))
+              }
+            >
+              {SESSION_FOCUS_AREA_OPTIONS.map((opt) => (
+                <option key={opt.value || "none-focus"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <textarea
+              className={`${inputClassName()} min-h-24 resize-none md:col-span-2`}
+              value={form.coachNotes}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  coachNotes: event.target.value,
+                }))
+              }
+              placeholder="Coach notes"
+            />
+          </div>
 
-            {error ? (
-              <div className="mt-5 rounded-2xl border border-destructive/30 bg-destructive-soft p-4 text-sm font-bold text-destructive-foreground">
-                {error}
-              </div>
-            ) : null}
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:border-primary"
-              >
-                <Icon icon="solar:close-circle-bold" className="size-4" />
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={submit}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Icon icon="solar:diskette-bold" className="size-4" />
-                {isPending ? "Creating..." : "Save session"}
-              </button>
+          <div className="mt-2 rounded-2xl border bg-muted/30 p-5">
+            <p className="text-sm font-extrabold text-foreground">
+              Draft attendance
+            </p>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              Select athletes to create attendance rows for this session.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {teamAthletes.length > 0 ? (
+                teamAthletes.map((athlete) => (
+                  <label
+                    key={athlete.id}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-primary text-primary focus:ring-primary"
+                      checked={form.athleteIds.includes(athlete.id)}
+                      onChange={() => toggleAthlete(athlete.id)}
+                    />
+                    {athleteName(athlete)}
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm font-medium text-muted-foreground">
+                  No athletes in this team yet.
+                </p>
+              )}
             </div>
           </div>
-        </div>
-      ) : null}
+
+          {error ? (
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-bold text-destructive">
+              {error}
+            </div>
+          ) : null}
+
+          <DialogFooter className="mt-2 flex items-center justify-end gap-3 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
+              className="font-bold h-11 px-6 rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isPending}
+              onClick={submit}
+              className="gap-2 font-bold h-11 px-6 rounded-xl"
+            >
+              <Icon icon="solar:diskette-bold" className="size-5" />
+              {isPending ? "Creating..." : "Save session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

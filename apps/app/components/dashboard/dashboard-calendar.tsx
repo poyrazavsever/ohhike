@@ -64,6 +64,9 @@ function getUpcomingSessions(sessions: CalendarSession[]) {
     .slice(0, 4);
 }
 
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
 export function DashboardMiniCalendar({
   sessions,
 }: {
@@ -79,60 +82,60 @@ export function DashboardMiniCalendar({
   );
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between gap-3">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
         <div>
-          <p className="text-sm font-black text-foreground">Calendar</p>
-          <p className="mt-1 text-xs font-semibold text-muted-foreground">
+          <CardTitle className="text-sm font-black">Calendar</CardTitle>
+          <CardDescription className="mt-1 text-xs font-semibold">
             {formatMonth(now)}
-          </p>
+          </CardDescription>
         </div>
-        <Link
-          href="/calendar"
-          className="text-xs font-extrabold text-primary-700 transition-colors hover:text-primary-hover"
-        >
-          View all
-        </Link>
-      </div>
+        <Button variant="ghost" size="sm" asChild className="h-8 text-xs font-extrabold text-primary">
+          <Link href="/calendar">
+            View all
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <div className="grid grid-cols-7 gap-1 text-center text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
+          {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+            <span key={`${day}-${index}`}>{day}</span>
+          ))}
+        </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-          <span key={`${day}-${index}`}>{day}</span>
-        ))}
-      </div>
+        <div className="mt-2 grid grid-cols-7 gap-1">
+          {days.map((day) => {
+            const key = dateKey(day);
+            const isCurrentMonth = day.getMonth() === now.getMonth();
+            const isToday = key === todayKey;
+            const hasSession = sessionDayKeys.has(key);
 
-      <div className="mt-2 grid grid-cols-7 gap-1">
-        {days.map((day) => {
-          const key = dateKey(day);
-          const isCurrentMonth = day.getMonth() === now.getMonth();
-          const isToday = key === todayKey;
-          const hasSession = sessionDayKeys.has(key);
-
-          return (
-            <div
-              key={day.toISOString()}
-              className={[
-                "relative grid aspect-square place-items-center rounded-lg text-xs font-bold",
-                isCurrentMonth ? "text-foreground" : "text-muted-foreground/45",
-                isToday
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background",
-              ].join(" ")}
-            >
-              {day.getDate()}
-              {hasSession ? (
-                <span
-                  className={[
-                    "absolute bottom-1 size-1.5 rounded-full",
-                    isToday ? "bg-primary-foreground" : "bg-secondary",
-                  ].join(" ")}
-                />
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </section>
+            return (
+              <div
+                key={day.toISOString()}
+                className={[
+                  "relative grid aspect-square place-items-center rounded-lg text-xs font-bold",
+                  isCurrentMonth ? "text-foreground" : "text-muted-foreground/45",
+                  isToday
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/30 hover:bg-muted/50 transition-colors",
+                ].join(" ")}
+              >
+                {day.getDate()}
+                {hasSession ? (
+                  <span
+                    className={[
+                      "absolute bottom-1 size-1.5 rounded-full",
+                      isToday ? "bg-primary-foreground" : "bg-primary",
+                    ].join(" ")}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -146,45 +149,49 @@ export function DashboardAgenda({
   const upcoming = getUpcomingSessions(sessions);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-black text-foreground">{title}</p>
-        <span className="rounded-xl bg-primary-soft px-2.5 py-1 text-xs font-extrabold text-primary-700">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
+        <CardTitle className="text-sm font-black">{title}</CardTitle>
+        <span className="rounded-xl bg-primary/10 px-2.5 py-1 text-xs font-extrabold text-primary">
           {upcoming.length}
         </span>
-      </div>
+      </CardHeader>
 
-      <div className="mt-3 grid gap-2">
-        {upcoming.length > 0 ? (
-          upcoming.map((session) => (
-            <article
-              key={session.id}
-              className="flex items-start gap-3 rounded-xl bg-background p-3"
-            >
-              <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-info-soft text-info-foreground">
-                <Icon icon="solar:calendar-mark-bold" className="size-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black text-foreground">
-                  {session.title}
-                </p>
-                <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                  {formatAgendaDate(session.scheduled_at)} ·{" "}
-                  {formatAgendaTime(session.scheduled_at)}
-                </p>
-                <p className="mt-1 truncate text-xs font-semibold text-muted-foreground">
-                  {session.teamName ?? "No team"} ·{" "}
-                  {session.location ?? "Location not set"}
-                </p>
-              </div>
-            </article>
-          ))
-        ) : (
-          <p className="rounded-xl border border-dashed border-border bg-background p-4 text-center text-sm font-semibold text-muted-foreground">
-            No upcoming sessions scheduled.
-          </p>
-        )}
-      </div>
-    </section>
+      <CardContent className="pt-0">
+        <div className="grid gap-2">
+          {upcoming.length > 0 ? (
+            upcoming.map((session) => (
+              <article
+                key={session.id}
+                className="flex items-start gap-3 rounded-xl border bg-card p-3 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                  <Icon icon="solar:calendar-mark-bold" className="size-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-foreground">
+                    {session.title}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                    {formatAgendaDate(session.scheduled_at)} ·{" "}
+                    {formatAgendaTime(session.scheduled_at)}
+                  </p>
+                  <p className="mt-1 truncate text-xs font-semibold text-muted-foreground">
+                    {session.teamName ?? "No team"} ·{" "}
+                    {session.location ?? "Location not set"}
+                  </p>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed bg-transparent p-6 text-center">
+              <p className="text-sm font-semibold text-muted-foreground">
+                No upcoming sessions scheduled.
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

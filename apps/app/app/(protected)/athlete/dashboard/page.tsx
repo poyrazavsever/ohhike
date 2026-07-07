@@ -1,4 +1,11 @@
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
   DashboardHero,
   DetailStat,
   EmptyStateCard,
@@ -108,64 +115,66 @@ export default async function AthleteDashboardPage() {
       </div>
 
       {summaries.length > 0 ? (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="border-b border-border p-4">
-            <p className="text-sm font-black text-foreground">
+        <Card className="mt-4 overflow-hidden">
+          <CardHeader className="border-b bg-muted/20 pb-4">
+            <CardTitle className="text-base font-black">
               Athlete roster health
-            </p>
-            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+            </CardTitle>
+            <CardDescription className="mt-1 text-sm font-semibold">
               Latest readiness, hydration and workload context per athlete.
-            </p>
-          </div>
-          <div className="grid gap-3 p-4 xl:grid-cols-2">
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-4 xl:grid-cols-2 bg-background">
             {summaries.map((summary) => (
-              <article
+              <Card
                 key={summary.athleteId}
-                className="rounded-2xl border border-border bg-card p-4"
+                className="shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <CardHeader className="flex flex-col gap-3 pb-3 md:flex-row md:items-start md:justify-between space-y-0">
                   <div>
-                    <h2 className="text-base font-black text-foreground">
+                    <CardTitle className="text-base font-black">
                       {summary.athleteName}
-                    </h2>
-                    <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                    </CardTitle>
+                    <CardDescription className="mt-1 font-semibold">
                       {summary.teamName ?? "No team"} ·{" "}
                       {summary.position ?? "No position"} ·{" "}
                       {formatStatus(summary.status)}
-                    </p>
+                    </CardDescription>
                   </div>
-                  <div className="rounded-xl bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-700">
+                  <div className="rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-extrabold text-primary">
                     {readinessLabel(summary.latestReadiness)}
                   </div>
-                </div>
+                </CardHeader>
 
-                <div className="mt-4 grid gap-2 md:grid-cols-4">
-                  <DetailStat
-                    label="Readiness"
-                    value={summary.latestReadiness ?? "No data"}
-                  />
-                  <DetailStat
-                    label="Fatigue"
-                    value={summary.latestFatigue ?? "No data"}
-                  />
-                  <DetailStat
-                    label="Hydration"
-                    value={summary.latestHydration ?? "No data"}
-                  />
-                  <DetailStat
-                    label="7D Load"
-                    value={formatNumber(summary.sevenDayLoad)}
-                  />
-                </div>
+                <CardContent className="pt-0">
+                  <div className="grid gap-2 md:grid-cols-4">
+                    <DetailStat
+                      label="Readiness"
+                      value={summary.latestReadiness ?? "No data"}
+                    />
+                    <DetailStat
+                      label="Fatigue"
+                      value={summary.latestFatigue ?? "No data"}
+                    />
+                    <DetailStat
+                      label="Hydration"
+                      value={summary.latestHydration ?? "No data"}
+                    />
+                    <DetailStat
+                      label="7D Load"
+                      value={formatNumber(summary.sevenDayLoad)}
+                    />
+                  </div>
 
-                <p className="mt-3 text-sm font-semibold text-muted-foreground">
-                  {summary.attendanceCount} attendance entries · Meal quality{" "}
-                  {summary.latestMealQuality ?? "No data"}
-                </p>
-              </article>
+                  <p className="mt-4 text-sm font-semibold text-muted-foreground">
+                    {summary.attendanceCount} attendance entries · Meal quality{" "}
+                    {summary.latestMealQuality ?? "No data"}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ) : (
         <EmptyStateCard
           title="No athletes yet"

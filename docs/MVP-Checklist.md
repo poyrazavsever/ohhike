@@ -71,9 +71,9 @@
 - [x] 14.3 Sporcu listelerinin modern bir Shadcn `Table` (DataTable) ile yapılandırılması
 
 #### Faz 15 — Shadcn UI: App Detay Ekranları
-- [ ] 15.1 Takvim ve Antrenman planlama görünümünün yenilenmesi
-- [ ] 15.2 Yoklama ve performans formlarının Shadcn `Input` ve `Select` ile tasarlanması
-- [ ] 15.3 Sporcu Portalı (Check-in formları) arayüzünün modernleştirilmesi
+- [x] 15.1 Takvim ve Antrenman planlama görünümünün yenilenmesi
+- [x] 15.2 Yoklama ve performans formlarının Shadcn `Input` ve `Select` ile tasarlanması
+- [x] 15.3 Sporcu Portalı (Check-in formları) arayüzünün modernleştirilmesi
 
 #### Faz 16 — Son Cila ve Dokümantasyon Temizliği
 - [ ] 16.1 Kullanılmayan tüm eski CSS, Tailwind eklentileri ve kütüphanelerin silinmesi
