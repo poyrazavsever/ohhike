@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { IconSlideButton } from "@repo/ui/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -159,13 +159,10 @@ export default function CommunityPage() {
                     placeholder="you@example.com"
                   />
                 </label>
-                <IconSlideButton
-                  as="button"
-                  type="submit"
-                  className="mt-2"
-                  text="Register"
-                  icon={<Icon icon="solar:arrow-right-linear" />}
-                />
+                <Button type="submit" size="lg" className="mt-4 rounded-full gap-2">
+                  Register
+                  <Icon icon="solar:arrow-right-linear" className="size-5" />
+                </Button>
               </form>
             )}
           </div>

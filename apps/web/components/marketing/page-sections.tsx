@@ -1,7 +1,7 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 import { Icon } from "@iconify/react";
-import { Button } from "@repo/ui/components/ui/button";
-import { Card } from "@repo/ui/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { backgroundScenes, pandaMascots } from "@repo/ui/lib/assets";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,12 +67,12 @@ function MarketingHero({
           {primaryCta || secondaryCta ? (
             <div className="mt-8 flex flex-wrap items-center gap-3">
               {primaryCta ? (
-                <Button asChild>
+                <Button size="lg" className="rounded-full font-bold px-8" asChild>
                   <Link href={primaryCta.href}>{primaryCta.label}</Link>
                 </Button>
               ) : null}
               {secondaryCta ? (
-                <Button variant="outline" asChild>
+                <Button size="lg" variant="outline" className="rounded-full font-bold px-8 bg-background/50 backdrop-blur-sm" asChild>
                   <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
                 </Button>
               ) : null}
@@ -86,7 +86,7 @@ function MarketingHero({
             alt=""
             width={1024}
             height={1024}
-            className="h-auto w-80 object-contain"
+            className="h-auto w-80 object-contain drop-shadow-xl"
           />
         </div>
       </div>
@@ -119,16 +119,18 @@ function InfoGrid({
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {cards.map((card) => (
-            <Card key={card.title} interactive>
-              <div className="flex size-11 items-center justify-center rounded-full bg-primary-soft text-primary-700">
-                <Icon icon={card.icon} className="size-5" />
-              </div>
-              <h3 className="mt-5 text-xl font-extrabold leading-tight text-foreground">
-                {card.title}
-              </h3>
-              <p className="mt-3 text-sm font-medium leading-6 text-muted-foreground">
-                {card.description}
-              </p>
+            <Card key={card.title} className="group transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+              <CardContent className="p-8">
+                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <Icon icon={card.icon} className="size-6" />
+                </div>
+                <h3 className="mt-6 text-xl font-extrabold leading-tight text-foreground">
+                  {card.title}
+                </h3>
+                <p className="mt-3 text-sm font-medium leading-relaxed text-muted-foreground">
+                  {card.description}
+                </p>
+              </CardContent>
             </Card>
           ))}
         </div>
@@ -145,7 +147,7 @@ function TextBand({
   title: string;
 }) {
   return (
-    <section className="bg-card px-5 py-20 md:px-8 lg:py-24">
+    <section className="bg-muted/30 px-5 py-20 md:px-8 lg:py-24">
       <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[0.75fr_1.25fr]">
         <h2 className="text-balance text-4xl font-extrabold leading-tight text-foreground">
           {title}
@@ -167,29 +169,30 @@ function CtaBand({
 }) {
   return (
     <section className="bg-background px-5 py-20 md:px-8">
-      <Card className="mx-auto max-w-7xl border-primary/25 bg-primary-soft/55" padding="lg">
-        <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
-          <div>
-            <h2 className="text-balance text-3xl font-extrabold leading-tight text-foreground sm:text-4xl">
-              {title}
-            </h2>
-            <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-muted-foreground">
-              {description}
-            </p>
+      <Card className="mx-auto max-w-7xl overflow-hidden border-primary/20 bg-primary-soft/50 shadow-xl shadow-primary/5">
+        <CardContent className="p-10 md:p-16">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
+            <div>
+              <h2 className="text-balance text-3xl font-extrabold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+                {title}
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg font-medium leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" className="rounded-full font-bold px-8 shadow-lg shadow-primary/20" asChild>
+                <Link href={getAppUrl("/register")}>Get Started</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="rounded-full font-bold px-8 bg-background/50 hover:bg-background" asChild>
+                <Link href="/docs">Read Docs</Link>
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href={getAppUrl("/register")}>Get Started</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/docs">Read Docs</Link>
-            </Button>
-          </div>
-        </div>
+        </CardContent>
       </Card>
     </section>
   );
 }
 
 export { CtaBand, InfoGrid, MarketingHero, TextBand, type InfoCard };
-

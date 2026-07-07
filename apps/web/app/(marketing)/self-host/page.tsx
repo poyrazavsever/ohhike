@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { IconSlideButton } from "@repo/ui/components/ui/button";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -76,19 +76,18 @@ export default function SelfHostPage() {
               much as the product itself.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <IconSlideButton
-                as={Link}
-                href="/docs/self-host"
-                text="Read Docs"
-                icon={<Icon icon="solar:book-bookmark-bold" />}
-              />
-              <IconSlideButton
-                as={Link}
-                href="/pricing"
-                variant="outline"
-                text="Compare Plans"
-                icon={<Icon icon="solar:arrow-right-linear" />}
-              />
+              <Button asChild size="lg" className="rounded-full gap-2 px-6">
+                <Link href="/docs/self-host">
+                  <Icon icon="solar:book-bookmark-bold" className="size-5" />
+                  Read Docs
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="rounded-full gap-2 px-6">
+                <Link href="/pricing">
+                  Compare Plans
+                  <Icon icon="solar:arrow-right-linear" className="size-5" />
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

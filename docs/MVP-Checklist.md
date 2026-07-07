@@ -56,9 +56,9 @@
 - [x] 11.4 Temel bileşenlerin (`Button`, `Input`, `Form`, `Card`, `Dialog`) dahil edilmesi
 
 #### Faz 12 — Shadcn UI: Web (Tanıtım) Sayfaları
-- [ ] 12.1 `hero-section.tsx` (Ana Karşılama) ekranının Shadcn ile modernleştirilmesi
-- [ ] 12.2 `page-sections.tsx` (Özellikler) ekranının Shadcn Kartları ile tasarlanması
-- [ ] 12.3 `navbar.tsx` (Üst Menü) bileşeninin modernleştirilmesi
+- [x] 12.1 `hero-section.tsx` (Ana Karşılama) ekranının Shadcn ile modernleştirilmesi
+- [x] 12.2 `page-sections.tsx` (Özellikler) ekranının Shadcn Kartları ile tasarlanması
+- [x] 12.3 `navbar.tsx` (Üst Menü) bileşeninin modernleştirilmesi
 
 #### Faz 13 — Shadcn UI: App Auth & Layout
 - [ ] 13.1 `Login` sayfasının Shadcn `Form` ve `Card` ile yenilenmesi
