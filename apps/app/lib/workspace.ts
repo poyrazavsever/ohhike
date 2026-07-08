@@ -185,29 +185,29 @@ export async function getCurrentWorkspace(): Promise<CurrentWorkspace> {
   const cookieStore = await cookies();
   const activeOrganizationId = cookieStore.get(ACTIVE_ORGANIZATION_COOKIE)?.value;
 
+  let workspaces: CurrentWorkspace[] = [];
+
   try {
     const { fetchApi } = await import("./api-client");
-    
-    // API'den workspaces dizisi döner: [{ organization: {}, membership: {} }]
-    const workspaces: CurrentWorkspace[] = await fetchApi("/organizations");
-
-    if (!workspaces || workspaces.length === 0) {
-      redirect("/onboarding");
-    }
-
-    const activeWorkspace = workspaces.find(
-      (ws) => ws.organization._id === activeOrganizationId || ws.organization.id === activeOrganizationId
-    ) ?? workspaces[0];
-
-    if (!activeWorkspace) {
-      redirect("/onboarding");
-    }
-
-    return activeWorkspace;
+    workspaces = await fetchApi("/organizations");
   } catch (error) {
     console.error("Failed to load workspace:", error);
     redirect("/login");
   }
+
+  if (!workspaces || workspaces.length === 0) {
+    redirect("/onboarding");
+  }
+
+  const activeWorkspace = workspaces.find(
+    (ws) => ws.organization._id === activeOrganizationId || ws.organization.id === activeOrganizationId
+  ) ?? workspaces[0];
+
+  if (!activeWorkspace) {
+    redirect("/onboarding");
+  }
+
+  return activeWorkspace;
 }
 
 export async function getWorkspaceShellData(): Promise<WorkspaceShellData> {
