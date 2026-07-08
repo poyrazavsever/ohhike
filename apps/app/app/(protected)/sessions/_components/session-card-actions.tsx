@@ -108,7 +108,7 @@ function buildSessionForm(session: SessionWithMeta): UpdateSessionInput {
     plannedIntensity: session.planned_intensity?.toString() ?? "",
     focusArea: session.focus_area ?? "",
     coachNotes: session.coach_notes ?? "",
-    athleteIds: session.attendance.map((entry) => entry.athlete_id),
+    athleteIds: session.attendance.map((entry: any) => entry.athlete_id),
   };
 }
 
@@ -120,7 +120,7 @@ function buildAttendanceEntries(
     .filter((athlete) => athlete.team_id === session.team_id)
     .map((athlete) => {
       const attendance = session.attendance.find(
-        (entry) => entry.athlete_id === athlete.id,
+        (entry: any) => entry.athlete_id === athlete.id,
       );
 
       return {
