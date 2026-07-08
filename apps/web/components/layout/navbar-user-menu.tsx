@@ -1,13 +1,13 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 "use client";
 
-const useUser = () => ({ user: null }); const SignedIn = ({children}: any) => null; const SignedOut = ({children}: any) => children; const UserButton = () => null; const SignInButton = () => null;
+const useUser = () => ({ user: null }); const SignedIn = ({children}: any) => null; const SignedOut = ({children}: any) => children; const UserButton = () => null; const SignInButton = () => null; const useClerk = () => ({ openUserProfile: () => {}, signOut: () => {} });
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-import { getAccountTypeFromMetadata } from "../../lib/account-type";
+import { getUserAccountType } from "../../lib/account-type";
 import { isCoachNetworkEnabled } from "../../lib/coach-network";
 import { getAppDashboardUrl } from "../../lib/site-url";
 import { coachNetworkAthleteItems } from "./navbar-coach-network";
@@ -73,7 +73,7 @@ function GuestMenuItems({ onNavigate }: { onNavigate?: () => void }) {
 function SignedInMenuItems({ onNavigate }: { onNavigate?: () => void }) {
   const { openUserProfile, signOut } = useClerk();
   const { user } = useUser();
-  const accountType = getAccountTypeFromMetadata(user?.publicMetadata);
+  const accountType = getUserAccountType();
 
   const athleteLinks = [
     ...coachNetworkAthleteItems,

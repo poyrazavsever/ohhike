@@ -1,8 +1,7 @@
-﻿// @ts-nocheck
 "use server";
 
-const auth = () => ({ userId: "temp" }); const currentUser = () => ({});
 import { revalidatePath } from "next/cache";
+import { fetchApi } from "../../lib/api-client";
 
 type OrganizationType =
   | "club"
@@ -102,17 +101,6 @@ function slugify(value: string) {
     .slice(0, 64);
 }
 
-function parsePositiveInteger(value: string | undefined) {
-  const cleaned = cleanString(value);
-
-  if (!cleaned) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(cleaned, 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
 function hasAthleteInput(athlete: OnboardingAthleteInput) {
   return Boolean(
     cleanString(athlete.firstName) ||
@@ -134,20 +122,6 @@ function isOrganizationType(value: string): value is OrganizationType {
 
 function isSportType(value: string): value is SportType {
   return sportTypes.includes(value as SportType);
-}
-
-function getPrimaryEmail(
-  user: Awaited<ReturnType<typeof currentUser>>,
-): string | null {
-  return (
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses[0]?.emailAddress ??
-    null
-  );
-}
-
-function getDisplayName(user: Awaited<ReturnType<typeof currentUser>>) {
-  return [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null;
 }
 
 function validateInput(input: CompleteOnboardingInput) {
@@ -202,18 +176,6 @@ export async function completeOnboarding(
     };
   }
 
-  const { userId, getToken } = await auth();
-  const user = await currentUser();
-  const email = getPrimaryEmail(user);
-  const token = await getToken();
-
-  if (!userId || !email || !token) {
-    return {
-      ok: false,
-      error: "You need a signed-in account with an email address.",
-    };
-  }
-
   const organizationName = cleanString(input.organization.name);
   const teamName = cleanString(input.team.name);
 
@@ -226,76 +188,54 @@ export async function completeOnboarding(
 
   const organizationSlug = `${slugify(organizationName)}-${crypto.randomUUID().slice(0, 8)}`;
 
-  // Create Organization via Express API
-  const orgRes = await fetch("http://localhost:3002/api/v1/organizations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name: organizationName,
-      slug: organizationSlug,
-    }),
-  });
-
-  if (!orgRes.ok) {
-    return {
-      ok: false,
-      error: "Failed to create organization via API.",
-    };
-  }
-  const organization = await orgRes.json();
-  const organizationId = organization._id;
-
-  // Create Team via Express API
-  const teamRes = await fetch("http://localhost:3002/api/v1/teams", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name: teamName,
-      organization_id: organizationId,
-    }),
-  });
-
-  if (!teamRes.ok) {
-    return {
-      ok: false,
-      error: "Failed to create team via API.",
-    };
-  }
-  const team = await teamRes.json();
-  const teamId = team._id;
-
-  const athletes = input.athletes
-    .filter((athlete) => hasAthleteInput(athlete))
-    .slice(0, 12);
-
-  if (athletes.length > 0) {
-    const athletePromises = athletes.map((athlete) => {
-      const firstName = cleanString(athlete.firstName) ?? "";
-      const lastName = cleanString(athlete.lastName);
-      
-      return fetch("http://localhost:3002/api/v1/athletes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          team_id: teamId,
-          first_name: firstName,
-          last_name: lastName,
-          email: cleanString(athlete.email),
-          position: cleanString(athlete.position),
-        }),
-      });
+  try {
+    // Create Organization via Express API
+    const organization = await fetchApi("/organizations", {
+      method: "POST",
+      body: JSON.stringify({
+        name: organizationName,
+        slug: organizationSlug,
+      }),
     });
 
-    await Promise.all(athletePromises);
+    // Create Team via Express API
+    const team = await fetchApi("/teams", {
+      method: "POST",
+      body: JSON.stringify({
+        name: teamName,
+        organization_id: organization._id,
+      }),
+    });
+
+    const athletes = input.athletes
+      .filter((athlete) => hasAthleteInput(athlete))
+      .slice(0, 12);
+
+    if (athletes.length > 0) {
+      const athletePromises = athletes.map((athlete) => {
+        const firstName = cleanString(athlete.firstName) ?? "";
+        const lastName = cleanString(athlete.lastName);
+        
+        return fetchApi("/athletes", {
+          method: "POST",
+          body: JSON.stringify({
+            team_id: team._id,
+            first_name: firstName,
+            last_name: lastName,
+            email: cleanString(athlete.email),
+            position: cleanString(athlete.position),
+          }),
+        });
+      });
+
+      await Promise.all(athletePromises);
+    }
+  } catch (error: any) {
+    console.error("Onboarding Error:", error);
+    return {
+      ok: false,
+      error: error.message || "Failed to create onboarding data via API.",
+    };
   }
 
   revalidatePath("/");
@@ -305,5 +245,3 @@ export async function completeOnboarding(
     redirectTo: "/dashboard",
   };
 }
-
-
